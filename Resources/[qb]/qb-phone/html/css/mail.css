@@ -4,7 +4,7 @@
     display: none;
     height: 100%;
     width: 100%;
-    background: rgb(36, 36, 36);
+    background: rgb(167, 162, 162);
     overflow: hidden;
 }
 
@@ -15,9 +15,9 @@
 
 .mail-header {
     display: block;
-    height: 14vh;
+    height: 12vh;
     width: 100%;
-    background: rgb(36, 36, 36);
+    background: rgba(0, 108, 134, 0.377);
 }
 
 #mail-header-text {
@@ -25,7 +25,7 @@
     top: 5vh;
     left: 12vh;
     font-family: 'Poppins', sans-serif;
-    font-size: 1.5vh;
+    font-size: 1vh;
     color: white;
 }
 
@@ -49,10 +49,10 @@
 
 .mail-list {
     position: absolute;
-    width: 99%;
-    height: 44.7vh;
-    top: 12vh;
-    left: .1vh;
+    width: 94%;
+    height: 44.5vh;
+    top: 15vh;
+    left: 1vh;
     overflow-x: hidden !important;
     overflow-y: scroll;
 }
@@ -75,14 +75,14 @@
 }
 
 .mail:hover {
-    background-color: #dc143c;
+    background-color: #12caeb8f;
     transition: .05s ease-in-out;
 }
 
 .mail-sender {
     position: absolute;
     font-family: 'Poppins', sans-serif;
-    font-size: 1.6vh;
+    font-size: 1.2vh;
     color: white;
     left: 0.5vh;
     top: 1vh;

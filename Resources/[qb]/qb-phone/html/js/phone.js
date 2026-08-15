@@ -751,3 +751,64 @@ $(document).on('click', '.suggested-contact', function(e){
     $(".phone-add-contact-number").val(SuggestionData.number);
     $(".phone-add-contact-iban").val(SuggestionData.bank);
 });
+
+$(document).on('click', '#box-new-cancel', function(e){
+    e.preventDefault();
+    ClearInputNew()
+    $('.phone-new-box-body').fadeOut(350);
+});
+
+function ClearInputNew(){
+    $(".phone-new-input-class").val("");
+}
+
+function updateTime() {
+    // Get current date and time
+    let now = new Date();
+
+    // Format time as HH:MM (12 hour format) with AM/PM
+    let time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // Format date as Day, Month Date, Year
+    let date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Format real-world time as HH:MM (12 hour format) with AM/PM
+    let realTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // Update HTML
+    document.getElementById('qb-phone-time').innerText = time;
+    document.getElementById('qb-phone-date').innerText = date;
+    document.getElementById('qb-real-time').innerText = realTime; // Add this line to update the real-world time
+}
+
+// Update the time and date immediately
+updateTime();
+
+// Then update the time and date every 1 minute (60000 milliseconds)
+setInterval(updateTime, 60000);
+
+//phone battery 
+
+
+let batteryLevel = 100;  // Set initial battery level to 100
+let batteryEmpty = false;  // The battery is initially not empty
+
+// Function to update battery icon according to battery level
+// Function to update battery icon according to battery level
+function updateBatteryIcon() {
+    const batteryIcon = document.getElementById('phone-battery');
+    const blackoutScreen = document.getElementById('blackout-screen');
+    
+    if (batteryLevel <= 0) {
+        batteryIcon.className = "fas fa-battery-empty";
+        batteryIcon.style.color = "red";
+        batteryEmpty = true;
+        blackoutScreen.style.display = "block";  // Show the blackout screen
+    } else if (batteryLevel <= 50) {
+        batteryIcon.className = "fas fa-battery-half";
+        batteryIcon.style.color = "yellow";
+    } else {
+        batteryIcon.className = "fas fa-battery-full";
+        batteryIcon.style.color = "green";
+    }
+}

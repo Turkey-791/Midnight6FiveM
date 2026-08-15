@@ -54,7 +54,7 @@ QB.Phone.Functions.DoBankOpen = function() {
 
     $(".bank-app-loaded").css({"display":"none", "padding-left":"30vh"});
     $(".bank-app-accounts").css({"left":"30vh"});
-    $(".qbank-logo").css({"left": "0vh"});
+    $(".qvisa").css({"left": "0vh"});
     $("#qbank-text").css({"opacity":"0.0", "left":"9vh"});
     $(".bank-app-loading").css({
         "display":"block",
@@ -62,7 +62,7 @@ QB.Phone.Functions.DoBankOpen = function() {
     });
     setTimeout(function(){
         CurrentTab = "accounts";
-        $(".qbank-logo").animate({
+        $(".qvisa").animate({
             left: -12+"vh"
         }, 500);
         setTimeout(function(){
@@ -134,7 +134,7 @@ GetInvoiceLabel = function(type) {
 $(document).on('click', '.pay-invoice', function(event){
     event.preventDefault();
 
-    var InvoiceId = $(this).parent().parent().parent().attr('id');
+    var InvoiceId = $(this).parent().parent().attr('id');
     var InvoiceData = $("#"+InvoiceId).data('invoicedata');
     var BankBalance = $(".bank-app-account-balance").data('balance');
 
@@ -168,29 +168,24 @@ $(document).on('click', '.pay-invoice', function(event){
     }
 });
 
-$(document).on('click', '.decline-invoice', async function(event) {
+$(document).on('click', '.decline-invoice', function(event){
     event.preventDefault();
-    var InvoiceId = $(this).parent().parent().parent().attr('id');
+    var InvoiceId = $(this).parent().parent().attr('id');
     var InvoiceData = $("#"+InvoiceId).data('invoicedata');
 
-    const resp = await $.post('https://qb-phone/DeclineInvoice', JSON.stringify({
+    $.post('https://qb-phone/DeclineInvoice', JSON.stringify({
         sender: InvoiceData.sender,
         amount: InvoiceData.amount,
         society: InvoiceData.society,
         invoiceId: InvoiceData.id,
     }));
-    if(resp === true) {
-        QB.Phone.Notifications.Add("fas fa-university", "QBank", "You declined the invoice", "#8c7ae6")
-        $("#"+InvoiceId).animate({
-            left: 30+"vh",
-        }, 300, function(){
-            setTimeout(function(){
-                $("#"+InvoiceId).remove();
-            }, 100);
-        });
-    } else {
-        QB.Phone.Notifications.Add("fas fa-university", "QBank", "Couldnt decline this invoice...", "#8c7ae6")
-    }
+    $("#"+InvoiceId).animate({
+        left: 30+"vh",
+    }, 300, function(){
+        setTimeout(function(){
+            $("#"+InvoiceId).remove();
+        }, 100);
+    });
 });
 
 QB.Phone.Functions.LoadBankInvoices = function(invoices) {
@@ -198,10 +193,10 @@ QB.Phone.Functions.LoadBankInvoices = function(invoices) {
         $(".bank-app-invoices-list").html("");
 
         $.each(invoices, function(i, invoice){
-            var Elem = '<div class="bank-app-invoice" id="invoiceid-'+invoice.id+'"> <div class="bank-app-invoice-title">'+invoice.society+' <span style="font-size: 1vh; color: gray;">(Sender: '+invoice.sender+')</span></div>' + (typeof invoice.reason === 'string' ? `<div class="bank-app-invoice-reason">${invoice.reason}</div>` : '') + '<div class="bank-app-invoice-info"><div class="bank-app-invoice-amount">&#36; '+invoice.amount+'</div> <div class="bank-app-invoice-buttons"> <i class="fas fa-check-circle pay-invoice"></i>'+ (invoice.candecline === 1 ? '<i class="fas fa-times-circle decline-invoice"></i>' : '') + '</div></div></div>';
+            var Elem = '<div class="bank-app-invoice" id="invoiceid-'+i+'"> <div class="bank-app-invoice-title">'+invoice.society+' <span style="font-size: 1vh; color: gray;">(Sender: '+invoice.sender+')</span></div> <div class="bank-app-invoice-amount">&#36; '+invoice.amount+'</div> <div class="bank-app-invoice-buttons"> <i class="fas fa-check-circle pay-invoice"></i> <i class="fas fa-times-circle decline-invoice"></i> </div> </div>';
 
             $(".bank-app-invoices-list").append(Elem);
-            $("#invoiceid-"+invoice.id).data('invoicedata', invoice);
+            $("#invoiceid-"+i).data('invoicedata', invoice);
         });
     }
 }

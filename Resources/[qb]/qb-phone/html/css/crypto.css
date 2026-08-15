@@ -61,7 +61,7 @@
 }
 
 .crypto-action-page-buy-crypto-footer-button:hover {
-   color: #dc143c;
+   color: #14c5dc;
 }
 
 @keyframes Shake {
@@ -87,7 +87,7 @@
 .crypto-header {
     position: absolute;
     width: 100%;
-    height: 18.5vh;
+    height: 18vh;
     top: 5vh;
     text-align: center;
 }
@@ -113,17 +113,17 @@
 }
 
 .crypto-header-footer-item-selected {
-    border-bottom: .2vh solid #dc143c;
+    border-bottom: .2vh solid #14b4dc;
 }
 
 .crypto-page {
     position: absolute;
-    height: 57%;
+    height: 54%;
     width: 100%;
     background: rgb(38, 38, 38);
     bottom: 10px;
-    margin: 0 auto;
-    left: 0;
+    margin: 4;
+    left: 1;
     right: 0;
 }
 

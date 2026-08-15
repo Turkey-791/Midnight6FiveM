@@ -5,7 +5,7 @@
     display: none;
     height: 100%;
     width: 100%;
-    background: rgb(36, 36, 36);
+    background: rgb(0, 0, 0);
     overflow: hidden;
 }
 
@@ -34,11 +34,11 @@
 }
 
 .houses-app-header-tab-selected {
-    border-bottom: .3vh solid #c23616;
+    border-bottom: .3vh solid #16a8c2;
 }
 
 .houses-app-header-tab-selected > p {
-    color: #ffffff;
+    color: #20bed3;
 }
 
 .house-app-myhouses-container {
@@ -81,12 +81,12 @@
     transition: all 0.05s linear 0s;
     margin-bottom: 10px;
     background: rgba(23, 23, 23, 90%);
-    border-radius: 0.15rem;
+    border-radius: 4rem;
     box-shadow: 0rem 0rem 0.1rem 0.05rem #000000;
 }
 
 .myhouses-house:hover {
-    background-color: #dc143c;
+    background-color: #14bedc;
 }
 
 .myhouse-house-icon {
@@ -226,8 +226,8 @@
     left: 35vw;
     /* left: 0; */
     right: 0;
-    background-color: rgb(36, 36, 36);
-    border-radius: .5vh;
+    background-color: rgb(0, 0, 0);
+    border-radius: 4vh;
     box-shadow:
     inset 0 0 1vh .2vh rgba(0, 0, 0, 0.281),
     0 0 1vh .2vh rgba(0, 0, 0, 0.253);
@@ -241,10 +241,10 @@
     margin: 0 auto;
     left: 35vw;
     right: 0;
-    background-color: rgb(36, 36, 36);
-    border-radius: .5vh;
+    background-color: rgb(0, 0, 0);
+    border-radius: 4vh;
     box-shadow:
-    inset 0 0 1vh .2vh rgba(0, 0, 0, 0.281),
+    inset 0 0 1vh .2vh rgba(37, 37, 37, 0.281),
     0 0 1vh .2vh rgba(0, 0, 0, 0.253);
     top: 15vh;
 }
@@ -386,22 +386,22 @@
     margin-bottom: 10px;
     transition: 0.1s ease;
     background: rgba(23, 23, 23, 90%);
-    border-radius: 0.15rem;
+    border-radius: 3rem;
     box-shadow: 0rem 0rem 0.1rem 0.05rem #000000;
 }
 
 .mykeys-key:hover {
-    background-color: #dc143c;
+    background-color: #14bedc;
 }
 
 .mykeys-key-label {
     position: absolute;
     top: 0;
-    left: 0;
+    left: 30;
     color: white;
     font-family: 'Poppins', sans-serif;
-    font-size: 1.3vh;
-    margin: 1vh;
+    font-size: 1.5vh;
+    margin: 1.5vh;
 }
 
 .mykeys-key-sub {
@@ -410,6 +410,6 @@
     left: 0;
     color: white;
     font-family: 'Poppins', sans-serif;
-    font-size: 1.2vh;
-    margin: 1vh;
+    font-size: 1vh;
+    margin: 1.4vh;
 }

@@ -16,6 +16,28 @@
     :root { font-size: 9px; }
 }
 
+/* 
+app name */
+
+.settings-app-header {
+    position: relative;
+    font-family: 'Poppins', sans-serif;
+    font-size: 3vh;
+    text-align: center;
+    top: 70px;
+    color: white;
+}
+
+.app-name {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 50px; /* Adjust as needed to position under the icon */
+    font-size: 2vh; /* Adjust as needed */
+    color: white; /* Adjust color as needed */
+}
+
+
 /* CSS Reset */
 body {
     margin: 0;
@@ -48,13 +70,14 @@ body {
 .phone-currentcall-container {
     display: none;
     position: absolute;
+    height: 5.5vh;
     margin: 0 auto;
     left: 0;
     right: 0;
     height: 5vh;
     width: 70%;
     background-color: rgba(0, 0, 0, 0.65);
-    top: 10vh;
+    top: 4vh;
     z-index: 99;
     transition: background-color .1s linear;
     border-radius: 3vh;
@@ -119,7 +142,7 @@ body {
 /* Phone Container */
 .phone-frame {
     position: absolute;
-    width: 30vh;
+    width: 29.3vh;
     bottom: 0;
     right: 0;
     margin: 5vh;
@@ -129,7 +152,7 @@ body {
 
 .phone-container {
     height: 61.7vh;
-    width: 29vh;
+    width: 29.3vh;
     bottom: 1vh;
     border-radius: 3vh;
     right: 0.5vh;
@@ -139,12 +162,12 @@ body {
 }
 
 .phone-background {
-    height: 61.7vh;
-    width: 29vh;
+    height: 58.9vh;
+    width: 28vh;
     bottom: 1vh;
-    border-radius: 3vh;
-    right: 0.5vh;
-    margin: 5vh;
+    border-radius: 5vh;
+    right: 1vh;
+    margin: 4.9vh;
     overflow: hidden;
     position: absolute;
     background-size: cover;
@@ -166,6 +189,8 @@ body {
     color: white;
 }
 
+
+
 #phone-server {
     font-family: 'Poppins', sans-serif;
     text-transform: uppercase;
@@ -184,13 +209,6 @@ body {
     color: white !important;
 }
 
-#phone-time {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1vh;
-    padding: 2vh 0 0 5.5vh;
-    float: left;
-    color: white !important;
-}
 
 #phone-icons {
     font-size: 0.95vh;
@@ -200,16 +218,84 @@ body {
 }
 
 #phone-signal {
-    font-size: 1vh;
-    left: -0.3vh;
+    font-size: 1.1vh;
+    top: -0.0vh;
+    left: -2.0vh;
     position: relative;
+    /* Add 3D effect */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.843), 
+                 -1px -1px 2px rgba(255,255,255,0.7);
 }
 
-#phone-battery {
-    transform: rotate(-90deg);
-    top: -0.1vh;
+
+
+#qb-phone-time {
+    font-size: 1.1vh;
+    top: -1.4vh;
+    left: -5.1vh; /* Adjust left property to match #phone-signal */
     position: relative;
+    /* Add 3D effect */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.825), 
+                 -1px -1px 2px rgba(255,255,255,0.7);
 }
+
+
+#phone-battery {
+    font-size: 1.1vh;
+    transform: rotate(-180deg);
+    top: 0.1vh;
+    left: -1.5vh;
+    position: relative;
+    /* Add 3D effect */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.834), 
+                 -1px -1px 2px rgba(255,255,255,0.7);
+}
+
+#blackout-screen {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 9999;
+}
+
+
+.sim {
+    font-size: 1.2vh;
+    top: 1.8vh;
+    left: 4.0vh;
+    position: absolute;
+    text-shadow: 1px 1px 4px rgb(0, 0, 0), 
+                 -1px -1px 4px rgba(255,255,255,0.7);
+    animation: slide 8s linear infinite;
+}
+
+@keyframes slide {
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(6.5vh);
+    }
+    50% {
+        transform: translateX(0);
+    }
+    75% {
+        transform: translateX(-8vh);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+
+
+
+
+
 
 /* Phone Header END */
 /* -------------------------- */
@@ -231,9 +317,24 @@ body {
 .phone-footer {
     position: absolute;
     bottom: 0;
-    height: 5vh;
+    height: 4.5vh;
     width: 100%;
 }
+.phone-lock-button {
+    position: absolute;
+    left: 21%;
+    bottom: -27px;
+    height: 4.5vh;
+    width: 73%;
+}
+
+.bar-buton{
+    background-color:#fff;
+    border-radius: 5px;
+    width: 80%;
+    height: 5px;
+}
+
 
 .phone-home-container {
     position: relative;
@@ -249,10 +350,10 @@ body {
 
 .phone-home-button {
     position: relative;
-    height: 0.5vh;
-    width: 10vh;
+    height: 0.4vh;
+    width: 16vh;
     background-color: white;
-    border-radius: 0.8vh;
+    border-radius: 2vh;
     top: 80%;
     transform: translateY(-50%);
     margin: 0px auto;
@@ -272,17 +373,17 @@ body {
 .phone-application {
     position: relative;
     height: 4.8vh;
-    width: 4.8vh;
-    left: 1vh;
+    width: 4.6vh;
+    left: 0.4vh;
     float: left;
     margin-left: 1.75vh;
     margin-top: 1.5vh;
     border-radius: 1.25vh;
     text-align: center;
-    /* box-shadow: inset 0px 0px 10px 0px rgba(0, 0, 0, 0.13); */
     opacity: 0.9;
     transition: .05s;
 }
+
 
 .phone-application:hover {
     opacity: 1.0;
@@ -291,13 +392,20 @@ body {
 .phone-footer-applications {
     position: absolute;
     width: 100%;
-    bottom: 7vh;
+    bottom: 3.0vh;
+    display: flex;
+    align-items: center;
+    background-color: #00000048;
+    border-radius: 2vh;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2),
+                0 0 10px rgba(0, 0, 0, 0.15),
+                0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .phone-home-applications {
     position: absolute;
     width: 100%;
-    bottom: 17vh;
+    bottom: 28.5vh;
 }
 
 .phone-application > i {
@@ -317,7 +425,7 @@ body {
     position: absolute;
     height: 5.5vh;
     width: 22vh;
-    background-color: rgba(39, 39, 39, 0.9);
+    background-color: rgba(3, 68, 73, 0.9);
     margin: 0 auto;
     left: 0;
     right: 0;
@@ -363,7 +471,7 @@ body {
 .call-notifications {
     display: none;
     position: absolute;
-    background: #e67d22ea;
+    background: #22bfe6ea;
     height: 9vh;
     width: 34vh;
     bottom: 16vh;
@@ -525,3 +633,114 @@ body {
     right: 0;
     bottom: 0;
 }
+
+/* lockscreen */
+
+.lock-screen {
+    display: block;
+    height: 59vh;
+    width: 28vh;
+    bottom: 1vh;
+    border-radius: 6vh;
+    right: 1vh;
+    margin: 5vh;
+    overflow: hidden;
+    position: absolute;
+    background-size: cover;
+    background-position-x: center;
+    background-repeat: no-repeat;
+    z-index: 140;
+    overflow: hidden;
+    background-image: url('../img/backgrounds/lockscreen.png');
+}
+
+
+#qb-phone-date {
+    position: absolute;
+    font-size: 1.5vh;
+    color: white;
+    bottom: 49vh; /* Adjust as needed */
+    left: 7.0vh; /* Adjust as needed */
+}
+
+
+
+.ef-fingerprint {
+    height: 4.5vh;
+    width: 4.5vh;
+    position: absolute;
+    top: 48vh;
+    left: 50%;
+    transform: translateX(-50%) translateZ(10vh) rotateY(180deg);
+    background-image: url('../img/fingerprint.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+    animation: fingerprintAnimation 10s infinite alternate;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0), 
+                0 0 20px 5px rgba(255, 0, 0, 0);
+}
+
+@keyframes fingerprintAnimation {
+    0% {
+        transform: translateX(-50%) translateZ(10vh) rotateY(180deg);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0), 
+                    0 0 20px 5px rgba(255, 0, 0, 0);
+    }
+    50% {
+        transform: translateX(-50%) translateZ(12vh) rotateY(0deg);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0), 
+                    0 0 20px 5px rgba(0, 255, 0, 0);
+    }
+    100% {
+        transform: translateX(-50%) translateZ(10vh) rotateY(180deg);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0), 
+                    0 0 20px 5px rgba(0, 0, 255, 0);
+    }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=San+Francisco&display=swap');
+
+
+#qb-real-time {
+    position: absolute;
+    top: 10vh; /* Adjust as per your layout needs */
+    left: 52%;
+    transform: translate(-50%) translateZ(10vh);
+    font-family: 'San Francisco', sans-serif;
+    font-size: 2vh;
+    color: white !important;
+}
+
+
+
+
+.ef-fingerprint:hover {
+    filter: invert(50%);
+}
+
+.ef-app-icon {
+    margin-left: -0.1vh;
+    width: 4.0vh;
+    height: 4.0vh;
+    border-radius: 28%;
+    background: linear-gradient(45deg, #ffffff, #e0e0e0);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2),
+                0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateZ(0);
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.ef-app-icon:hover {
+    transform: scale(1.3);
+}
+
+
+.ef-app-icon:before {
+    content: '';
+    display: block;
+    padding-top: 100%;
+}
+

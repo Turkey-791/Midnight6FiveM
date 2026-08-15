@@ -4,17 +4,8 @@
     display: none;
     height: 100%;
     width: 100%;
-    background: rgba(36, 36, 36, 90%);
+    background: rgb(0, 0, 0);
     overflow: hidden;
-}
-
-.settings-app-header {
-    position: relative;
-    font-family: 'Poppins', sans-serif;
-    font-size: 3vh;
-    text-align: center;
-    top: 70px;
-    color: white;
 }
 
 .settings-app-tab-appereance {
@@ -33,18 +24,18 @@
 
 .settings-app-tab {
     position: relative;
-    width: 90%;
-    border-radius: 0.15rem;
+    width: 80%;
+    border-radius: 4rem;
     height: 6vh;
     margin-bottom: 10px;
     color: white;
     background: rgba(23, 23, 23, 90%);
-    left: 15px;
+    left: 30px;
     box-shadow: 0rem 0rem 0.1rem 0.05rem #000000;
 }
 
 .settings-app-tab:hover {
-    background-color: #dc143c;
+    background-color: #14b4dc;
     transition: .5s ease;
 }
 
@@ -82,7 +73,7 @@
     position: absolute;
     left: 6.2vh;
     top: 1.2vh;
-    font-size: 1.3vh;
+    font-size: 1.2vh;
     font-family: 'Poppins', sans-serif;
 }
 
@@ -126,18 +117,18 @@
 
 .background-option {
     position: relative;
-    width: 90%;
-    border-radius: 0.15rem;
+    width: 80%;
+    border-radius: 4rem;
     height: 6vh;
     margin-bottom: 10px;
     color: white;
     background: rgba(23, 23, 23, 90%);
-    left: 15px;
+    left: 30px;
     box-shadow: 0rem 0rem 0.1rem 0.05rem #000000;
 }
 
 .background-option:hover {
-    background-color: #dc143c;
+    background-color: #14bedc;
     transition: .5s ease;
 }
 
@@ -148,7 +139,7 @@
     text-align: center;
     line-height: 7vh;
     font-size: 2.3vh;
-    color: #fbc531;
+    color: #31ddfb;
 }
 
 .background-option-title {
@@ -179,7 +170,7 @@
     top: 2.5vh;
     text-align: center;
     font-size: 1.6vh;
-    color: green;
+    color: rgb(46, 189, 214);
     font-family: 'Poppins', sans-serif;
 }
 
@@ -204,7 +195,7 @@
 }
 
 .background-button:hover {
-    border-top: .3vh solid #dc143c;
+    border-top: .3vh solid #14bedc;
 }
 
 .background-custom {
@@ -270,7 +261,7 @@
 
 .custom-background-button:hover {
     font-weight: bolder;
-    color: #DC143C;
+    color: #14bedc;
 }
 
 
@@ -355,7 +346,7 @@
 }
 
 .profilepicture-button:hover {
-    border-top: .3vh solid #dc143c;
+    border-top: .3vh solid #14addc;
 }
 
 .profilepicture-custom {
@@ -448,7 +439,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: rgb(35, 176, 231);
     -webkit-transition: .4s;
     transition: .4s;
 }

@@ -57,3 +57,20 @@ SetupDetails = function(data) {
     $(".vehicle-engine").find(".vehicle-answer").html(Math.ceil(data.engine / 10)+"%");
     $(".vehicle-body").find(".vehicle-answer").html(Math.ceil(data.body / 10)+"%");
 }
+
+$(document).on('click', '#valet-vehicle', function(e){
+    e.preventDefault();
+
+    $(".garage-homescreen").animate({
+        left: 00+"vh"
+    }, 200);
+    $(".garage-detailscreen").animate({
+        left: -30+"vh"
+    }, 200);
+
+    var plate = $(".vehicle-plate").find(".vehicle-answer").html();
+    
+    $.post('https://qb-phone/CallValet', JSON.stringify({
+        CarPlate: plate,
+    }))
+});
