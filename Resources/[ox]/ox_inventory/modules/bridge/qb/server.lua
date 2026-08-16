@@ -1,5 +1,6 @@
 assert(lib.checkDependency('qb-core', '1.0.0'), 'qb-core is required')
 local Inventory = require 'modules.inventory.server'
+local Items = require 'modules.items.server'
 local QBCore = exports['qb-core']:GetCoreObject()
 
 AddEventHandler('QBCore:Server:OnPlayerUnload', server.playerDropped)
@@ -30,6 +31,7 @@ local function setupPlayer(PlayerData)
 end
 
 RegisterNetEvent('QBCore:Server:PlayerLoaded', function(Player)
+    print('^2[DEBUG] PlayerLoaded event fired for source: ' .. tostring(Player.PlayerData.source) .. '^7')
     setupPlayer(Player.PlayerData)
 end)
 
@@ -120,4 +122,43 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 function server.getOwnedVehicleId(entityId)
     return GetVehicleNumberPlateText(entityId)
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function server.convertInventory(source, data)
+    local inventory = {}
+    local totalWeight = 0
+    local ostime = os.time()
+
+    if type(data) == 'table' then
+        for _, v in pairs(data) do
+            local itemName = v.name
+            local slot = tonumber(v.slot)
+            local count = tonumber(v.amount) or 1
+
+            if itemName and slot then
+                local item = Items(itemName)
+
+                if item then
+                    local metadata = Items.CheckMetadata(v.info or {}, item, itemName, ostime)
+                    local weight = Inventory.SlotWeight(item, { count = count, metadata = metadata })
+                    totalWeight = totalWeight + weight
+
+                    inventory[slot] = {
+                        name = item.name,
+                        label = item.label,
+                        weight = weight,
+                        slot = slot,
+                        count = count,
+                        description = item.description,
+                        metadata = metadata,
+                        stack = item.stack,
+                        close = item.close,
+                    }
+                end
+            end
+        end
+    end
+
+    return inventory, totalWeight
 end

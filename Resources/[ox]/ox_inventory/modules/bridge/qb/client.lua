@@ -3,13 +3,13 @@ RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
 end)
 
 RegisterNetEvent('QBCore:Client:OnJobUpdate', function(job)
-    local groups = client.playerData.groups or {}
+    local groups = PlayerData.groups or {}
     groups[job.name] = job.grade.level
     client.setPlayerData('groups', groups)
 end)
 
 RegisterNetEvent('QBCore:Client:OnGangUpdate', function(gang)
-    local groups = client.playerData.groups or {}
+    local groups = PlayerData.groups or {}
     groups[gang.name] = gang.grade.level
     client.setPlayerData('groups', groups)
 end)
