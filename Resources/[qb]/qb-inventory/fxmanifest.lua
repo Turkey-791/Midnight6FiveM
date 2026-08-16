@@ -1,37 +1,21 @@
 fx_version 'cerulean'
 game 'gta5'
-lua54 'yes'
-author 'Kakarot'
-description 'Player inventory system providing a variety of features for storing and managing items'
-version '2.0.0'
 
-shared_scripts {
-    '@qb-core/shared/locale.lua',
-    'locales/en.lua',
-    'locales/*.lua',
-    'config/*.lua',
-}
+author 'Bridge Shim'
+description 'Routes legacy qb-inventory exports to ox_inventory'
+version '1.1.0'
+
+shared_script '@ox_lib/init.lua'
 
 client_scripts {
-    'client/main.lua',
-    'client/drops.lua',
-    'client/vehicles.lua',
+    'client/main.lua'
 }
 
 server_scripts {
-    '@oxmysql/lib/MySQL.lua',
-    'server/main.lua',
-    'server/functions.lua',
-    'server/commands.lua',
+    'server/main.lua'
 }
 
-ui_page 'html/index.html'
-
-files {
-    'html/index.html',
-    'html/main.css',
-    'html/app.js',
-    'html/images/*.png',
+dependencies {
+    'ox_lib',
+    'ox_inventory'
 }
-
-dependency 'qb-weapons'
