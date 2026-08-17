@@ -17,6 +17,33 @@ RegisterNetEvent('QBCore:Server:OnGangUpdate', function(source, gang)
     inventory.player.groups[gang.name] = gang.grade.level
 end)
 
+-- Paired with client.setPlayerStatus in the bridge's client.lua. ox_inventory
+-- item status effects (hunger/thirst/stress from eating, drinking, etc.)
+-- only update an ox_lib statebag by default, which qb-hud does not read.
+-- This applies the same delta to qb-core's own metadata so the HUD bars
+-- actually move.
+RegisterNetEvent('ox-qb-bridge:updateStatus', function(deltas)
+    local source = source
+    local Player = QBCore.Functions.GetPlayer(source)
+    if not Player then return end
+
+    for name, delta in pairs(deltas) do
+        local current = Player.PlayerData.metadata[name] or 100
+        local newValue = math.max(0, math.min(100, current + delta))
+        Player.Functions.SetMetaData(name, newValue)
+    end
+
+    -- SetMetaData alone updates the underlying data, but qb-hud does not
+    -- watch PlayerData.metadata reactively - it only redraws hunger/thirst
+    -- when it receives this specific client event (normally sent by
+    -- qb-core's own QBCore:UpdatePlayer decay loop). Without this, eating
+    -- or drinking correctly changes the data but the HUD bar visibly does
+    -- nothing until the next natural decay tick.
+    if deltas.hunger or deltas.thirst then
+        TriggerClientEvent('hud:client:UpdateNeeds', source, Player.PlayerData.metadata['hunger'], Player.PlayerData.metadata['thirst'])
+    end
+end)
+
 local function setupPlayer(PlayerData)
     PlayerData.identifier = PlayerData.citizenid
     PlayerData.name = ('%s %s'):format(PlayerData.charinfo.firstname, PlayerData.charinfo.lastname)
@@ -53,8 +80,8 @@ SetTimeout(500, function()
 end)
 
 function server.UseItem(source, itemName, data)
-    local itemData = QBCore.Shared.Items[itemName]
-    return itemData and itemData.func and itemData.func(source, data)
+    local usableItem = QBCore.Functions.CanUseItem(itemName)
+    return usableItem and usableItem.func and usableItem.func(source, data)
 end
 
 ---@diagnostic disable-next-line: duplicate-set-field
