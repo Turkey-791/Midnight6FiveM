@@ -10,3 +10,11 @@ local function HasItem(items, amount)
     return lib.callback.await('qb-inventory-shim:hasItem', false, items, amount)
 end
 exports('HasItem', HasItem)
+
+-- Triggered by the server-side OpenShop shim (server/main.lua). Shops in
+-- ox_inventory must be opened by the client itself, not pushed from the
+-- server, so this just calls ox_inventory's own client export on this
+-- player's behalf.
+RegisterNetEvent('qb-inventory-shim:openShop', function(shopName)
+    exports.ox_inventory:openInventory('shop', { type = shopName })
+end)

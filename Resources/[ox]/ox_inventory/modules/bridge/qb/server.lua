@@ -20,18 +20,28 @@ end)
 local function setupPlayer(PlayerData)
     PlayerData.identifier = PlayerData.citizenid
     PlayerData.name = ('%s %s'):format(PlayerData.charinfo.firstname, PlayerData.charinfo.lastname)
+
+    -- server.setPlayerInventory (ox_inventory's own code) auto-syncs
+    -- immediately after creating the inventory. For any character that
+    -- doesn't yet have a 'money' item matching their qb-core cash (e.g. a
+    -- brand new character), that auto-sync sees 0 money items and WIPES
+    -- PlayerData.money to match (a real ox_inventory behavior, not a bug
+    -- we can patch there). We save the original values here so we can
+    -- correctly backfill afterward using the true starting amount, not the
+    -- already-zeroed one.
+    local originalMoney = table.clone(PlayerData.money)
+
     server.setPlayerInventory(PlayerData)
 
     local accounts = Inventory.GetAccountItemCounts(PlayerData.source)
     if not accounts then return end
     for account in pairs(accounts) do
         local playerAccount = account == 'money' and 'cash' or account
-        Inventory.SetItem(PlayerData.source, account, PlayerData.money[playerAccount])
+        Inventory.SetItem(PlayerData.source, account, originalMoney[playerAccount])
     end
 end
 
 RegisterNetEvent('QBCore:Server:PlayerLoaded', function(Player)
-    print('^2[DEBUG] PlayerLoaded event fired for source: ' .. tostring(Player.PlayerData.source) .. '^7')
     setupPlayer(Player.PlayerData)
 end)
 
@@ -64,6 +74,42 @@ function server.setPlayerData(player)
     }
 end
 
+-- Converts ox_inventory's slot table (keyed by slot, .count/.metadata shaped)
+-- back into qb-core's item shape (.amount/.info), so that resources reading
+-- Player.PlayerData.items directly (bypassing exports entirely - e.g.
+-- qb-hud, qb-vineyard, qb-crafting, qb-pawnshop, qb-houses, qb-prison,
+-- qb-smallresources) see a shape they understand, instead of silently
+-- getting nil fields. This does NOT make those resources' writes back to
+-- PlayerData.items persist into ox_inventory - that remains a known gap
+-- (see qb-weapons, which both reads AND writes ammo/durability this way).
+local function toQbShape(oxItems)
+    local items = {}
+
+    for slot, data in pairs(oxItems) do
+        local itemInfo = QBCore.Shared.Items[data.name]
+
+        if itemInfo then
+            items[slot] = {
+                name = itemInfo.name,
+                amount = data.count,
+                info = data.metadata or {},
+                label = itemInfo.label,
+                description = itemInfo.description or '',
+                weight = itemInfo.weight,
+                type = itemInfo.type,
+                unique = itemInfo.unique,
+                useable = itemInfo.useable,
+                image = itemInfo.image,
+                shouldClose = itemInfo.shouldClose,
+                slot = data.slot,
+                combinable = itemInfo.combinable,
+            }
+        end
+    end
+
+    return items
+end
+
 ---@diagnostic disable-next-line: duplicate-set-field
 function server.syncInventory(inv)
     local accounts = Inventory.GetAccountItemCounts(inv)
@@ -71,15 +117,35 @@ function server.syncInventory(inv)
 
     local Player = QBCore.Functions.GetPlayer(inv.id)
     if not Player then return end
-    Player.Functions.SetPlayerData('items', inv.items)
+    Player.Functions.SetPlayerData('items', toQbShape(inv.items))
+end
 
-    for account, amount in pairs(accounts) do
-        account = account == 'money' and 'cash' or account
-        if Player.Functions.GetMoney(account) ~= amount then
-            Player.Functions.SetMoney(account, amount, ('Sync %s with inventory'):format(account))
+-- Money sync is handled on a fixed interval instead of per-event: relying
+-- on every single AddItem/RemoveItem call to trigger a correct sync proved
+-- unreliable in practice (root cause not conclusively found). Polling every
+-- few seconds guarantees cash eventually matches the 'money' item count
+-- regardless of which specific event path is taken.
+CreateThread(function()
+    while true do
+        Wait(3000)
+
+        local players = QBCore.Functions.GetQBPlayers()
+        for _, Player in pairs(players) do
+            local inv = Inventory(Player.PlayerData.source)
+            if inv then
+                local accounts = Inventory.GetAccountItemCounts(inv)
+                if accounts then
+                    for account, amount in pairs(accounts) do
+                        account = account == 'money' and 'cash' or account
+                        if Player.Functions.GetMoney(account) ~= amount then
+                            Player.Functions.SetMoney(account, amount, ('Sync %s with inventory'):format(account))
+                        end
+                    end
+                end
+            end
         end
     end
-end
+end)
 
 ---@diagnostic disable-next-line: duplicate-set-field
 function server.hasLicense(inv, license)
@@ -124,6 +190,10 @@ function server.getOwnedVehicleId(entityId)
     return GetVehicleNumberPlateText(entityId)
 end
 
+-- Converts a player's OLD qb-inventory formatted DB data (array of
+-- {name, amount, info, type, slot}) into ox_inventory's expected shape the
+-- FIRST time that player logs in after the migration. This does not run
+-- again once ox_inventory has saved their inventory in its own format.
 ---@diagnostic disable-next-line: duplicate-set-field
 function server.convertInventory(source, data)
     local inventory = {}
