@@ -32,7 +32,7 @@ RegisterNetEvent('qb-taxi:server:NpcPay', function(payment, hasReceivedBonus)
             end
 
             if Config.Management then
-                exports['qb-banking']:AddMoney('taxi', payment, 'Customer payment')
+                exports['Renewed-Banking']:addAccountMoney('taxi', payment)
             else
                 Player.AddMoney('cash', payment, 'Taxi payout')
             end
