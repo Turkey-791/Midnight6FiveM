@@ -22,7 +22,8 @@ local function initalizeBanking()
         currency = Config.currency
     })
 end
-AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
+
+RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     Wait(100)
     initalizeBanking()
 end)
