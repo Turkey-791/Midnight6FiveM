@@ -104,8 +104,21 @@ RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUpdated', function(key, val)
-    if key ~= 'all' then return end
-    PlayerData = val
+    if key == 'all' then
+        PlayerData = val
+    elseif key == 'money' then
+        -- qb-core's AddMoney/RemoveMoney/SetMoney all call
+        -- self:UpdateClient('money', self.PlayerData.money), which fires
+        -- this event with key='money' (not 'all'). Previously this whole
+        -- branch was ignored (only key == 'all' updated PlayerData), so
+        -- qb-hud's own copy of PlayerData.money never changed after the
+        -- initial login snapshot. Since hud:client:OnMoneyChange (below)
+        -- reads PlayerData.money['cash']/['bank'] directly to build every
+        -- money notification and the pause-menu balance display, that
+        -- display was effectively frozen at whatever it was at login,
+        -- regardless of how many times cash actually changed afterward.
+        PlayerData.money = val
+    end
 end)
 
 AddEventHandler('onResourceStart', function(resourceName)
