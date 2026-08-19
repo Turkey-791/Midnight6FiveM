@@ -6,7 +6,7 @@ Config.BillingCommissions = { -- This is a percentage (0.10) == 10%
 
 
 -- Webhooks
-Config.serverwebhook = "MAKE_YOUR_WEBHOOK_HERE" ---enter your webhook link here don't forget to do this Important for camera work.
+Config.serverwebhook = "https://discordapp.com/api/webhooks/1384833951113412770/X4chIVh5BUtiTcfei8svW6fgZMGDJfO5-Xin7fCx7GnBrBjql4sfm5qqaBnEdsxKnyf6" ---enter your webhook link here don't forget to do this Important for camera work.
 --- Important to add a webhook here
 
 
