@@ -147,31 +147,152 @@ function server.syncInventory(inv)
     Player.Functions.SetPlayerData('items', toQbShape(inv.items))
 end
 
--- Money sync is handled on a fixed interval instead of per-event: relying
--- on every single AddItem/RemoveItem call to trigger a correct sync proved
--- unreliable in practice (root cause not conclusively found). Polling every
--- few seconds guarantees cash eventually matches the 'money' item count
--- regardless of which specific event path is taken.
+-- Money sync, take 2: instead of forcing cash to EQUAL the 'money' item
+-- count (which fought with qb-core's own AddMoney/RemoveMoney-based job
+-- payouts, banking, etc. and made them appear to vanish or go negative),
+-- this only applies the CHANGE in money-item-count since the last check as
+-- a delta on top of whatever cash currently is. This way:
+--   - picking up/looting physical cash (item count goes up) -> cash goes up
+--     by that same amount, on top of any job/bank cash changes
+--   - spending a 'money' item in an ox_inventory shop (item count goes
+--     down) -> cash goes down to match
+--   - qb-core's own AddMoney/RemoveMoney calls (jobs, banking, robbery
+--     payouts) never touch the 'money' item at all, so they produce no
+--     delta here and are left completely alone
+local lastKnownMoneyCount = {}
+local syncingFromInventory = {}
+
 CreateThread(function()
     while true do
         Wait(3000)
 
         local players = QBCore.Functions.GetQBPlayers()
         for _, Player in pairs(players) do
+            local citizenid = Player.PlayerData.citizenid
             local inv = Inventory(Player.PlayerData.source)
+
             if inv then
                 local accounts = Inventory.GetAccountItemCounts(inv)
+
                 if accounts then
+                    lastKnownMoneyCount[citizenid] = lastKnownMoneyCount[citizenid] or {}
+
                     for account, amount in pairs(accounts) do
-                        account = account == 'money' and 'cash' or account
-                        if Player.Functions.GetMoney(account) ~= amount then
-                            Player.Functions.SetMoney(account, amount, ('Sync %s with inventory'):format(account))
+                        local mappedAccount = account == 'money' and 'cash' or account
+                        local lastKnown = lastKnownMoneyCount[citizenid][account]
+
+                        if lastKnown == nil then
+                            -- first time seeing this player/account this session -
+                            -- just record the baseline, don't apply a delta yet
+                            lastKnownMoneyCount[citizenid][account] = amount
+                        elseif amount ~= lastKnown then
+                            local delta = amount - lastKnown
+                            local success
+
+                            syncingFromInventory[citizenid] = true
+                            if delta > 0 then
+                                success = Player.Functions.AddMoney(mappedAccount, delta, 'Physical cash picked up')
+                            else
+                                success = Player.Functions.RemoveMoney(mappedAccount, -delta, 'Physical cash spent/lost')
+                            end
+                            syncingFromInventory[citizenid] = nil
+
+                            -- Only move the baseline forward if the money change
+                            -- actually succeeded. AddMoney/RemoveMoney can fail
+                            -- (e.g. RemoveMoney refuses to go below qb-core's
+                            -- configured minimum). If we updated the baseline
+                            -- regardless, a failed call would permanently
+                            -- desync our tracked item-count from real cash,
+                            -- and the NEXT cycle would then "correct" that
+                            -- phantom difference - which is exactly what
+                            -- looked like cash briefly going negative and
+                            -- then reverting on its own.
+                            if success then
+                                lastKnownMoneyCount[citizenid][account] = amount
+                            end
                         end
                     end
                 end
             end
         end
     end
+end)
+
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(source)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if Player then
+        local citizenid = Player.PlayerData.citizenid
+        lastKnownMoneyCount[citizenid] = nil
+        syncingFromInventory[citizenid] = nil
+    end
+end)
+
+-- ============================================================
+-- QBCore -> ox_inventory money sync (the missing reverse direction)
+--
+-- qb-core's AddMoney/RemoveMoney/SetMoney each independently fire
+-- 'QBCore:Server:OnMoneyChange' (source, moneytype, amount, changeType,
+-- reason) after changing PlayerData.money. Previously nothing in this
+-- codebase listened for that event, so job payouts, banking, etc. (which
+-- only ever call AddMoney/RemoveMoney directly) never updated the 'money'
+-- item at all - only the item->cash direction above was implemented. This
+-- is a separate, standalone handler for the other direction, kept apart
+-- from server.syncInventory/setupPlayer so the two sync directions stay
+-- easy to reason about independently.
+--
+-- Only 'cash' is mirrored here - bank/crypto/etc. aren't represented as
+-- physical items and shouldn't be.
+AddEventHandler('QBCore:Server:OnMoneyChange', function(source, moneytype, amount, changeType, reason)
+    if moneytype ~= 'cash' then return end
+
+    local Player = QBCore.Functions.GetPlayer(source)
+    if not Player then return end
+
+    if syncingFromInventory[Player.PlayerData.citizenid] then
+        return
+    end
+
+    local inv = Inventory(source)
+    if not inv then return end
+
+    local accounts = Inventory.GetAccountItemCounts(inv)
+    if not accounts then return end
+
+    local currentItemCount = accounts.money or 0
+    local itemDelta
+
+    if changeType == 'set' then
+        itemDelta = amount - currentItemCount
+    elseif changeType == 'add' then
+        itemDelta = amount
+    elseif changeType == 'remove' then
+        itemDelta = -amount
+    else
+        return
+    end
+
+    if itemDelta == 0 then return end
+
+    local newItemCount = currentItemCount
+
+    if itemDelta > 0 then
+        if Inventory.AddItem(inv, 'money', itemDelta) then
+            newItemCount = currentItemCount + itemDelta
+        end
+    else
+        if Inventory.RemoveItem(inv, 'money', -itemDelta) then
+            newItemCount = currentItemCount + itemDelta -- itemDelta is negative here
+        end
+    end
+
+    -- Critical: immediately advance the polling thread's baseline to the
+    -- item count we just produced. Without this, the next 3-second poll
+    -- would see the item count it itself didn't cause change and try to
+    -- apply IT as a delta back onto cash too - an infinite feedback loop
+    -- between this handler and the CreateThread above.
+    local citizenid = Player.PlayerData.citizenid
+    lastKnownMoneyCount[citizenid] = lastKnownMoneyCount[citizenid] or {}
+    lastKnownMoneyCount[citizenid].money = newItemCount
 end)
 
 ---@diagnostic disable-next-line: duplicate-set-field
