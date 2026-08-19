@@ -21,7 +21,7 @@ local function ListenForNitrous()
                     SetVehicleBoostActive(vehicle, true)
                     SetVehicleCheatPowerIncrease(vehicle, Config.NitrousBoost)
                     nitrousVehicles[plate].level = nitrousVehicles[plate].level - Config.NitrousUsage
-                    TriggerEvent('hud:client:UpdateNitrous', nitrousVehicles[plate].level, nitrousVehicles[plate].hasnitro)
+                    TriggerEvent('hud:client:UpdateNitrous', nitrousVehicles[plate].hasnitro, nitrousVehicles[plate].level, true)
                 end
                 if IsControlJustReleased(0, 155) or nitrousVehicles[plate].level <= 0 then
                     nitrousActive = false
@@ -31,7 +31,7 @@ local function ListenForNitrous()
                     if nitrousVehicles[plate].level <= 0 then
                         nitrousVehicles[plate].hasnitro = false
                         TriggerServerEvent('qb-mechanicjob:server:syncNitrous', plate, false)
-                        TriggerEvent('hud:client:UpdateNitrous', 0, false)
+                        TriggerEvent('hud:client:UpdateNitrous', false, 0, false)
                         plate = nil
                         vehicle = nil
                         netId = nil
@@ -45,7 +45,7 @@ local function ListenForNitrous()
                 vehicle = nil
                 netId = nil
                 nitrousActive = false
-                TriggerEvent('hud:client:UpdateNitrous', 0, false)
+                TriggerEvent('hud:client:UpdateNitrous', false, 0, false)
                 break
             end
         end
@@ -62,7 +62,7 @@ AddEventHandler('gameEventTriggered', function(event)
         QBCore.Functions.TriggerCallback('qb-mechanicjob:server:getnitrousVehicles', function(vehs)
             nitrousVehicles = vehs
             if nitrousVehicles[plate] and nitrousVehicles[plate].hasnitro and nitrousVehicles[plate].level > 0 then
-                TriggerEvent('hud:client:UpdateNitrous', nitrousVehicles[plate].level, true)
+                TriggerEvent('hud:client:UpdateNitrous', true, nitrousVehicles[plate].level, false)
                 ListenForNitrous()
             end
         end)

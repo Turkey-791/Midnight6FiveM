@@ -148,6 +148,16 @@ RegisterNetEvent("QBCore:Player:SetPlayerData", function(val)
     PlayerData = val
 end)
 
+RegisterNetEvent("QBCore:Client:OnPlayerUpdated", function(key, val)
+
+    if key == 'all' then
+        PlayerData = val
+    elseif key == 'money' then
+        PlayerData.money = val
+    end
+
+end)
+
 -- Event Handlers
 AddEventHandler('onResourceStart', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
