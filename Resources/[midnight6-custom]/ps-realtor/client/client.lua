@@ -99,7 +99,7 @@ local function setRealtor(jobInfo)
 end
 RegisterNetEvent("QBCore:Client:OnJobUpdate", setRealtor)
 
-AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
+RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
 	SendNUIMessage({
 		action = "setConfig",
 		data = Config.RealtorPerms

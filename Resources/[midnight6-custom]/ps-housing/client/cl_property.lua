@@ -389,6 +389,8 @@ end
 function Property:GiveMenus(garden)
     if not garden and not self.inProperty then return end
 
+   
+
     local accessAndConfig = self.has_access and Config.AccessCanEditFurniture
 
     if self.owner or accessAndConfig then

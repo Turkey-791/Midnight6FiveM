@@ -1,4 +1,10 @@
-QBCore = exports['qb-core']:GetCoreObject()
+local ok, err = pcall(function()
+    QBCore = exports['qb-core']:GetCoreObject()
+end)
+if not ok then
+    print("[ps-housing DEBUG] QBCoreの取得に失敗:", err)
+end
+
 PlayerData = {}
 local loaded = false
 
@@ -39,8 +45,13 @@ function InitialiseProperties(properties)
     Debug("Initialised properties")
     loaded = true
 end
-AddEventHandler("QBCore:Client:OnPlayerLoaded", InitialiseProperties)
+RegisterNetEvent("QBCore:Client:OnPlayerLoaded", InitialiseProperties)
 RegisterNetEvent('ps-housing:client:initialiseProperties', InitialiseProperties)
+
+print("[ps-housing DEBUG] ここまで到達。ログイン済み判定=", LocalPlayer.state.isLoggedIn)
+if LocalPlayer.state.isLoggedIn then
+    InitialiseProperties()
+end
 
 -- AddEventHandler("onResourceStart", function(resourceName) -- Used for when the resource is restarted while in game
 -- 	if (GetCurrentResourceName() == resourceName) then
