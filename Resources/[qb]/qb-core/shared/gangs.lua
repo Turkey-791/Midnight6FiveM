@@ -1,57 +1,63 @@
 QBCore.Shared.Gangs = {
-    none = { label = 'No Gang', grades = { ['0'] = { name = 'Unaffiliated' } } },
+    none = { label = 'ギャングなし', grades = { ['0'] = { name = '無所属' } } },
+    -- ザ・ロストMC
     lostmc = {
-        label = 'The Lost MC',
+        label = 'ザ・ロストMC',
         grades = {
-            ['0'] = { name = 'Recruit' },
-            ['1'] = { name = 'Enforcer' },
-            ['2'] = { name = 'Shot Caller' },
-            ['3'] = { name = 'Boss', isboss = true },
+            ['0'] = { name = '新人' },
+            ['1'] = { name = '構成員' },
+            ['2'] = { name = '幹部' },
+            ['3'] = { name = 'ボス', isboss = true },
         },
     },
+    -- バラス
     ballas = {
-        label = 'Ballas',
+        label = 'バラス',
         grades = {
-            ['0'] = { name = 'Recruit' },
-            ['1'] = { name = 'Enforcer' },
-            ['2'] = { name = 'Shot Caller' },
-            ['3'] = { name = 'Boss', isboss = true },
+            ['0'] = { name = '新人' },
+            ['1'] = { name = '構成員' },
+            ['2'] = { name = '幹部' },
+            ['3'] = { name = 'ボス', isboss = true },
         },
     },
+    -- ヴァゴス
     vagos = {
-        label = 'Vagos',
+        label = 'ヴァゴス',
         grades = {
-            ['0'] = { name = 'Recruit' },
-            ['1'] = { name = 'Enforcer' },
-            ['2'] = { name = 'Shot Caller' },
-            ['3'] = { name = 'Boss', isboss = true },
+            ['0'] = { name = '新人' },
+            ['1'] = { name = '構成員' },
+            ['2'] = { name = '幹部' },
+            ['3'] = { name = 'ボス', isboss = true },
         },
     },
+    -- カルテル
     cartel = {
-        label = 'Cartel',
+        label = 'カルテル',
         grades = {
-            ['0'] = { name = 'Recruit' },
-            ['1'] = { name = 'Enforcer' },
-            ['2'] = { name = 'Shot Caller' },
-            ['3'] = { name = 'Boss', isboss = true },
+            ['0'] = { name = '新人' },
+            ['1'] = { name = '構成員' },
+            ['2'] = { name = '幹部' },
+            ['3'] = { name = 'ボス', isboss = true },
         },
     },
+    -- ファミリーズ
     families = {
-        label = 'Families',
+        label = 'ファミリーズ',
         grades = {
-            ['0'] = { name = 'Recruit' },
-            ['1'] = { name = 'Enforcer' },
-            ['2'] = { name = 'Shot Caller' },
-            ['3'] = { name = 'Boss', isboss = true },
+            ['0'] = { name = '新人' },
+            ['1'] = { name = '構成員' },
+            ['2'] = { name = '幹部' },
+            ['3'] = { name = 'ボス', isboss = true },
         },
     },
+    -- トライアッズ
     triads = {
-        label = 'Triads',
+        label = 'トライアッズ',
         grades = {
-            ['0'] = { name = 'Recruit' },
-            ['1'] = { name = 'Enforcer' },
-            ['2'] = { name = 'Shot Caller' },
-            ['3'] = { name = 'Boss', isboss = true },
+            ['0'] = { name = '新人' },
+            ['1'] = { name = '構成員' },
+            ['2'] = { name = '幹部' },
+            ['3'] = { name = 'ボス', isboss = true },
         },
     }
 }
