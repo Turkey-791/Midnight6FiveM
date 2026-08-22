@@ -357,6 +357,9 @@ Modeler = {
         item.entity = CreateObject(GetHashKey(item.object), newPos.x, newPos.y, newPos.z, false, true, false)
         SetEntityRotation(item.entity, newRot.x, newRot.y, newRot.z)
         FreezeEntityPosition(item.entity, true)
+        SetEntityAlpha(item.entity, 255, false)
+        SetEntityDrawOutline(item.entity, false)
+        
 
         local property = Property.Get(self.property_id)
 
