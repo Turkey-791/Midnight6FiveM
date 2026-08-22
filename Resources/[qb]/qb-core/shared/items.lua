@@ -381,6 +381,33 @@ QBCore.Shared.Items = {
     newsmic                      = { name = 'newsmic', label = 'ニュースマイク', weight = 100, type = 'item', image = 'newsmic.png', unique = true, useable = true, shouldClose = true, description = 'ニュース用マイク' },
     newsbmic                     = { name = 'newsbmic', label = 'ブームマイク', weight = 100, type = 'item', image = 'newsbmic.png', unique = true, useable = true, shouldClose = true, description = '使用可能なブームマイク' },
 
+    -- 木こり関連アイテム (2026.08.23 追加 potato)
+    wood = {
+        name = 'wood',
+        label = '原木',
+        weight = 1000,
+        type = 'item',
+        image = 'wood.png',
+        unique = false,
+        useable = false,
+        shouldClose = false,
+        combinable = nil,
+        description = '伐採した未加工の木材'
+    },
+
+    wood_pro = {
+        name = 'wood_pro',
+        label = '加工済み木材',
+        weight = 1000,
+        type = 'item',
+        image = 'wood_proc.png',
+        unique = false,
+        useable = false,
+        shouldClose = false,
+        combinable = nil,
+        description = '加工され、販売できる状態になった木材'
+    },
+
     -- クラフトテーブル
     item_bench = {name = "item_bench", label = "作業台", weight = 15000, type = "item", image = "workbench.png", unique = true, useable = true, shouldClose = false, combinable = nil, description = "アイテムを作成するための作業台。"},
     attachment_bench = {name = "attachment_bench", label = "アタッチメント作業台", weight = 15000, type = "item", image = "attworkbench.png", unique = true, useable = true, shouldClose = false, combinable = nil, description = "アタッチメントを作成するための作業台。"},
