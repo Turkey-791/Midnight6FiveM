@@ -370,6 +370,7 @@ QBCore.Shared.Items = {
     -- Other Tools
     casinochips                  = { name = 'casinochips', label = 'Casino Chips', weight = 0, type = 'item', image = 'casinochips.png', unique = false, useable = false, shouldClose = false, description = 'Chips For Casino Gambling' },
     stickynote                   = { name = 'stickynote', label = 'Sticky note', weight = 0, type = 'item', image = 'stickynote.png', unique = true, useable = false, shouldClose = false, description = 'Sometimes handy to remember something :)' },
+    wheeltoken                   = { name = 'wheeltoken', label = 'Lucky Wheel Token', weight = 100, type = 'item', image = 'token.png', unique = false, useable = false, shouldClose = false, description = 'Lucky Wheel Token', expire = 9 },
     moneybag                     = { name = 'moneybag', label = 'Money Bag', weight = 0, type = 'item', image = 'moneybag.png', unique = true, useable = true, shouldClose = true, description = 'A bag with cash' },
     parachute                    = { name = 'parachute', label = 'Parachute', weight = 30000, type = 'item', image = 'parachute.png', unique = true, useable = true, shouldClose = true, description = 'The sky is the limit! Woohoo!' },
     binoculars                   = { name = 'binoculars', label = 'Binoculars', weight = 600, type = 'item', image = 'binoculars.png', unique = false, useable = true, shouldClose = true, description = 'Sneaky Breaky...' },

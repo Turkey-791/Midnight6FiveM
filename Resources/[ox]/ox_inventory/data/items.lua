@@ -1416,6 +1416,12 @@ return {
 		description = 'Chips For Casino Gambling',
 		client = { image = 'casinochips.png' },
 	},
+	['wheeltoken'] = {
+		label = 'Lucky Wheel Token',
+		weight = 100,
+		description = 'Lucky Wheel Token',
+		client = { image = 'token.png' },
+	},
 	['stickynote'] = {
 		label = 'Sticky note',
 		weight = 0,
