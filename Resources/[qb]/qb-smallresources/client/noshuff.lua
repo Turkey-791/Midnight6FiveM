@@ -1,3 +1,7 @@
+-- NOTE:
+-- disableShuffle を false にすると、プレイヤーが車両に乗ると自動で運転席に座るようになります。
+-- disableShuffle を true にすると、プレイヤーが車両に乗ると自動で運転席に座ることを防ぎます。
+-- (2026.08.23 potato)
 local disableShuffle = true
 
 RegisterNetEvent('QBCore:Client:EnteredVehicle', function(data)
@@ -28,3 +32,6 @@ end)
 RegisterCommand('shuff', function()
     TriggerEvent('SeatShuffle')
 end, false)
+
+--- 座席移動コマンドをキーバインドに登録 (2026.08.23 potato)
+RegisterKeyMapping('shuff', '座席を移動する', 'keyboard', 'G')

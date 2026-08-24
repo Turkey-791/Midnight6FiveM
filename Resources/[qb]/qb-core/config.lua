@@ -42,7 +42,7 @@ QBCore.Config.Player.PlayerDefaults = {
     },
     job = {
         name = 'unemployed',
-        label = 'Civilian',
+        label = '市民',
         payment = 10,
         type = 'none',
         onduty = false,
@@ -54,7 +54,7 @@ QBCore.Config.Player.PlayerDefaults = {
     },
     gang = {
         name = 'none',
-        label = 'No Gang Affiliation',
+        label = 'ギャングに所属していません',
         isboss = false,
         grade = {
             name = 'none',
