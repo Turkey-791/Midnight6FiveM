@@ -938,9 +938,20 @@ end
 RegisterNetEvent("ps-housing:client:enterProperty", function(property_id, spawn)
     local property = Property.Get(property_id)
     if spawn == 'spawn' then
+        DoScreenFadeOut(250)
+        Wait(250)
+        FreezeEntityPosition(PlayerPedId(), true)
+
         local data = lib.callback.await("ps-housing:cb:getMainMloDoor", false, property_id, 1)
-        if not data then property:EnterShell() return end
+        if not data then
+            FreezeEntityPosition(PlayerPedId(), false)
+            property:EnterShell()
+            return
+        end
+
         SetEntityCoords(PlayerPedId(), data.objCoords.x, data.objCoords.y, data.objCoords.z)
+        FreezeEntityPosition(PlayerPedId(), false)
+        DoScreenFadeIn(250)
         return
     else
         property:EnterShell()
