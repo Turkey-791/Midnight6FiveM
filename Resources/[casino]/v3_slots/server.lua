@@ -6,9 +6,7 @@
 	}), {["Content-Type"] = "application/json"})
 end)]]
 
-math.randomseed(os.clock()*100000000000)
-math.randomseed(os.clock()*math.random())
-math.randomseed(os.clock()*math.random())
+math.randomseed(os.time())
 
 local activeSlot = {}
 

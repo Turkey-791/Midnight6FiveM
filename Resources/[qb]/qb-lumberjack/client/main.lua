@@ -109,11 +109,7 @@ AddEventHandler("qb-lumberjack:client:sellwood", function ()
                 disableCarMovement = true,
                 disableMouse = false,
                 disableCombat = true,
-            }, {
-                animDict = "",
-                anim = "",
-                flags = 16,
-            }, {}, {}, function ()
+            }, {}, {}, {}, function ()
                 TriggerServerEvent("qb-lumberjack:server:sellwood")
             end)
         elseif not pro_wood then

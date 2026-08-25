@@ -380,6 +380,20 @@ return {
 		description = 'A brushstroke camo for a weapon',
 		client = { image = 'brushcamo_attachment.png' },
 	},
+	['wood'] = {
+    	label = 'Wood',
+    	weight = 1000,
+    	stack = true,
+    	close = true,
+    	description = '木材',
+	},
+	['wood_pro'] = {
+   	 label = 'Processed Wood',
+		weight = 1000,
+		stack = true,
+		close = true,
+		description = '加工された木材',
+	},
 	['woodcamo_attachment'] = {
 		label = 'Woodland Camo',
 		weight = 1000,
