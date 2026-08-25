@@ -1,4 +1,5 @@
 local QBCore = exports['qb-core']:GetCoreObject()
+local diedBeforeSale = {}
 
 ------------------------------ Jack Pick----------------------
 RegisterServerEvent("qb-lumberjack:server:cutjack")
@@ -33,6 +34,13 @@ RegisterServerEvent('qb-lumberjack:server:processwood', function()
     Player.Functions.AddItem('wood_pro', wood)
     TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['wood_pro'], "add")
     TriggerClientEvent('QBCore:Notify', source, "Successfully ", "success")
+    diedBeforeSale[source] = false
+end)
+
+RegisterServerEvent('qb-lumberjack:server:playerDied')
+AddEventHandler('qb-lumberjack:server:playerDied', function()
+    local src = source
+    diedBeforeSale[src] = true
 end)
 
 -------------------------seller-------------------------------
@@ -62,15 +70,22 @@ AddEventHandler('qb-lumberjack:server:sellwood', function()
 		
 		if Item.amount > 0 then
             local reward = math.random(400, 450)
-            -- for i = 1, Item.amount do
-            --     --reward = reward + math.random(v[1], v[2])
-            --     reward = reward + math.random(1, 2)
-            -- end
+
+            if diedBeforeSale[source] then
+                reward = math.floor(reward / 2)
+            end
+
 			xPlayer.Functions.RemoveItem('wood_pro', 1)
 			TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items['wood_pro'], "remove")
 			xPlayer.Functions.AddMoney("cash", reward, "sold-pawn-items")
-			TriggerClientEvent('QBCore:Notify', source, 'Successfully Selling.', "success")  
-			--end
+
+            if diedBeforeSale[source] then
+                TriggerClientEvent('QBCore:Notify', source, '道中で死亡したため、買取額が半額になりました。', "primary")
+            else
+                TriggerClientEvent('QBCore:Notify', source, 'Successfully Selling.', "success")
+            end
+
+            diedBeforeSale[source] = false
         end
      end
 	end
