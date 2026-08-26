@@ -36,7 +36,7 @@ RegisterCommand("migrateapartments", function()
             local propertyData = {
                 owner = apt.citizenid,
                 label = aptName .. " Apartment " .. tostring(i),
-                description = "This is " .. aptName .. " Apartment " .. tostring(i),
+                description = aptName .. " アパート " .. tostring(i) .. " の部屋です",
                 for_sale = 0,    
                 shell = Config.Apartments[aptName].shell,
                 apartment = aptName,

@@ -469,7 +469,7 @@ Modeler = {
 
 	    -- If the cart is empty, return notify
         if not next(self.Cart) then
-	        Framework[Config.Notify].Notify("Your cart is empty", "error")
+	        Framework[Config.Notify].Notify("カートは空です", "error")
             return
         end
 
@@ -480,7 +480,7 @@ Modeler = {
 
         PlayerData = QBCore.Functions.GetPlayerData()
         if PlayerData.money.cash < totalPrice and PlayerData.money.bank < totalPrice then
-	        Framework[Config.Notify].Notify("You don't have enough money!", "error")
+	        Framework[Config.Notify].Notify("所持金が足りません!", "error")
             return
         end
         local property = Property.Get(self.property_id)
@@ -591,7 +591,7 @@ Modeler = {
         if data.type == 'storage' then
             local property = Property.Get(self.property_id).storageTarget[data.entity]
             local hasItems = Framework[Config.Inventory].inventoryHasItems(property)
-            if hasItems then Framework[Config.Notify].Notify('Stash is not empty', 'error') return end
+            if hasItems then Framework[Config.Notify].Notify('収納の中身が空ではありません', 'error') return end
         end
         local item = data
 

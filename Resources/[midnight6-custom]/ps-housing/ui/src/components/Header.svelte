@@ -32,11 +32,11 @@
 			}
 
 			const filteredFurnitureItems = allFurnitureItems.filter(furniture => furniture.label.toLowerCase().includes(searchTerm.toLowerCase()))
-			$SHOWFURNITURES = { category: "Search Results", items: filteredFurnitureItems }
+			$SHOWFURNITURES = { category: "検索結果", items: filteredFurnitureItems }
 		} else {
 			if (selected === -1) {
 				const allFurnitureItems = $FURNITURES.flatMap(furniture => furniture.items);
-				$SHOWFURNITURES = { category: "All Objects", items: allFurnitureItems }
+				$SHOWFURNITURES = { category: "全アイテム", items: allFurnitureItems }
 			} else {
 				$SHOWFURNITURES = $FURNITURES[selected]
 			}
@@ -67,7 +67,7 @@
 				autofocus
 				class="min-w-[10rem] h-[4.5rem] px-[1rem] text-[1.6rem] bg-[color:var(--color-tertiary)]"
 				type="text"
-				placeholder="Search"
+				placeholder="検索"
 			/>
 		{/if}
 	</button>
@@ -82,10 +82,10 @@
 			on:click={() => {
 				selected = -1
 				const allFurnitureItems = $FURNITURES.flatMap(furniture => furniture.items);
-				$SHOWFURNITURES = { category: "All Objects", items: allFurnitureItems }
+				$SHOWFURNITURES = { category: "全アイテム", items: allFurnitureItems }
 				if ($IS_MENU_MINIMIZED) $IS_MENU_MINIMIZED = false
 			}}
-			class:selected={selected === -1}>All Objects</button
+			class:selected={selected === -1}>全アイテム</button
 		>
 		{#each $FURNITURES as category, i}
 			<button
@@ -109,7 +109,7 @@
 				
 			}}
 			>
-			<p class="w-fit whitespace-nowrap">Owned Furniture</p>
+			<p class="w-fit whitespace-nowrap">所有家具</p>
 			<span class="h-fit px-[1rem] bg-[color:var(--color-tertiary)]"
 				>{$OWNEDITEMS.length}</span
 			>

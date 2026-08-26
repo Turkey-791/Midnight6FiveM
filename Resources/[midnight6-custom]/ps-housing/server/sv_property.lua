@@ -24,7 +24,7 @@ function Property:new(propertyData)
 
     for k, v in ipairs(propertyData.furnitures) do
         if v.type == 'storage' then
-            Framework[Config.Inventory].RegisterInventory(k == 1 and stashName or stashName..v.id, 'Property: ' ..  (propertyData.street or propertyData.apartment or 'Unknown') .. ' #'.. propertyData.property_id or propertyData.apartment or stashName, stashConfig)
+            Framework[Config.Inventory].RegisterInventory(k == 1 and stashName or stashName..v.id, '物件: ' ..  (propertyData.street or propertyData.apartment or '不明') .. ' #'.. propertyData.property_id or propertyData.apartment or stashName, stashConfig)
         end
     end
 
@@ -104,16 +104,16 @@ function Property:AddToDoorbellPoolTemp(src)
     for src, _ in pairs(self.playersInside) do
         local targetSrc = tonumber(src)
 
-        Framework[Config.Notify].Notify(targetSrc, "Someone is at the door.", "info")
+        Framework[Config.Notify].Notify(targetSrc, "ドアの前に誰かがいます。", "info")
         TriggerClientEvent("ps-housing:client:updateDoorbellPool", targetSrc, self.property_id, self.playersDoorbell)
     end
 
-    Framework[Config.Notify].Notify(src, "You rang the doorbell. Just wait...", "info")
+    Framework[Config.Notify].Notify(src, "呼び鈴を鳴らしました。しばらくお待ちください...", "info")
 
     SetTimeout(10000, function()
         if self.playersDoorbell[_src] then
             self.playersDoorbell[_src] = nil
-            Framework[Config.Notify].Notify(src, "No one answered the door.", "error")
+            Framework[Config.Notify].Notify(src, "応答がありませんでした。", "error")
         end
 
         for src, _ in pairs(self.playersInside) do
@@ -143,7 +143,7 @@ function Property:StartRaid()
 
     for src, _ in pairs(self.playersInside) do
         local targetSrc = tonumber(src)
-        Framework[Config.Notify].Notify(targetSrc, "This Property is being Raided.", "error")
+        Framework[Config.Notify].Notify(targetSrc, "この物件は強制捜索されています。", "error")
     end
 
     SetTimeout(Config.RaidTimer * 60000, function()
@@ -331,12 +331,12 @@ function Property:UpdateOwner(data)
 
     self:addMloDoorsAccess(citizenid)
     if self.propertyData.shell == 'mlo' and DoorResource == 'qb' then
-        Framework[Config.Notify].Notify(targetSrc, "Go far away and come back for the door to update and open/close.", "error")
+        Framework[Config.Notify].Notify(targetSrc, "一度遠くまで離れてから戻ると、ドアの開閉が更新されます。", "error")
     end
 
     if self.propertyData.owner == citizenid then
-        Framework[Config.Notify].Notify(targetSrc, "You already own this property", "error")
-        Framework[Config.Notify].Notify(realtorSrc, "Client already owns this property", "error")
+        Framework[Config.Notify].Notify(targetSrc, "この物件はすでに所有しています", "error")
+        Framework[Config.Notify].Notify(realtorSrc, "この顧客はすでにこの物件を所有しています", "error")
         return
     end
 
@@ -344,18 +344,18 @@ function Property:UpdateOwner(data)
     local targetAllow = lib.callback.await("ps-housing:cb:confirmPurchase", targetSrc, self.propertyData.price, self.propertyData.street, self.propertyData.property_id)
 
     if targetAllow ~= "confirm" then
-        Framework[Config.Notify].Notify(targetSrc, "You did not confirm the purchase", "info")
-        Framework[Config.Notify].Notify(realtorSrc, "Client did not confirm the purchase", "error")
+        Framework[Config.Notify].Notify(targetSrc, "購入が確定されませんでした", "info")
+        Framework[Config.Notify].Notify(realtorSrc, "顧客が購入を確定しませんでした", "error")
         return
     end
 
     if bank < self.propertyData.price then
-                Framework[Config.Notify].Notify(targetSrc, "You do not have enough money in your bank account", "error")
-            Framework[Config.Notify].Notify(realtorSrc, "Client does not have enough money in their bank account", "error")
+                Framework[Config.Notify].Notify(targetSrc, "銀行口座の残高が足りません", "error")
+            Framework[Config.Notify].Notify(realtorSrc, "顧客の銀行口座の残高が足りません", "error")
         return
     end
 
-    targetPlayer.Functions.RemoveMoney('bank', self.propertyData.price, "Bought Property: " .. self.propertyData.street .. " " .. self.property_id)
+    targetPlayer.Functions.RemoveMoney('bank', self.propertyData.price, "物件購入: " .. self.propertyData.street .. " " .. self.property_id)
 
     local prevPlayer = QBCore.Functions.GetPlayerByCitizenId(previousOwner)
     local realtor = QBCore.Functions.GetPlayer(tonumber(realtorSrc))
@@ -369,8 +369,8 @@ function Property:UpdateOwner(data)
         exports['qb-banking']:AddMoney(realtor.PlayerData.job.name, totalAfterCommission)
     else
         if prevPlayer ~= nil then
-            Framework[Config.Notify].Notify(prevPlayer.PlayerData.source, "Sold Property: " .. self.propertyData.street .. " " .. self.property_id, "success")
-            prevPlayer.Functions.AddMoney('bank', totalAfterCommission, "Sold Property: " .. self.propertyData.street .. " " .. self.property_id)
+            Framework[Config.Notify].Notify(prevPlayer.PlayerData.source, "物件売却: " .. self.propertyData.street .. " " .. self.property_id, "success")
+            prevPlayer.Functions.AddMoney('bank', totalAfterCommission, "物件売却: " .. self.propertyData.street .. " " .. self.property_id)
         elseif previousOwner then
             MySQL.Async.execute('UPDATE `players` SET `bank` = `bank` + @price WHERE `citizenid` = @citizenid', {
                 ['@citizenid'] = previousOwner,
@@ -379,7 +379,7 @@ function Property:UpdateOwner(data)
         end
     end
     
-    realtor.Functions.AddMoney('bank', commission, "Commission from Property: " .. self.propertyData.street .. " " .. self.property_id)
+    realtor.Functions.AddMoney('bank', commission, "物件仲介手数料: " .. self.propertyData.street .. " " .. self.property_id)
 
     self.propertyData.owner = citizenid
 
@@ -396,8 +396,8 @@ function Property:UpdateOwner(data)
     
     Framework[Config.Logs].SendLog("**House Bought** by: **"..PlayerData.charinfo.firstname.." "..PlayerData.charinfo.lastname.."** for $"..self.propertyData.price.." from **"..realtor.PlayerData.charinfo.firstname.." "..realtor.PlayerData.charinfo.lastname.."** !")
 
-    Framework[Config.Notify].Notify(targetSrc, "You have bought the property for $"..self.propertyData.price, "success")
-    Framework[Config.Notify].Notify(realtorSrc, "Client has bought the property for $"..self.propertyData.price, "success")
+    Framework[Config.Notify].Notify(targetSrc, "$"..self.propertyData.price.." で物件を購入しました", "success")
+    Framework[Config.Notify].Notify(realtorSrc, "顧客が $"..self.propertyData.price.." で物件を購入しました", "success")
 end
 
 function Property:UpdateImgs(data)
@@ -513,9 +513,9 @@ function Property:UpdateApartment(data)
         ["@property_id"] = self.property_id
     })
 
-    Framework[Config.Notify].Notify(realtorSrc, "Changed Apartment of property with id: " .. self.property_id .." to ".. apartment, "success")
+    Framework[Config.Notify].Notify(realtorSrc, "物件ID: " .. self.property_id .." のアパートを ".. apartment .." に変更しました", "success")
 
-    Framework[Config.Notify].Notify(targetSrc, "Changed Apartment to " .. apartment, "success")
+    Framework[Config.Notify].Notify(targetSrc, "アパートが " .. apartment .. " に変更されました", "success")
 
     Framework[Config.Logs].SendLog("**Changed Apartment** with id: " .. self.property_id .. " by: **" .. GetPlayerName(realtorSrc) .. "** for **" .. GetPlayerName(targetSrc) .."**")
 
@@ -539,7 +539,7 @@ function Property:DeleteProperty(data)
 
     TriggerClientEvent("ps-housing:client:removeProperty", -1, propertyid)
 
-    Framework[Config.Notify].Notify(realtorSrc, "Property with id: " .. propertyid .." has been removed.", "info")
+    Framework[Config.Notify].Notify(realtorSrc, "物件ID: " .. propertyid .." を削除しました。", "info")
 
     Framework[Config.Logs].SendLog("**Property Deleted** with id: " .. propertyid .. " by: " .. realtorName)
 
@@ -652,7 +652,7 @@ RegisterNetEvent('ps-housing:server:raidProperty', function(property_id)
                 if confirmRaid == "confirm" then
                     property:StartRaid(src)
                     property:PlayerEnter(src)
-                    Framework[Config.Notify].Notify(src, "Raid started", "success")
+                    Framework[Config.Notify].Notify(src, "強制捜索を開始しました", "success")
 
                     if Config.ConsumeRaidItem then
                         -- Remove the "stormram" item from the officer's inventory
@@ -685,19 +685,19 @@ RegisterNetEvent('ps-housing:server:raidProperty', function(property_id)
                     end
                 end
             else
-                Framework[Config.Notify].Notify(src, "Raid in progress", "success")
+                Framework[Config.Notify].Notify(src, "強制捜索を実行中です", "success")
                 property:PlayerEnter(src)
             end
         else
-            Framework[Config.Notify].Notify(src, "You need a stormram to perform a raid", "error")
+            Framework[Config.Notify].Notify(src, "強制捜索にはストームラムが必要です", "error")
         end
     else
         if not PoliceJobs[jobName] then
-            Framework[Config.Notify].Notify(src, "Only police officers are permitted to perform raids", "error")
+            Framework[Config.Notify].Notify(src, "強制捜索を行えるのは警察官のみです", "error")
         elseif not onDuty then
-            Framework[Config.Notify].Notify(src, "You must be onduty before performing a raid", "error")
+            Framework[Config.Notify].Notify(src, "強制捜索を行うには勤務中である必要があります", "error")
         elseif not gradeAllowed then
-            Framework[Config.Notify].Notify(src, "You must be a higher rank before performing a raid", "error")
+            Framework[Config.Notify].Notify(src, "強制捜索を行うにはより高い階級が必要です", "error")
         end
     end
 end)
@@ -773,14 +773,14 @@ RegisterNetEvent("ps-housing:server:buyFurniture", function(property_id, items, 
     price = tonumber(price)
 
     if price > PlayerData.money.bank and price > PlayerData.money.cash then
-        Framework[Config.Notify].Notify(src, "You do not have enough money!", "error")
+        Framework[Config.Notify].Notify(src, "所持金が足りません!", "error")
         return
     end
 
     if price <= PlayerData.money.cash then
-        Player.Functions.RemoveMoney('cash', price, "Bought furniture")
+        Player.Functions.RemoveMoney('cash', price, "家具の購入")
     else
-        Player.Functions.RemoveMoney('bank', price, "Bought furniture")
+        Player.Functions.RemoveMoney('bank', price, "家具の購入")
     end
 
     local propertyData = property.propertyData
@@ -800,9 +800,9 @@ RegisterNetEvent("ps-housing:server:buyFurniture", function(property_id, items, 
             local stashName = ("property_%s"):format(propertyData.property_id)
             local stashConfig = Config.Shells[propertyData.shell].stash
             if not propertyData.apartment then
-                Framework[Config.Inventory].RegisterInventory(firstStorage and stashName or stashName .. item.id, 'Property: ' .. propertyData.street .. '#' .. propertyData.property_id, stashConfig)
-            else 
-               Framework[Config.Inventory].RegisterInventory(firstStorage and stashName or stashName .. item.id, 'Property: ' .. propertyData.apartment .. '#' .. propertyData.property_id, stashConfig)
+                Framework[Config.Inventory].RegisterInventory(firstStorage and stashName or stashName .. item.id, '物件: ' .. propertyData.street .. '#' .. propertyData.property_id, stashConfig)
+            else
+               Framework[Config.Inventory].RegisterInventory(firstStorage and stashName or stashName .. item.id, '物件: ' .. propertyData.apartment .. '#' .. propertyData.property_id, stashConfig)
             end
         end
         numFurnitures = numFurnitures + 1
@@ -811,7 +811,7 @@ RegisterNetEvent("ps-housing:server:buyFurniture", function(property_id, items, 
 
     property:UpdateFurnitures(propertyData.furnitures, isGarden)
 
-    Framework[Config.Notify].Notify(src, "You bought furniture for $" .. price, "success")
+    Framework[Config.Notify].Notify(src, "$" .. price .. " で家具を購入しました", "success")
 
     Framework[Config.Logs].SendLog("**Player ".. GetPlayerName(src) .. "** bought furniture for **$" .. price .. "**")
 
@@ -885,7 +885,7 @@ RegisterNetEvent("ps-housing:server:addAccess", function(property_id, srcToAdd)
 
     if not property.propertyData.owner == citizenid then
         -- hacker ban or something
-        Framework[Config.Notify].Notify(src, "You are not the owner of this property!", "error")
+        Framework[Config.Notify].Notify(src, "この物件の所有者ではありません!", "error")
         return
     end
 
@@ -899,10 +899,10 @@ RegisterNetEvent("ps-housing:server:addAccess", function(property_id, srcToAdd)
         property:addMloDoorsAccess(targetCitizenid)
         property:UpdateHas_access(has_access)
 
-        Framework[Config.Notify].Notify(src, "You added access to " .. targetPlayer.charinfo.firstname .. " " .. targetPlayer.charinfo.lastname, "success")
-        Framework[Config.Notify].Notify(srcToAdd, "You got access to this property!", "success")
+        Framework[Config.Notify].Notify(src, targetPlayer.charinfo.firstname .. " " .. targetPlayer.charinfo.lastname .. " にアクセス権を付与しました", "success")
+        Framework[Config.Notify].Notify(srcToAdd, "この物件へのアクセス権を取得しました!", "success")
     else
-        Framework[Config.Notify].Notify(src, "This person already has access to this property!", "error")
+        Framework[Config.Notify].Notify(src, "この人物はすでにこの物件へのアクセス権を持っています!", "error")
     end
 end)
 
@@ -912,7 +912,7 @@ RegisterNetEvent("ps-housing:server:qbxRegisterHouse", function(property_id)
     if not property then return end
 
     local propertyData = property.propertyData
-    local label = propertyData.street .. property.property_id .. " Garage"
+    local label = propertyData.street .. property.property_id .. " ガレージ"
     local garageData = propertyData.garage_data
     local coords = vec4(garageData.x, garageData.y, garageData.z, garageData.h)
 
@@ -938,7 +938,7 @@ RegisterNetEvent("ps-housing:server:removeAccess", function(property_id, citizen
 
     if not property.propertyData.owner == citizenid then
         -- hacker ban or something
-        Framework[Config.Notify].Notify(src, "You are not the owner of this property!", "error")
+        Framework[Config.Notify].Notify(src, "この物件の所有者ではありません!", "error")
         return
     end
 
@@ -959,13 +959,13 @@ RegisterNetEvent("ps-housing:server:removeAccess", function(property_id, citizen
         local removePlayerData = playerToAdd.PlayerData
         local srcToRemove = removePlayerData.source
 
-        Framework[Config.Notify].Notify(src, "You removed access from " .. removePlayerData.charinfo.firstname .. " " .. removePlayerData.charinfo.lastname, "success")
+        Framework[Config.Notify].Notify(src, removePlayerData.charinfo.firstname .. " " .. removePlayerData.charinfo.lastname .. " のアクセス権を削除しました", "success")
 
         if srcToRemove then
-            Framework[Config.Notify].Notify(srcToRemove, "You lost access to " .. (property.propertyData.street or property.propertyData.apartment) .. " " .. property.property_id, "error")
+            Framework[Config.Notify].Notify(srcToRemove, (property.propertyData.street or property.propertyData.apartment) .. " " .. property.property_id .. " へのアクセス権を失いました", "error")
         end
     else
-        Framework[Config.Notify].Notify(src, "This person does not have access to this property!", "error")
+        Framework[Config.Notify].Notify(src, "この人物はこの物件へのアクセス権を持っていません!", "error")
     end
 end)
 
@@ -1017,7 +1017,7 @@ lib.callback.register('ps-housing:cb:getPropertyInfo', function (source, propert
         ownerPlayer = QBCore.Functions.GetPlayerByCitizenId(ownerCid) or QBCore.Functions.GetOfflinePlayerByCitizenId(ownerCid)
         ownerName = ownerPlayer.PlayerData.charinfo.firstname .. " " .. ownerPlayer.PlayerData.charinfo.lastname
     else
-        ownerName = "No Owner"
+        ownerName = "所有者なし"
     end
 
     data.owner = ownerName

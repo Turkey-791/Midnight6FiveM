@@ -43,7 +43,7 @@
 						if (itemsWithSameType.length >= furnitureTypeMax) {
 							SendNUI('showNotification', {
 								type: 'error',
-								message: `You can only have ${furnitureTypeMax} of this item!`,
+								message: `このアイテムは最大${furnitureTypeMax}個までしか所有できません!`,
 							})
 							return;
 						}
@@ -81,7 +81,7 @@
 					</p>
 					<div class="flex">
 						<p class="text-[color:var(--color-text)] text-[1.2rem]">
-							Price:
+							価格:
 						</p>
 						<p class="text-[color:var(--color-accent)] ml-2 font-bold text-[1.2rem]">
 							${furniture.price}
@@ -118,8 +118,7 @@
 				<p
 					class="text-[color:var(--color-text)] text-[2rem] font-bold text-start"
 				>
-					Are you sure you want to stop placing this current
-					furniture?
+					この家具の配置を中止しますか？
 				</p>
 				<div class="flex flex-row justify-between w-full gap-[2vw]">
 					<button
@@ -129,7 +128,7 @@
 							switchToFurniture = null
 						}}
 					>
-						No
+						いいえ
 					</button>
 					<button
 						class="bg-[color:var(--color-tertiary)] text-[color:var(--color-text)] text-[2rem] px-[1rem] py-[0.5rem] w-full hover:cursor-pointer"
@@ -142,7 +141,7 @@
 							switchToFurniture = null
 						}}
 					>
-						Yes
+						はい
 					</button>
 				</div>
 			</div>

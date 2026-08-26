@@ -18,7 +18,7 @@ if IsDuplicityVersion() then
 
     function Framework.ox.Notify(src, message, type)
         type = type == "inform" and "info" or type
-        TriggerClientEvent("ox_lib:notify", src, {title="Property", description=message, type=type})
+        TriggerClientEvent("ox_lib:notify", src, {title="物件", description=message, type=type})
     end
 
     function Framework.qb.Notify(src, message, type)
@@ -81,7 +81,7 @@ Framework.qb = {
             {
                 options = {
                     {
-                        label = "Enter Property",
+                        label = "家に入る",
                         icon = "fas fa-door-open",
                         action = enter,
                         canInteract = function()
@@ -90,7 +90,7 @@ Framework.qb = {
                         end,
                     },
                     {
-                        label = "Showcase Property",
+                        label = "物件を内見する",
                         icon = "fas fa-eye",
                         action = showcase,
                         canInteract = function()
@@ -101,7 +101,7 @@ Framework.qb = {
                         end,
                     },
                     {
-                        label = "Property Info",
+                        label = "物件情報",
                         icon = "fas fa-circle-info",
                         action = showData,
                         canInteract = function()
@@ -112,7 +112,7 @@ Framework.qb = {
                         end,
                     },
                     {
-                        label = "Ring Doorbell",
+                        label = "呼び鈴を鳴らす",
                         icon = "fas fa-bell",
                         action = enter,
                         canInteract = function()
@@ -121,7 +121,7 @@ Framework.qb = {
                         end,
                     },
                     {
-                        label = "Raid Property",
+                        label = "物件を強制捜索",
                         icon = "fas fa-building-shield",
                         action = raid,
                         canInteract = function()
@@ -150,7 +150,7 @@ Framework.qb = {
         }, {
             options = {
                 {
-                    label = "Enter Apartment",
+                    label = "アパートに入る",
                     action = enter,
                     icon = "fas fa-door-open",
                     canInteract = function()
@@ -159,12 +159,12 @@ Framework.qb = {
                     end,
                 },
                 {
-                    label = "See all apartments",
+                    label = "アパート一覧を見る",
                     icon = "fas fa-circle-info",
                     action = seeAll,
                 },
                 {
-                    label = "Raid Apartment",
+                    label = "アパートを強制捜索",
                     action = seeAllToRaid,
                     icon = "fas fa-building-shield",
                     canInteract = function()
@@ -196,12 +196,12 @@ Framework.qb = {
             {
                 options = {
                     {
-                        label = "Leave Property",
+                        label = "家を出る",
                         action = leave,
                         icon = "fas fa-right-from-bracket",
                     },
                     {
-                        label = "Check Door",
+                        label = "ドアを確認する",
                         action = checkDoor,
                         icon = "fas fa-bell",
                     },
@@ -228,7 +228,7 @@ Framework.qb = {
             {
                 options = {
                     {
-                        label = "Leave",
+                        label = "出る",
                         action = leave,
                         icon = "fas fa-right-from-bracket",
                     },
@@ -296,7 +296,7 @@ Framework.ox = {
         type = type == "inform" and "info" or type
         
         lib.notify({
-            title = 'Property',
+            title = '物件',
             description = message,
             type = type
         })
@@ -312,7 +312,7 @@ Framework.ox = {
             debug = Config.DebugMode,
             options = {
                 {
-                    label = "Enter Property",
+                    label = "家に入る",
                     icon = "fas fa-door-open",
                     onSelect = enter,
                     canInteract = function()
@@ -321,7 +321,7 @@ Framework.ox = {
                     end,
                 },
                 {
-                    label = "Showcase Property",
+                    label = "物件を内見する",
                     icon = "fas fa-eye",
                     onSelect = showcase,
                     canInteract = function()
@@ -335,7 +335,7 @@ Framework.ox = {
                     end,
                 },
                 {
-                    label = "Property Info",
+                    label = "物件情報",
                     icon = "fas fa-circle-info",
                     onSelect = showData,
                     canInteract = function()
@@ -346,7 +346,7 @@ Framework.ox = {
                     end,
                 },
                 {
-                    label = "Ring Doorbell",
+                    label = "呼び鈴を鳴らす",
                     icon = "fas fa-bell",
                     onSelect = enter,
                     canInteract = function()
@@ -355,7 +355,7 @@ Framework.ox = {
                     end,
                 },
                 {
-                    label = "Raid Property",
+                    label = "物件を強制捜索",
                     icon = "fas fa-building-shield",
                     onSelect = raid,
                     canInteract = function()
@@ -381,7 +381,7 @@ Framework.ox = {
             debug = Config.DebugMode,
             options = {
                 {
-                    label = "Enter Apartment",
+                    label = "アパートに入る",
                     onSelect = enter,
                     icon = "fas fa-door-open",
                     canInteract = function()
@@ -390,12 +390,12 @@ Framework.ox = {
                     end,
                 },
                 {
-                    label = "See all apartments",
+                    label = "アパート一覧を見る",
                     onSelect = seeAll,
                     icon = "fas fa-circle-info",
                 },
                 {
-                    label = "Raid Apartment",
+                    label = "アパートを強制捜索",
                     onSelect = seeAllToRaid,
                     icon = "fas fa-building-shield",
                     canInteract = function()
@@ -422,13 +422,13 @@ Framework.ox = {
             options = {
                 {
                     name = "leave",
-                    label = "Leave Property",
+                    label = "家を出る",
                     onSelect = leave,
                     icon = "fas fa-right-from-bracket",
                 },
                 {
                     name = "doorbell",
-                    label = "Check Door",
+                    label = "ドアを確認する",
                     onSelect = checkDoor,
                     icon = "fas fa-bell",
                 },
@@ -447,7 +447,7 @@ Framework.ox = {
             options = {
                 {
                     name = "leave",
-                    label = "Leave",
+                    label = "出る",
                     onSelect = leave,
                     icon = "fas fa-right-from-bracket",
                 },

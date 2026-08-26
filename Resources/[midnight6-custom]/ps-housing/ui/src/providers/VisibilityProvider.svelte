@@ -57,7 +57,7 @@ onMount(() => {
 	<div class="z-[100] bg-black bg-opacity-50 w-screen h-screen absolute top-0 left-0 grid place-items-center">
 		<div class="bg-[color:var(--color-secondary)] absolute w-[50rem] h-[fit] p-[1vw] flex flex-col gap-[1vw] justify-center items-center">
 			<p class="text-[color:var(--color-text)] text-[2rem] font-bold text-start">
-				Are you sure you want to exit? You have items in your cart.
+				本当に終了しますか？カートに商品が入っています。
 			</p>
 			<div class="flex flex-row justify-between w-full gap-[2vw]">
 				<button
@@ -66,7 +66,7 @@ onMount(() => {
 						showModal = false
 					}}
 				>
-					No
+					いいえ
 				</button>
 				<button
 				class="bg-[color:var(--color-tertiary)] text-[color:var(--color-text)] text-[2rem] px-[1rem] py-[0.5rem] w-full hover:cursor-pointer"
@@ -77,7 +77,7 @@ onMount(() => {
           ModelStore.show.set(false)
 				}}
 			>
-				Yes
+				はい
 			</button>
 			</div>
 		</div>

@@ -156,7 +156,7 @@ function RegisterProperty(propertyData, preventEnter, source)
             Debug("Player: " .. propertyData.owner .. " is creating a new character!")
         end
 
-        Framework[Config.Notify].Notify(src, "Open radial menu for furniture menu and place down your stash and clothing locker.", "info")
+        Framework[Config.Notify].Notify(src, "ラジアルメニューから家具メニューを開き、収納とクローゼットを設置してください。", "info")
 
         -- This will create the stash for the apartment and migrate the items from the old apartment stash if applicable
         if GetResourceState('qb-inventory') == 'started' then
@@ -279,7 +279,7 @@ RegisterNetEvent("ps-housing:server:createNewApartment", function(aptLabel)
 
     local propertyData = {
         owner = citizenid,
-        description = string.format("This is %s's apartment in %s", PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname, apartment.label),
+        description = string.format("%sの%s内の部屋です", PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname, apartment.label),
         for_sale = 0,
         shell = apartment.shell,
         apartment = apartment.label,
@@ -376,8 +376,8 @@ AddEventHandler("ps-housing:server:addTenantToApartment", function (data)
         local propertyData = v.propertyData
         if propertyData.owner == targetCitizenid then
             if propertyData.apartment == apartment then
-                Framework[Config.Notify].Notify(targetSrc, "You are already in this apartment", "error")
-                Framework[Config.Notify].Notify(targetSrc, "This person is already in this apartment", "error")
+                Framework[Config.Notify].Notify(targetSrc, "すでにこのアパートに住んでいます", "error")
+                Framework[Config.Notify].Notify(targetSrc, "この人物はすでにこのアパートに住んでいます", "error")
 
                 return
             elseif propertyData.apartment and #propertyData.apartment > 1 then
@@ -395,7 +395,7 @@ AddEventHandler("ps-housing:server:addTenantToApartment", function (data)
         local targetToAdd = QBCore.Functions.GetPlayerByCitizenId(citizenid).PlayerData
         local propertyData = {
             owner = targetCitizenid,
-            description = string.format("This is %s's apartment in %s", targetToAdd.charinfo.firstname .. " " .. targetToAdd.charinfo.lastname, newApartment.label),
+            description = string.format("%sの%s内の部屋です", targetToAdd.charinfo.firstname .. " " .. targetToAdd.charinfo.lastname, newApartment.label),
             for_sale = 0,
             shell = newApartment.shell,
             apartment = newApartment.label,
@@ -405,8 +405,8 @@ AddEventHandler("ps-housing:server:addTenantToApartment", function (data)
 
         Framework[Config.Logs].SendLog("Creating new apartment for " .. GetPlayerName(targetSrc) .. " in " .. newApartment.label)
 
-        Framework[Config.Notify].Notify(targetSrc, "Your apartment is now at "..apartment, "success")
-        Framework[Config.Notify].Notify(realtorSrc, "You have added ".. targetToAdd.charinfo.firstname .. " " .. targetToAdd.charinfo.lastname .. " to apartment "..apartment, "success")
+        Framework[Config.Notify].Notify(targetSrc, "アパートが "..apartment.." に変更されました", "success")
+        Framework[Config.Notify].Notify(realtorSrc, targetToAdd.charinfo.firstname .. " " .. targetToAdd.charinfo.lastname .. " をアパート "..apartment.." に追加しました", "success")
 
         RegisterProperty(propertyData, true)
 
@@ -422,8 +422,8 @@ AddEventHandler("ps-housing:server:addTenantToApartment", function (data)
     local targetToAdd = QBCore.Functions.GetPlayerByCitizenId(citizenid)
     local targetPlayer = targetToAdd.PlayerData
 
-    Framework[Config.Notify].Notify(targetSrc, "Your apartment is now at "..apartment, "success")
-    Framework[Config.Notify].Notify(realtorSrc, "You have added ".. targetPlayer.charinfo.firstname .. " " .. targetPlayer.charinfo.lastname .. " to apartment "..apartment, "success")
+    Framework[Config.Notify].Notify(targetSrc, "アパートが "..apartment.." に変更されました", "success")
+    Framework[Config.Notify].Notify(realtorSrc, targetPlayer.charinfo.firstname .. " " .. targetPlayer.charinfo.lastname .. " をアパート "..apartment.." に追加しました", "success")
 end)
 
 exports('IsOwner', function(src, property_id)
@@ -437,7 +437,7 @@ end)
 function GetCitizenid(targetSrc, callerSrc)
     local Player = QBCore.Functions.GetPlayer(tonumber(targetSrc))
     if not Player then
-        Framework[Config.Notify].Notify(callerSrc, "Player not found.", "error")
+        Framework[Config.Notify].Notify(callerSrc, "プレイヤーが見つかりません。", "error")
         return
     end
     local PlayerData = Player.PlayerData

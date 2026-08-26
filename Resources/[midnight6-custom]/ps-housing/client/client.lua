@@ -64,7 +64,7 @@ if GetResourceState('qbx_properties') == 'started' then
     for k, v in pairs(Config.Apartments) do
         data[#data +1] = {
             label = v.label,
-            description = 'Luxury Apartments!',
+            description = '高級アパートメント!',
             enter = vec3(v.door.x, v.door.y, v.door.z),
             id = k
         }
@@ -132,52 +132,52 @@ end)
 
 lib.callback.register('ps-housing:cb:confirmPurchase', function(amount, street, id)
     return lib.alertDialog({
-        header = 'Purchase Confirmation',
-        content = 'Are you sure you want to purchase '..street..' ' .. id .. ' for $' .. amount .. '?',
+        header = '購入確認',
+        content = street..' ' .. id .. ' を $' .. amount .. ' で購入しますか?',
         centered = true,
         cancel = true,
         labels = {
-            confirm = "Purchase",
-            cancel = "Cancel"
+            confirm = "購入する",
+            cancel = "キャンセル"
         }
     })
 end)
 
 lib.callback.register('ps-housing:cb:confirmRaid', function(street, id)
     return lib.alertDialog({
-        header = 'Raid',
-        content = 'Do you want to raid '..street..' ' .. id .. '?',
+        header = '強制捜索',
+        content = street..' ' .. id .. ' を強制捜索しますか?',
         centered = true,
         cancel = true,
         labels = {
-            confirm = "Raid",
-            cancel = "Cancel"
+            confirm = "捜索する",
+            cancel = "キャンセル"
         }
     })
 end)
 
 lib.callback.register('ps-housing:cb:ringDoorbell', function()
     return lib.alertDialog({
-        header = 'Ring Doorbell',
-        content = 'You dont have a key for this property, would you like to ring the doorbell?',
+        header = '呼び鈴を鳴らす',
+        content = 'この物件の鍵を持っていません。呼び鈴を鳴らしますか?',
         centered = true,
         cancel = true,
         labels = {
-            confirm = "Ring",
-            cancel = "Cancel"
+            confirm = "鳴らす",
+            cancel = "キャンセル"
         }
     })
 end)
 
 lib.callback.register('ps-housing:cb:showcase', function()
     return lib.alertDialog({
-        header = 'Showcase Property',
-        content = 'Do you want to showcase this property?',
+        header = '物件を内見する',
+        content = 'この物件を内見しますか?',
         centered = true,
         cancel = true,
         labels = {
-            confirm = "Yes",
-            cancel = "Cancel"
+            confirm = "はい",
+            cancel = "キャンセル"
         }
     })
 end)

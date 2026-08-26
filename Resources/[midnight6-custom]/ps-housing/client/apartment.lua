@@ -51,19 +51,19 @@ function Apartment:EnterApartment()
         end
     end
 
-    Framework[Config.Notify].Notify("You dont have an apartment here.", "error")
+    Framework[Config.Notify].Notify("ここにあなたのアパートはありません。", "error")
 end
 
 function Apartment:GetMenuForAll()
     if next(self.apartments) == nil then 
-        Framework[Config.Notify].Notify("There are no apartments here.", "error")
+        Framework[Config.Notify].Notify("ここにアパートはありません。", "error")
         return
     end
 
     local id = "apartments-" .. self.apartmentData.label
     local menu = {
         id = id,
-        title = "Apartments",
+        title = "アパート一覧",
         options = {}
     }
 
@@ -82,20 +82,20 @@ end
 
 function Apartment:GetMenuForAllToRaid()
     if next(self.apartments) == nil then 
-        Framework[Config.Notify].Notify("There are no apartments here.", "error")
+        Framework[Config.Notify].Notify("ここにアパートはありません。", "error")
         return
     end
 
     local id = "apartments-" .. self.apartmentData.label
     local menu = {
         id = id,
-        title = "Apartments To Raid",
+        title = "強制捜索するアパートを選択",
         options = {}
     }
 
     for propertyId, _ in pairs(self.apartments) do
         table.insert(menu.options,{
-            title = "Raid " .. self.apartmentData.label .. " " .. propertyId,
+            title = self.apartmentData.label .. " " .. propertyId .. " を強制捜索",
             onSelect = function()
                 TriggerServerEvent("ps-housing:server:raidProperty", propertyId)
             end,

@@ -183,10 +183,10 @@ function Property:RegisterPropertyEntrance()
         local data = lib.callback.await("ps-housing:cb:getPropertyInfo", false, self.property_id)
         if not data then return end
 
-        local content = "**Owner:** " .. data.owner .. "  \n" .. "**Description:** " .. data.description .. "  \n" .. "**Street:** " .. data.street .. "  \n" .. "**Region:** " .. data.region .. "  \n" .. "**Shell:** " .. data.shell .. "  \n" .. "**For Sale:** " .. (data.for_sale and "Yes" or "No")
+        local content = "**所有者:** " .. data.owner .. "  \n" .. "**説明:** " .. data.description .. "  \n" .. "**通り:** " .. data.street .. "  \n" .. "**地域:** " .. data.region .. "  \n" .. "**建物タイプ:** " .. data.shell .. "  \n" .. "**販売中:** " .. (data.for_sale and "はい" or "いいえ")
 
         if data.for_sale then
-            content = content .. "  \n" .. "**Price:** " .. data.price
+            content = content .. "  \n" .. "**価格:** " .. data.price
         end
 
         lib.alertDialog({
@@ -263,7 +263,7 @@ function Property:RegisterGarageZone()
     end
 
     local garageData = self.propertyData.garage_data
-    local label = self.propertyData.street .. self.property_id .. " Garage"
+    local label = self.propertyData.street .. self.property_id .. " ガレージ"
 
     local isQbx = GetResourceState('qbx_garages') == 'started'
     local coords = vec4(garageData.x, garageData.y, garageData.z, garageData.h)
@@ -396,7 +396,7 @@ function Property:GiveMenus(garden)
     if self.owner or accessAndConfig then
         Framework[Config.Radial].AddRadialOption(
             "furniture_menu",
-            "Furniture Menu",
+            "家具メニュー",
             "house",
             function()
                 Modeler:OpenMenu(self.property_id)
@@ -409,7 +409,7 @@ function Property:GiveMenus(garden)
     if self.owner and not garden then
         Framework[Config.Radial].AddRadialOption(
             "access_menu",
-            "Manage Property",
+            "物件を管理",
             "key",
             function()
                 self:ManageAccessMenu()
@@ -434,7 +434,7 @@ function Property:ManageAccessMenu()
     if not self.inProperty then return end
 
     if not self.owner then
-        Framework[Config.Notify].Notify("Only the owner can do this.", "error")
+        Framework[Config.Notify].Notify("所有者のみ実行できます。", "error")
         return
     end
 
@@ -442,19 +442,19 @@ function Property:ManageAccessMenu()
     local id = "property-" .. self.property_id .. "-access"
     local menu = {
         id = id,
-        title = "Manage Access",
+        title = "アクセス権を管理",
         options = {},
     }
 
     menu.options[#menu.options + 1] = {
-        title = "Give Access",
+        title = "アクセス権を付与",
         onSelect = function()
             self:GiveAccessMenu()
         end,
     }
 
     menu.options[#menu.options + 1] = {
-        title = "Revoke Access",
+        title = "アクセス権を剥奪",
         onSelect = function()
             self:RevokeAccessMenu()
         end,
@@ -474,7 +474,7 @@ function Property:GiveAccessMenu()
     local id = "property-" .. self.property_id .. "-access-give"
     local menu = {
         id = id,
-        title = "Give Access",
+        title = "アクセス権を付与",
         options = {},
     }
 
@@ -485,7 +485,7 @@ function Property:GiveAccessMenu()
             local v = players[i]
             menu.options[#menu.options + 1] = {
                 title = v.name,
-                description = "Give Access",
+                description = "アクセス権を付与",
                 onSelect = function()
                     TriggerServerEvent("ps-housing:server:addAccess", self.property_id, v.src)
                 end,
@@ -495,7 +495,7 @@ function Property:GiveAccessMenu()
         lib.registerContext(menu)
         lib.showContext(id)
     else
-        Framework[Config.Notify].Notify("No one is in the property", "error")
+        Framework[Config.Notify].Notify("物件内に誰もいません", "error")
     end
 end
 
@@ -507,7 +507,7 @@ function Property:RevokeAccessMenu()
     local id = "property-" .. self.property_id .. "-access-already"
     local alreadyAccessMenu = {
         id = id,
-        title = "Revoke Access",
+        title = "アクセス権を剥奪",
         options = {},
     }
 
@@ -519,7 +519,7 @@ function Property:RevokeAccessMenu()
             local v = playersWithAccess[i]
             alreadyAccessMenu.options[#alreadyAccessMenu.options + 1] = {
                 title = v.name,
-                description = "Remove Access",
+                description = "アクセス権を削除",
                 onSelect = function()
                     TriggerServerEvent("ps-housing:server:removeAccess", self.property_id, v.citizenid)
                 end,
@@ -529,7 +529,7 @@ function Property:RevokeAccessMenu()
         lib.registerContext(alreadyAccessMenu)
         lib.showContext(id)
     else
-        Framework[Config.Notify].Notify("No one has access to this property", "error")
+        Framework[Config.Notify].Notify("この物件にアクセス権を持つ人がいません", "error")
     end
 end
 
@@ -537,14 +537,14 @@ function Property:OpenDoorbellMenu()
     if not self.inProperty then return end
 
     if not next(self.doorbellPool) then
-        Framework[Config.Notify].Notify("No one is at the door", "error")
+        Framework[Config.Notify].Notify("ドアの前には誰もいません", "error")
         return
     end
 
     local id = string.format("property-%s-doorbell", self.property_id)
     local menu = {
         id = id,
-        title = "People at the door",
+        title = "ドアの前にいる人",
         options = {},
     }
 

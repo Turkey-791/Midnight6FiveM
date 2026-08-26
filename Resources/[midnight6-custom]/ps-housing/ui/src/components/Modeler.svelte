@@ -137,9 +137,9 @@
 							mode = 'translate'
 						}
 					}}
-					>Change to {mode == 'translate'
-						? 'rotate'
-						: 'translate'}</button
+					>{mode == 'translate'
+						? '回転モードに切り替え'
+						: '移動モードに切り替え'}</button
 				>
 				<div class="flex flex-row gap-[1rem]">
 					<button
@@ -147,7 +147,7 @@
 						on:click={() => {
 							mesh.rotation.set(0.0, 0.0, 0.0, $objectEuler.order)
 							getMeshLocation()
-						}}>Reset Rotation</button
+						}}>回転リセット</button
 					>
 					<button
 						class="bg-[color:var(--color-secondary)]  text-white p-[1rem] w-full"
@@ -158,11 +158,11 @@
 								$cameraLookAt.z
 							)
 							getMeshLocation()
-						}}>Reset Position</button
+						}}>位置リセット</button
 					>
 				</div>
 				<div class="flex flex-col items-center">
-					<p class=" h-fit">Translation Snap</p>
+					<p class=" h-fit">移動スナップ</p>
 					<div class="flex flex-row gap-[1rem] text-center">
 						<!-- y and z are switched because it was not passed throguh convertToGTACordSystem -->
 						<div class="bg-[color:var(--color-secondary)] relative flex flex-col w-[8rem] px-[0.1rem]"><p>x</p> <p>{$objectPosition.x.toFixed(2)}</p></div>
@@ -198,10 +198,10 @@
 								)
 								getMeshLocation()
 							})
-						}}>Place On Ground</button
+						}}>地面に配置</button
 					>
 				<div class="flex flex-col items-center ">
-					<p class=" h-fit">Rotation Snap</p>
+					<p class=" h-fit">回転スナップ</p>
 					<div class="flex flex-row gap-[1rem] text-center">
 						<div class="bg-[color:var(--color-secondary)] relative flex flex-col w-[8rem] px-[0.1rem]"><p>x</p> <p>{MathUtils.radToDeg($objectEuler.x).toFixed(2)}</p></div>
 						<div class="bg-[color:var(--color-secondary)] relative flex flex-col w-[8rem] px-[0.1rem]"><p>y</p> <p>{MathUtils.radToDeg($objectEuler.y).toFixed(2)}</p></div>
@@ -224,7 +224,7 @@
 						class="w-full"
 					/>
 				</div>
-				<p class="">Object Alpha</p>
+				<p class="">透明度</p>
 				<div class="flex flex-row gap-[1rem] items-center">
 					<input
 						id="slider"
@@ -242,7 +242,7 @@
 						SendNUI('stopPlacement')
 						ModelStore.show.set(false)
 						$CURRENTFURNITURE = null
-					}}>Stop Placement</button
+					}}>配置中止</button
 				>
 			</div>
 			<button
@@ -272,7 +272,7 @@
 					if (itemsWithSameType.length >= furnitureTypeMax) {
 						SendNUI('showNotification', {
 							type: 'error',
-							message: `You can only have ${furnitureTypeMax} of this item!`,
+							message: `このアイテムは最大${furnitureTypeMax}個までしか所有できません!`,
 						})
 						return;
 					}
@@ -283,7 +283,7 @@
 			}}
 		>        
 			<i class="fa-solid fa-shopping-cart text-[white]"></i>
-        	<p class=" font-semibold">Add To Cart</p>
+        	<p class=" font-semibold">カートに追加</p>
 		</button>	
 		{/if}
 

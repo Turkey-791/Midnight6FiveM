@@ -613,7 +613,7 @@ Config.FurnitureTypes = {
         local stash = ("property_%s"):format(property_id)
         id = type(id) == "boolean" and stash or stash..id
 
-        Framework[Config.Target].AddTargetEntity(entity, "Storage", "fas fa-box-open", function()
+        Framework[Config.Target].AddTargetEntity(entity, "収納", "fas fa-box-open", function()
             local stashConfig = Config.Shells[shell].stash
             Framework[Config.Inventory].OpenInventory('property_'..property_id, stashConfig, property_id)
         end)
@@ -624,7 +624,7 @@ Config.FurnitureTypes = {
     end,
 
     ["clothing"] = function(entity, property_id)
-        Framework[Config.Target].AddTargetEntity(entity, "Clothing", "fas fa-shirt", function()
+        Framework[Config.Target].AddTargetEntity(entity, "クローゼット", "fas fa-shirt", function()
             local heading = GetEntityHeading(cache.ped)
             SetEntityHeading(cache.ped, heading - 180.0)
             TriggerEvent("qb-clothing:client:openOutfitMenu")
@@ -1371,7 +1371,7 @@ Config.Furnitures = {
             { ["object"] = "v_res_mp_ashtrayb", ["price"] = 300, ["label"] = "灰皿" },
             { ["object"] = "v_res_m_candle", ["price"] = 300, ["label"] = "キャンドル" },
             { ["object"] = "v_res_m_candlelrg", ["price"] = 300, ["label"] = "キャンドル(大)" },
-            { ["object"] = "v_res_m_kscales", ["price"] = 300, ["label"] = "Scales" },
+            { ["object"] = "v_res_m_kscales", ["price"] = 300, ["label"] = "はかり" },
             { ["object"] = "v_res_tt_bedpillow", ["price"] = 300, ["label"] = "ベッドピロー" },
             { ["object"] = "v_med_cor_whiteboard", ["price"] = 300, ["label"] = "ホワイトボード" },
             { ["object"] = "prop_ashtray_01", ["price"] = 100, ["label"] = "灰皿(黒)" },
