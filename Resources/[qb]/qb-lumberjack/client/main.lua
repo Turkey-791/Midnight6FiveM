@@ -112,6 +112,26 @@ CreateThread(function()
     FreezeEntityPosition(pedfarmer1, true)
 end)
 
+--------------------------------
+---- Foreman Ped (きこり場) -----
+local ForemanCoords = Config.Foreman.coords
+CreateThread(function()
+    RequestModel( GetHashKey( PedModel ) )
+    while (not HasModelLoaded( GetHashKey( PedModel))) do
+        Wait(1)  
+    end
+    
+    pedforeman1 = CreatePed(1, PedHash, ForemanCoords, false, true)
+    for i = 1, 10 do
+        Wait(200)
+        PlaceObjectOnGroundProperly(pedforeman1)
+    end
+
+    SetEntityInvincible(pedforeman1, true)
+    SetBlockingOfNonTemporaryEvents(pedforeman1, true)
+    FreezeEntityPosition(pedforeman1, true)
+end)
+
 -----------------------------seller wood------------------------------
 RegisterNetEvent("qb-lumberjack:client:sellwood")
 AddEventHandler("qb-lumberjack:client:sellwood", function ()
@@ -204,6 +224,23 @@ Citizen.CreateThread(function ()
 	},
 	distance = 3.0
 })
+
+  exports['qb-target']:AddBoxZone("foremanped", vector3(ForemanCoords.x, ForemanCoords.y, ForemanCoords.z), 1, 1, {
+      name = "foreman",
+      heading = ForemanCoords.w,
+      debugPoly = false,
+      minZ = ForemanCoords.z - 1.0,
+      maxZ = ForemanCoords.z + 1.0,
+  }, {
+      options = {
+          {
+              event = "qb-lumberjack:menuforeman",
+              icon = "fas fa-hands",
+              label = "Talk to Foreman",
+          },
+      },
+      distance = 3.0
+  })
 end)
 
 ----------------------qb-menu-----------------------------
@@ -254,6 +291,37 @@ end)
 RegisterNetEvent('qb-lumberjack:client:endjob', function()
     hasLumberjackJob = false
     QBCore.Functions.Notify("きこりの仕事を終了しました。", 'primary', 4000)
+end)
+
+RegisterNetEvent('qb-lumberjack:menuforeman', function(data)
+    local ForemanMenu = {
+        {
+            header = "Foreman",
+            isMenuHeader = true,
+        },
+    }
+
+    if hasLumberjackJob then
+        ForemanMenu[#ForemanMenu + 1] = {
+            header = "🏁 仕事を終える",
+            params = {
+                event = 'qb-lumberjack:client:endjob',
+            }
+        }
+    else
+        ForemanMenu[#ForemanMenu + 1] = {
+            header = "📋 受注する",
+            params = {
+                event = 'qb-lumberjack:client:acceptjob',
+            }
+        }
+    end
+
+    ForemanMenu[#ForemanMenu + 1] = {
+        header = "Close",
+    }
+
+    exports['qb-menu']:openMenu(ForemanMenu)
 end)
 
 -----------------------------死亡検知------------------------------

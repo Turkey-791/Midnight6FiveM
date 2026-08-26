@@ -42,4 +42,6 @@ Config.Alerts = {
 }
 
 
-
+Config.Foreman = {
+    coords = vector4(-545.95, 5373.53, 70.49, 28.28),
+}
