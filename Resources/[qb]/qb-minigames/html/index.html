@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,59 +39,59 @@
         <script src="js/wordscramble.js" defer></script>
     </head>
     <body>
-        <!-- Word Scramble Game HTML -->
+        <!-- 単語並べ替えゲーム HTML -->
         <div class="scramble-container">
-            <h2>Word Scramble</h2>
+            <h2>ワードスクランブル</h2>
             <div class="scramble-content">
                 <p class="word"></p>
                 <div class="details">
-                    <p class="hint">Hint: <span></span></p>
+                    <p class="hint">ヒント: <span></span></p>
                     <p class="time">
-                        Time Left: <span><b>30</b>s</span>
+                        残り時間: <span><b>30</b>秒</span>
                     </p>
                 </div>
-                <input type="text" spellcheck="false" placeholder="Enter a valid word" />
+                <input type="text" spellcheck="false" placeholder="正しい単語を入力" />
                 <div class="buttons">
-                    <button class="check-word">Check Word</button>
+                    <button class="check-word">単語を確認</button>
                 </div>
             </div>
         </div>
 
-        <!-- Guess the Word Game HTML -->
+        <!-- 単語当てゲーム HTML -->
         <div class="guess-container">
-            <h1>Guess the Word</h1>
+            <h1>単語を推測</h1>
             <div class="guess-content">
                 <input type="text" class="typing-input" maxlength="1" />
                 <div class="inputs"></div>
                 <div class="details">
-                    <p class="guess-hint">Hint: <span></span></p>
-                    <p class="guess-left">Remaining guesses: <span></span></p>
-                    <p class="wrong-letter">Wrong letters: <span></span></p>
+                    <p class="guess-hint">ヒント: <span></span></p>
+                    <p class="guess-left">残り推測回数: <span></span></p>
+                    <p class="wrong-letter">間違った文字: <span></span></p>
                 </div>
             </div>
         </div>
 
-        <!-- Quiz Game HTML -->
+        <!-- クイズゲーム HTML -->
         <div class="quiz-container">
-            <div class="start_btn"><button>Start Quiz</button></div>
+            <div class="start_btn"><button>クイズを開始</button></div>
             <div class="info_box">
-                <div class="info-title"><span>Quiz Rules:</span></div>
+                <div class="info-title"><span>クイズのルール:</span></div>
                 <div class="info-list">
-                    <div class="info">1. You will have only <span>15 seconds</span> per each question.</div>
-                    <div class="info">2. Once you select your answer, it can't be undone.</div>
-                    <div class="info">3. You can't select any option once time goes off.</div>
-                    <div class="info">4. You'll get points on the basis of your correct answers.</div>
+                    <div class="info">1. 各質問につき、持ち時間は<span>15秒</span>です。</div>
+                    <div class="info">2. 一度回答を選択すると、元に戻すことはできません。</div>
+                    <div class="info">3. 時間切れになると、どのオプションも選択できません。</div>
+                    <div class="info">4. 正しい回答数に基づいてポイントを獲得します。</div>
                 </div>
                 <div class="buttons">
-                    <button class="quit">Exit Quiz</button>
-                    <button class="restart">Continue</button>
+                    <button class="quit">クイズを終了</button>
+                    <button class="restart">続ける</button>
                 </div>
             </div>
             <div class="quiz_box">
                 <header>
-                    <div class="title">Quiz Application</div>
+                    <div class="title">クイズアプリ</div>
                     <div class="timer">
-                        <div class="time_left_txt">Time Left</div>
+                        <div class="time_left_txt">残り時間</div>
                         <div class="timer_sec">15</div>
                     </div>
                     <div class="time_line"></div>
@@ -102,22 +102,22 @@
                 </section>
                 <footer>
                     <div class="total_que"></div>
-                    <button class="next_btn">Next Que</button>
+                    <button class="next_btn">次の質問</button>
                 </footer>
             </div>
             <div class="result_box">
                 <div class="icon">
                     <i class="fas fa-crown"></i>
                 </div>
-                <div class="complete_text">You've completed the Quiz!</div>
+                <div class="complete_text">クイズを完了しました！</div>
                 <div class="score_text"></div>
                 <div class="buttons">
-                    <button class="quit">Quit Quiz</button>
+                    <button class="quit">クイズを終了</button>
                 </div>
             </div>
         </div>
 
-        <!-- Keys minigame HTML -->
+        <!-- キーミニゲーム HTML -->
         <div class="keys-container">
             <div class="key" data-key="arrowup">&uarr;</div>
             <div class="key-row">
@@ -127,7 +127,7 @@
             </div>
         </div>
 
-        <!-- Lockpick HTML -->
+        <!-- ロックピック HTML -->
         <div id="lockpick-container">
             <img id="collar" />
             <div id="cylinder"></div>
@@ -138,7 +138,7 @@
             </div>
         </div>
 
-        <!-- Hacking HTML -->
+        <!-- ハッキング HTML -->
         <div class="hacking-container">
             <audio id="audiocorrect" src="sounds/correct.ogg"></audio>
             <audio id="audiowrong" src="sounds/wrong.ogg"></audio>
@@ -151,10 +151,10 @@
             </div>
         </div>
 
-        <!-- Skillbar HTML -->
+        <!-- スキルバー HTML -->
         <canvas id="skillbar" height="300" width="300"></canvas>
 
-        <!-- pinpad HTML -->
+        <!-- ピンパッド HTML -->
         <div class="pinpad-container">
             <input type="text" id="PINbox" readonly />
             <div id="PINcode">
@@ -167,7 +167,7 @@
                 <button class="PINbutton" value="7">7</button>
                 <button class="PINbutton" value="8">8</button>
                 <button class="PINbutton" value="9">9</button>
-                <button class="PINbutton clear-button" id="clearButton">Clear</button>
+                <button class="PINbutton clear-button" id="clearButton">クリア</button>
             </div>
         </div>
     </body>

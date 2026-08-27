@@ -36,7 +36,12 @@ AddEventHandler('casino:grabToken', function()
 
     if Player.Functions.RemoveMoney('cash', Casino.WheelTokenPrice) then
         Player.Functions.AddItem("wheeltoken", 1)
-        TriggerClientEvent('inventory:client:ItemBox', source, Framework.Shared.Items[item], 'add')
+        -- Fix: referenced 'item', a variable that does not exist in this
+        -- function (it is only defined in the separate casino:grabFood
+        -- handler above). Framework.Shared.Items[nil] is nil, so the
+        -- ItemBox popup silently never showed for a token purchase even
+        -- though the purchase itself (money removed, item added) worked.
+        TriggerClientEvent('inventory:client:ItemBox', source, Framework.Shared.Items["wheeltoken"], 'add')
     end
 end)
 

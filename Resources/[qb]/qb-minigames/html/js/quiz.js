@@ -198,7 +198,16 @@ next_btn.onclick = () => {
 document.addEventListener("keydown", (event) => {
     if (!quizStarted) return;
     if (event.key === "Escape") {
-        fetch(`https://${GetParentResourceName()}/closeQuiz`, {
+        // Fix: this posted to 'closeQuiz', which has no matching
+        // RegisterNUICallback in client/quiz.lua (only 'exitQuiz' and
+        // 'quitQuiz' are registered there), so pressing Escape reset the
+        // NUI locally but never told the Lua side the quiz ended - the
+        // quiz promise (quiz:resolve(...)) never resolved, leaving
+        // whatever server-side code called the quiz waiting forever.
+        // 'exitQuiz' is the same endpoint the existing Exit button uses
+        // (an early/incomplete exit that resolves the quiz as failed), so
+        // Escape now behaves the same way instead of introducing new Lua.
+        fetch(`https://${GetParentResourceName()}/exitQuiz`, {
             method: "POST",
             headers: { "Content-Type": "application/json; charset=UTF-8" },
             body: JSON.stringify({}),
