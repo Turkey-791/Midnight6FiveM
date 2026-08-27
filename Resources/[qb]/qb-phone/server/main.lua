@@ -538,6 +538,42 @@ QBCore.Functions.CreateCallback('qb-phone:server:HasPhone', function(source, cb)
     end
 end)
 
+-- Added: correctly-named callback for the Garage app vehicle list.
+-- Fixes a naming mismatch bug: client/main.lua previously called the
+-- non-existent callback 'qb-garage:server:GetPlayerVehicles1', which was
+-- never registered anywhere, so the Garage app's vehicle list never
+-- populated. This callback queries player_vehicles by citizenid (the same
+-- ownership check qb-garages itself uses) and resolves the fields the
+-- Garage app UI (html/js/garage.js) expects: fullname, brand, and the
+-- garage's display label (Config.Garages here is qb-garages' own config,
+-- loaded via the '@qb-garages/config.lua' shared/server script in
+-- fxmanifest.lua, and uses string keys with a 'label' field, not numeric
+-- keys with a 'name' field as the old, unused code elsewhere in this file
+-- assumed).
+QBCore.Functions.CreateCallback('qb-phone:server:GetGarageVehicles', function(source, cb)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if Player == nil then
+        cb({})
+        return
+    end
+
+    local vehicles = MySQL.query.await('SELECT * FROM player_vehicles WHERE citizenid = ?', { Player.PlayerData.citizenid })
+    if vehicles[1] ~= nil then
+        for _, v in pairs(vehicles) do
+            local vehInfo = QBCore.Shared.Vehicles[v.vehicle]
+            if vehInfo ~= nil then
+                v.brand = vehInfo.brand
+                v.fullname = vehInfo.brand .. ' ' .. vehInfo.name
+            end
+            if v.garage ~= nil and Config.Garages[v.garage] ~= nil then
+                v.garage = Config.Garages[v.garage].label
+            end
+        end
+    end
+
+    cb(vehicles)
+end)
+
 QBCore.Functions.CreateCallback('qb-phone:server:CanTransferMoney', function(source, cb, amount, iban)
     -- strip bad characters from bank transfers
     local newAmount = tostring(amount)
