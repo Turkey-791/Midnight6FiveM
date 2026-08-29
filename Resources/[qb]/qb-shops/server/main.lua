@@ -1,4 +1,6 @@
 local Bail = {}
+-- Money Authority fix (2026-08-28): サーバー側で実際の配送完了数を追跡するためのテーブル(citizenid単位)
+local TruckerDropsCount = {}
 
 -- Functions
 
@@ -33,14 +35,15 @@ end
 
 local function deliveryPay(source, shop)
     local Player = exports['qb-core']:GetPlayer(source)
-    if not Player then return end
+    if not Player then return false end
     local playerPed = GetPlayerPed(source)
     local playerCoords = GetEntityCoords(playerPed)
     local deliverCoords = Config.Locations[shop].delivery
     local distance = #(playerCoords - vector3(deliverCoords.x, deliverCoords.y, deliverCoords.z))
-    if distance > 10 then return end
+    if distance > 10 then return false end
     Player.AddMoney('bank', Config.DeliveryPrice, 'qb-shops:deliveryPay')
     if math.random(100) <= 10 then exports['qb-inventory']:AddItem(source, Config.RewardItem, 1, false, false, 'qb-shops:deliveryPay') end
+    return true
 end
 
 -- Events
@@ -51,7 +54,15 @@ RegisterNetEvent('qb-shops:server:RestockShopItems', function(shop)
     local src = source
     if not shop then return end
     if not Config.Locations[shop] then return end
-    deliveryPay(src, shop)
+    -- Money Authority fix (2026-08-28): deliveryPay()が実際に支払いを行った(=サーバー側の距離検証を通過した)
+    -- 場合のみ、PaySlip用の完了カウントを積み上げる。
+    if deliveryPay(src, shop) then
+        local Player = exports['qb-core']:GetPlayer(src)
+        if Player then
+            local citizenid = Player.PlayerData.citizenid
+            TruckerDropsCount[citizenid] = (TruckerDropsCount[citizenid] or 0) + 1
+        end
+    end
     if not Config.Locations[shop].useStock then return end
     local randAmount = math.random(10, 50)
     for k in pairs(Config.Locations[shop].products) do Config.Locations[shop].products[k].amount += randAmount end
@@ -104,12 +115,24 @@ RegisterNetEvent('qb-shops:server:PaySlip', function(drops)
     if distance > 10 then return end
     local Player = exports['qb-core']:GetPlayer(src)
     if not Player then return end
-    local completedDrops = tonumber(drops)
-    if not drops then return end
+    -- Money Authority fix (2026-08-28): drops引数(クライアント申告値)は使用しない。
+    -- RestockShopItems時にサーバー側で積み上げたカウントのみを正とする。
+    local citizenid = Player.PlayerData.citizenid
+    local completedDrops = TruckerDropsCount[citizenid] or 0
+    if completedDrops <= 0 then return end
     local payment = Config.DeliveryPrice * completedDrops
     Player.AddMoney('bank', payment, 'trucker-salary')
     Player.AddRep('delivery', completedDrops)
     TriggerClientEvent('QBCore:Notify', src, Lang:t('success.you_earned', { value = payment }), 'success')
+    TruckerDropsCount[citizenid] = 0
+end)
+
+-- Money Authority fix (2026-08-28): ログアウト時にサーバー側カウントを破棄する。
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(source)
+    local Player = exports['qb-core']:GetPlayer(source)
+    if Player then
+        TruckerDropsCount[Player.PlayerData.citizenid] = nil
+    end
 end)
 
 -- Opening shops

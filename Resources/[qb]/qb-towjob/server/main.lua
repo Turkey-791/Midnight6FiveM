@@ -1,6 +1,8 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 local PaymentTax = 15
 local Bail = {}
+-- Money Authority fix (2026-08-28): サーバー側で実際の納車完了数を追跡するためのテーブル(citizenid単位)
+local TowDropoffCount = {}
 
 RegisterNetEvent('qb-tow:server:DoBail', function(bool, vehInfo)
     local src = source
@@ -48,6 +50,21 @@ RegisterNetEvent('qb-tow:server:nano', function(vehNetID)
     end
 end)
 
+-- Money Authority fix (2026-08-28): 個々の納車完了をサーバー側で検知・カウントする。
+-- deliverVehicle()(client/main.lua)から都度呼ばれる。qb-garbagejobのRoutes[citizenid]方式と同じ考え方。
+RegisterNetEvent('qb-tow:server:VehicleDelivered', function()
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player or Player.PlayerData.job.name ~= 'tow' then return end
+    local playerPed = GetPlayerPed(src)
+    local playerCoords = GetEntityCoords(playerPed)
+    if #(playerCoords - Config.Locations['dropoff'].coords) > 35.0 then
+        return
+    end
+    local citizenid = Player.PlayerData.citizenid
+    TowDropoffCount[citizenid] = (TowDropoffCount[citizenid] or 0) + 1
+end)
+
 RegisterNetEvent('qb-tow:server:11101110', function(drops)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
@@ -57,7 +74,11 @@ RegisterNetEvent('qb-tow:server:11101110', function(drops)
     if Player.PlayerData.job.name ~= 'tow' or #(playerCoords - vector3(Config.Locations['main'].coords.x, Config.Locations['main'].coords.y, Config.Locations['main'].coords.z)) > 6.0 then
         return DropPlayer(src, Lang:t('info.skick'))
     end
-    drops = tonumber(drops)
+    -- Money Authority fix (2026-08-28): drops引数(クライアント申告値)は使用しない。
+    -- server:VehicleDelivered で積み上げたサーバー側カウントのみを正とする。
+    local citizenid = Player.PlayerData.citizenid
+    drops = TowDropoffCount[citizenid] or 0
+    if drops <= 0 then return end
     local bonus = 0
     local DropPrice = math.random(150, 170)
     if drops > 5 then
@@ -74,6 +95,15 @@ RegisterNetEvent('qb-tow:server:11101110', function(drops)
     local payment = price - taxAmount
     Player.Functions.AddMoney('bank', payment, 'tow-salary')
     TriggerClientEvent('QBCore:Notify', src, Lang:t('success.you_earned', { value = payment }), 'success')
+    TowDropoffCount[citizenid] = 0
+end)
+
+-- Money Authority fix (2026-08-28): ログアウト時にサーバー側カウントを破棄し、次回ログイン時に持ち越さない。
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(source)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if Player then
+        TowDropoffCount[Player.PlayerData.citizenid] = nil
+    end
 end)
 
 QBCore.Commands.Add('npc', Lang:t('info.toggle_npc'), {}, false, function(source)

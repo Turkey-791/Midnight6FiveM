@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ao_infohud</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="hud">
+  <div class="logo-wrap">
+    <img src="images/logo.png" class="logo" alt="logo">
+  </div>
+
+  <div class="info-block">
+    <div class="left-group">
+      <span id="realtime">--:--</span>
+      <span id="realdate">--/--</span>
+      <span class="weather">☀ 26°</span>
+    </div>
+    <span class="divider"></span>
+    <span class="label-col cash-label">CASH</span>
+    <span class="amount-col" id="cash">$0</span>
+
+    <div class="left-group">
+      <span class="id-label">ID <span id="playerId">0</span></span>
+      <span class="ingame-label">IN GAME <span id="gametime">--:--</span></span>
+    </div>
+    <span class="divider"></span>
+    <span class="label-col bank-label">BANK</span>
+    <span class="amount-col" id="bank">$0</span>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

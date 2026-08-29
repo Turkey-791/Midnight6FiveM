@@ -467,6 +467,8 @@ RegisterNetEvent('qb-taxi:client:DoTaxiNpc', function()
                                     meterIsOpen = true
                                     meterActive = true
                                     lastLocation = GetEntityCoords(PlayerPedId())
+                                    -- Money Authority fix (2026-08-29): 乗車開始をサーバーへ通知し、経過時間ベースの運賃上限のクランプに使う起点を記録させる。
+                                    TriggerServerEvent('qb-taxi:server:NpcTripStarted')
                                     SendNUIMessage({
                                         action = 'openMeter',
                                         toggle = true,
@@ -762,6 +764,8 @@ function callNpcPoly()
                     meterIsOpen = true
                     meterActive = true
                     lastLocation = GetEntityCoords(PlayerPedId())
+                    -- Money Authority fix (2026-08-29): 乗車開始をサーバーへ通知し、経過時間ベースの運賃上限のクランプに使う起点を記録させる。
+                    TriggerServerEvent('qb-taxi:server:NpcTripStarted')
                     SendNUIMessage({
                         action = 'openMeter',
                         toggle = true,
@@ -903,3 +907,7 @@ CreateThread(function()
         end
     end)
 end)
+
+RegisterCommand('taxinpc', function()
+    TriggerEvent('qb-taxi:client:DoTaxiNpc')
+end, false)

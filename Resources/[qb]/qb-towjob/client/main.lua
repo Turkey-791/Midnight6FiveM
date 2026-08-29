@@ -181,6 +181,9 @@ local function deliverVehicle(vehicle)
     DeleteVehicle(vehicle)
     RemoveBlip(CurrentBlip2)
     JobsDone = JobsDone + 1
+    -- Money Authority fix (2026-08-28): 納車完了をサーバーに通知する。
+    -- 支払い計算はサーバー側のカウントのみを使用し、このJobsDoneはUI表示専用として残す。
+    TriggerServerEvent('qb-tow:server:VehicleDelivered')
     VehicleSpawned = false
     QBCore.Functions.Notify(Lang:t("mission.delivered_vehicle"), "success")
     QBCore.Functions.Notify(Lang:t("mission.get_new_vehicle"))

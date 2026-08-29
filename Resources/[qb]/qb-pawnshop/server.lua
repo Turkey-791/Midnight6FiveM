@@ -20,7 +20,23 @@ end
 RegisterNetEvent('qb-pawnshop:server:sellPawnItems', function(itemName, itemAmount, itemPrice)
     local src = source
     local Player = exports['qb-core']:GetPlayer(src)
-    local totalPrice = (tonumber(itemAmount) * itemPrice)
+
+    -- Money Authority fix (2026-08-28): 単価はConfig.PawnItems(サーバー側)から取得する。
+    -- クライアントから送られる itemPrice 引数(第3引数)は互換のため残すが、計算には使用しない。
+    local unitPrice
+    for _, entry in pairs(Config.PawnItems) do
+        if entry.item == itemName then
+            unitPrice = entry.price
+            break
+        end
+    end
+    if not unitPrice then
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_items'), 'error')
+        return
+    end
+
+    itemAmount = tonumber(itemAmount)
+    local totalPrice = unitPrice * itemAmount
     local playerCoords = GetEntityCoords(GetPlayerPed(src))
     local dist
     for _, value in pairs(Config.PawnLocation) do
@@ -34,13 +50,13 @@ RegisterNetEvent('qb-pawnshop:server:sellPawnItems', function(itemName, itemAmou
         exploitBan(src, 'sellPawnItems Exploiting')
         return
     end
-    if exports['qb-inventory']:RemoveItem(src, itemName, tonumber(itemAmount), false, 'qb-pawnshop:server:sellPawnItems') then
+    if exports['qb-inventory']:RemoveItem(src, itemName, itemAmount, false, 'qb-pawnshop:server:sellPawnItems') then
         if Config.BankMoney then
             Player.AddMoney('bank', totalPrice, 'qb-pawnshop:server:sellPawnItems')
         else
             Player.AddMoney('cash', totalPrice, 'qb-pawnshop:server:sellPawnItems')
         end
-        TriggerClientEvent('QBCore:Notify', src, Lang:t('success.sold', { value = tonumber(itemAmount), value2 = sharedItems[itemName].label, value3 = totalPrice }), 'success')
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('success.sold', { value = itemAmount, value2 = sharedItems[itemName].label, value3 = totalPrice }), 'success')
         TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems[itemName], 'remove')
     else
         TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_items'), 'error')

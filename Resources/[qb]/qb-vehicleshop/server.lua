@@ -193,9 +193,23 @@ RegisterNetEvent('qb-vehicleshop:server:financePayment', function(paymentAmount,
     local bank = player.PlayerData.money['bank']
     local plate = vehData.vehiclePlate
     paymentAmount = tonumber(paymentAmount)
-    local minPayment = tonumber(vehData.paymentAmount)
     local timer = (Config.PaymentInterval * 60)
-    local newBalance, newPaymentsLeft, newPayment = calculateNewFinance(paymentAmount, vehData)
+
+    -- Money Authority fix (2026-08-28): 残債・残回数・最低支払額はDBの現在値を正とする。
+    -- クライアントが送るvehDataはplate(識別用)以外は信用しない。
+    local dbRow = MySQL.single.await('SELECT balance, paymentamount, paymentsleft FROM player_vehicles WHERE plate = ?', { plate })
+    if not dbRow or not dbRow.balance then
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.notenoughmoney'), 'error')
+        return
+    end
+
+    local currentVehData = {
+        balance = tonumber(dbRow.balance),
+        paymentsLeft = tonumber(dbRow.paymentsleft),
+    }
+    local minPayment = tonumber(dbRow.paymentamount)
+
+    local newBalance, newPaymentsLeft, newPayment = calculateNewFinance(paymentAmount, currentVehData)
     if newBalance > 0 then
         if player and paymentAmount >= minPayment then
             if cash >= paymentAmount then
@@ -222,8 +236,12 @@ RegisterNetEvent('qb-vehicleshop:server:financePaymentFull', function(data)
     local player = exports['qb-core']:GetPlayer(src)
     local cash = player.PlayerData.money['cash']
     local bank = player.PlayerData.money['bank']
-    local vehBalance = data.vehBalance
     local vehPlate = data.vehPlate
+
+    -- Money Authority fix (2026-08-28): 残債はDBの現在値を正とする。data.vehBalance(クライアント申告値)は使用しない。
+    local dbRow = MySQL.single.await('SELECT balance FROM player_vehicles WHERE plate = ?', { vehPlate })
+    local vehBalance = dbRow and tonumber(dbRow.balance) or 0
+
     if player and vehBalance ~= 0 then
         if cash >= vehBalance then
             player.RemoveMoney('cash', vehBalance, 'paid off vehicle')

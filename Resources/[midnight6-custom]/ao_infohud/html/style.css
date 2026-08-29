@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  font-family: 'Rajdhani', sans-serif;
+  overflow: hidden;
+}
+
+/*
+ * --u: レイアウトの基準単位。画面幅に応じて可変(vw)にしつつ、
+ * 極端に小さい/大きい解像度では読みやすさ優先で上下限にクランプします。
+ * 1280〜1920px幅の範囲でHUDの画面占有率がほぼ一定(横幅23%前後)になるよう調整済みです。
+ */
+#hud {
+  --u: clamp(12px, 0.941vw, 21px);
+  position: absolute;
+  top: calc(var(--u) * 1.2);
+  right: calc(var(--u) * 1.2);
+  display: flex;
+  align-items: stretch;
+  background: rgba(15, 17, 22, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: calc(var(--u) * 0.6667);
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+.logo-wrap {
+  width: calc(var(--u) * 3.733);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logo {
+  width: calc(var(--u) * 2.533);
+  height: calc(var(--u) * 2.533);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.info-block {
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 1.0667);
+  display: grid;
+  grid-template-columns: auto 1px calc(var(--u) * 2.8) minmax(9ch, auto);
+  align-items: center;
+  column-gap: calc(var(--u) * 0.6667);
+  row-gap: calc(var(--u) * 0.1333);
+  font-size: var(--u);
+  color: #e9ebf0;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+}
+
+.left-group {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6667);
+}
+
+.divider {
+  width: 1px;
+  height: calc(var(--u) * 0.9333);
+  background: rgba(255, 255, 255, 0.15);
+  justify-self: center;
+}
+
+#realtime { color: #ffffff; }
+#realdate { color: #9aa1ad; font-size: calc(var(--u) * 0.8667); font-weight: 500; }
+
+.weather { color: #9aa1ad; font-size: calc(var(--u) * 0.8); font-weight: 500; text-align: center; }
+
+.id-label, .ingame-label { color: #9aa1ad; font-size: calc(var(--u) * 0.8); font-weight: 500; }
+.id-label span, .ingame-label span { color: #e9ebf0; }
+
+.label-col {
+  text-align: right;
+  font-size: calc(var(--u) * 0.8);
+  font-weight: 600;
+}
+.cash-label { color: #7dd67d; }
+.bank-label { color: #6fb3ff; }
+
+.amount-col {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+#cash { color: #a4f0a4; }
+#bank { color: #a9d4ff; }
