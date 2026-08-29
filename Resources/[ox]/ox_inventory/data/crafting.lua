@@ -65,7 +65,7 @@ return {
 				count = 1,
 			},
 			{
-				name = 'pistol_ammo',
+				name = 'ammo-9', -- was pistol_ammo
 				ingredients = { metalscrap = 50, steel = 37, copper = 26 },
 				duration = 4600,
 				count = 1,

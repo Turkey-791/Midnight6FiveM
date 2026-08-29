@@ -76,7 +76,7 @@ Config = {
                 }
             },
             {
-                item = 'pistol_ammo',
+                item = 'ammo-9', -- was pistol_ammo
                 xpRequired = 250,
                 xpGain = 8,
                 requiredItems = {

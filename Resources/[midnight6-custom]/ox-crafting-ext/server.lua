@@ -33,7 +33,7 @@ local Requirements = {
     gatecrack              = { xpRequired = 110,  xpGain = 5,  tier = 2 },
     handcuffs              = { xpRequired = 160,  xpGain = 6,  tier = 2 },
     repairkit              = { xpRequired = 200,  xpGain = 7,  tier = 2 },
-    pistol_ammo            = { xpRequired = 250,  xpGain = 8,  tier = 3 },
+    ['ammo-9']              = { xpRequired = 250,  xpGain = 8,  tier = 3 }, -- was pistol_ammo
     ironoxide              = { xpRequired = 300,  xpGain = 9,  tier = 3 },
     aluminumoxide           = { xpRequired = 300,  xpGain = 10, tier = 3 },
     armor                   = { xpRequired = 350,  xpGain = 11, tier = 4 },

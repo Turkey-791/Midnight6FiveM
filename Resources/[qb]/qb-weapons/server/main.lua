@@ -225,11 +225,18 @@ end, 'god')
 -- Items
 
 -- AMMO
-for ammoItem, properties in pairs(Config.AmmoTypes) do
-    QBCore.Functions.CreateUseableItem(ammoItem, function(source, item)
-        TriggerClientEvent('qb-weapons:client:AddAmmo', source, properties.ammoType, properties.amount, item)
-    end)
-end
+-- [2026-08-27] Disabled: this registered pistol_ammo/smg_ammo/shotgun_ammo/rifle_ammo/
+-- mg_ammo/snp_ammo/emp_ammo as QBCore useable items that added ammo directly via
+-- AddAmmoToPed. That ammo was never written to ox_inventory's weapon.metadata.ammo,
+-- so it silently disappeared the next time the weapon was re-equipped. ox_inventory's
+-- own ammo-* items (loaded via the inventory UI) are the single supported ammo path now.
+-- Left Config.AmmoTypes itself untouched (data.lua) in case another script reads it.
+--
+-- for ammoItem, properties in pairs(Config.AmmoTypes) do
+--     QBCore.Functions.CreateUseableItem(ammoItem, function(source, item)
+--         TriggerClientEvent('qb-weapons:client:AddAmmo', source, properties.ammoType, properties.amount, item)
+--     end)
+-- end
 
 -- TINTS
 

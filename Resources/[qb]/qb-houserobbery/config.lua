@@ -45,7 +45,7 @@ Config.Rewards = {
             { item = 'thermite',     min = 1, max = 1 },
             { item = 'cryptostick',  min = 1, max = 1 },
             { item = 'tablet',       min = 1, max = 1 },
-            { item = 'pistol_ammo',  min = 1, max = 3 }
+            { item = 'ammo-9',  min = 1, max = 3 } -- was pistol_ammo
         }
     }
 }

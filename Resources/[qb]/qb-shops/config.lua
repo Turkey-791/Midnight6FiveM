@@ -1,19 +1,19 @@
 Config = {}
 Config.UseTarget = GetConvar('UseTarget', 'false') == 'true'
 
--- Deliveries
+-- 配達 (Deliveries)
 Config.ShopsInvJsonFile = './json/shops-inventory.json'
-Config.TruckDeposit = 125
-Config.MaxDeliveries = 20
-Config.DeliveryPrice = 500
-Config.RewardItem = 'cryptostick'
-Config.Fuel = 'LegacyFuel'
+Config.TruckDeposit = 125 -- トラックの預り金
+Config.MaxDeliveries = 20 -- 最大配達数
+Config.DeliveryPrice = 500 -- 配達報酬額
+Config.RewardItem = 'cryptostick' -- 報酬アイテム
+Config.Fuel = 'LegacyFuel' -- 燃料システム
 
 Config.DeliveryLocations = {
     ['main'] = { label = 'GO Postal', coords = vector4(69.0862, 127.6753, 79.2123, 156.7736) },
-    ['vehicleWithdraw'] = vector4(71.9318, 120.8389, 79.0823, 160.5110),
-    ['vehicleDeposit'] = vector3(62.7282, 124.9846, 79.0926),
-    ['stores'] = {} -- auto generated
+    ['vehicleWithdraw'] = vector4(71.9318, 120.8389, 79.0823, 160.5110), -- 車両引き出し
+    ['vehicleDeposit'] = vector3(62.7282, 124.9846, 79.0926), -- 車両預り金
+    ['stores'] = {} -- 自動生成 (auto generated)
 }
 
 Config.Vehicles = {
@@ -66,7 +66,7 @@ Config.Products = {
     },
     ['gearshop'] = {
         { name = 'diving_gear', price = 2500, amount = 10 },
-        { name = 'jerry_can',   price = 200,  amount = 50 },
+        { name = 'jerry_can',   price = 200,  amount = 50 }, -- ガソリン缶
     },
     ['leisureshop'] = {
         { name = 'parachute',   price = 2500, amount = 10 },
@@ -78,7 +78,8 @@ Config.Products = {
         { name = 'weapon_knife',         price = 250,  amount = 250 },
         { name = 'weapon_bat',           price = 250,  amount = 250 },
         { name = 'weapon_hatchet',       price = 250,  amount = 250 },
-        { name = 'pistol_ammo',          price = 250,  amount = 250, requiredLicense = 'weapon' },
+        { name = 'ammo-9',              price = 250,  amount = 250, requiredLicense = 'weapon' }, -- was pistol_ammo (Pistol/Vintage Pistol use ammo-9)
+        { name = 'ammo-45',             price = 250,  amount = 250, requiredLicense = 'weapon' }, -- added: SNS Pistol requires ammo-45, not ammo-9
         { name = 'weapon_pistol',        price = 2500, amount = 5,   requiredLicense = 'weapon' },
         { name = 'weapon_snspistol',     price = 1500, amount = 5,   requiredLicense = 'weapon' },
         { name = 'weapon_vintagepistol', price = 4000, amount = 5,   requiredLicense = 'weapon' },
@@ -116,17 +117,16 @@ Config.Products = {
         { name = 'water_bottle', price = 4, amount = 50 },
     },
     ['police'] = {
-        { name = 'weapon_pistol',       price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_PI_FLSH', label = 'Flashlight' } } } },
-        { name = 'weapon_stungun',      price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_AR_FLSH', label = 'Flashlight' } } } },
-        { name = 'weapon_pumpshotgun',  price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_AR_FLSH', label = 'Flashlight' } } } },
-        { name = 'weapon_smg',          price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_SCOPE_MACRO_02', label = '1x Scope' }, { component = 'COMPONENT_AT_AR_FLSH', label = 'Flashlight' } } } },
-        { name = 'weapon_carbinerifle', price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_AR_FLSH', label = 'Flashlight' }, { component = 'COMPONENT_AT_SCOPE_MEDIUM', label = '3x Scope' } } } },
+        { name = 'weapon_pistol',       price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_PI_FLSH', label = 'フラッシュライト' } } } },
+        { name = 'weapon_stungun',      price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_AR_FLSH', label = 'フラッシュライト' } } } },
+        { name = 'weapon_pumpshotgun',  price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_AR_FLSH', label = 'フラッシュライト' } } } },
+        { name = 'weapon_smg',          price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_SCOPE_MACRO_02', label = '1x スコープ' }, { component = 'COMPONENT_AT_AR_FLSH', label = 'フラッシュライト' } } } },
+        { name = 'weapon_carbinerifle', price = 0, amount = 50, info = { attachments = { { component = 'COMPONENT_AT_AR_FLSH', label = 'フラッシュライト' }, { component = 'COMPONENT_AT_SCOPE_MEDIUM', label = '3x スコープ' } } } },
         { name = 'weapon_nightstick',   price = 0, amount = 50 },
         { name = 'weapon_flashlight',   price = 0, amount = 50 },
-        { name = 'pistol_ammo',         price = 0, amount = 50 },
-        { name = 'smg_ammo',            price = 0, amount = 50 },
-        { name = 'shotgun_ammo',        price = 0, amount = 50 },
-        { name = 'rifle_ammo',          price = 0, amount = 50 },
+        { name = 'ammo-9',              price = 0, amount = 50 }, -- was pistol_ammo + smg_ammo (Pistol & SMG both use ammo-9)
+        { name = 'ammo-shotgun',        price = 0, amount = 50 }, -- was shotgun_ammo
+        { name = 'ammo-rifle',          price = 0, amount = 50 }, -- was rifle_ammo (Carbine Rifle)
         { name = 'handcuffs',           price = 0, amount = 50 },
         { name = 'empty_evidence_bag',  price = 0, amount = 50 },
         { name = 'police_stormram',     price = 0, amount = 50 },
@@ -166,15 +166,15 @@ Config.Products = {
 }
 
 Config.Locations = {
-    -- 24/7 Locations
+    -- 24/7 店舗 (24/7 Locations)
     ['247supermarket'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(24.47, -1346.62, 29.5, 271.66),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -185,13 +185,13 @@ Config.Locations = {
     },
 
     ['247supermarket2'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(-3039.54, 584.38, 7.91, 17.27),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -201,13 +201,13 @@ Config.Locations = {
     },
 
     ['247supermarket3'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(-3242.97, 1000.01, 12.83, 357.57),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -217,13 +217,13 @@ Config.Locations = {
     },
 
     ['247supermarket4'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(1728.07, 6415.63, 35.04, 242.95),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -233,13 +233,13 @@ Config.Locations = {
     },
 
     ['247supermarket5'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(1959.82, 3740.48, 32.34, 301.57),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -249,13 +249,13 @@ Config.Locations = {
     },
 
     ['247supermarket6'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(549.13, 2670.85, 42.16, 99.39),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -265,13 +265,13 @@ Config.Locations = {
     },
 
     ['247supermarket7'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(2677.47, 3279.76, 55.24, 335.08),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -281,13 +281,13 @@ Config.Locations = {
     },
 
     ['247supermarket8'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(2556.66, 380.84, 108.62, 356.67),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -297,13 +297,13 @@ Config.Locations = {
     },
 
     ['247supermarket9'] = {
-        ['label'] = '24/7 Supermarket',
+        ['label'] = '24/7 スーパーマーケット',
         ['coords'] = vector4(372.66, 326.98, 103.57, 253.73),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -312,15 +312,15 @@ Config.Locations = {
         ['delivery'] = vector4(379.97, 357.3, 102.56, 26.42)
     },
 
-    -- LTD Gasoline Locations
+    -- LTD ガソリンスタンド (LTD Gasoline Locations)
     ['ltdgasoline'] = {
-        ['label'] = 'LTD Gasoline',
+        ['label'] = 'LTD ガソリン',
         ['coords'] = vector4(-47.02, -1758.23, 29.42, 45.05),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -330,13 +330,13 @@ Config.Locations = {
     },
 
     ['ltdgasoline2'] = {
-        ['label'] = 'LTD Gasoline',
+        ['label'] = 'LTD ガソリン',
         ['coords'] = vector4(-706.06, -913.97, 19.22, 88.04),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -346,13 +346,13 @@ Config.Locations = {
     },
 
     ['ltdgasoline3'] = {
-        ['label'] = 'LTD Gasoline',
+        ['label'] = 'LTD ガソリン',
         ['coords'] = vector4(-1820.02, 794.03, 138.09, 135.45),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -362,13 +362,13 @@ Config.Locations = {
     },
 
     ['ltdgasoline4'] = {
-        ['label'] = 'LTD Gasoline',
+        ['label'] = 'LTD ガソリン',
         ['coords'] = vector4(1164.71, -322.94, 69.21, 101.72),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -378,13 +378,13 @@ Config.Locations = {
     },
 
     ['ltdgasoline5'] = {
-        ['label'] = 'LTD Gasoline',
+        ['label'] = 'LTD ガソリン',
         ['coords'] = vector4(1697.87, 4922.96, 42.06, 324.71),
         ['ped'] = 'mp_m_shopkeep_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['normal'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -393,7 +393,7 @@ Config.Locations = {
         ['delivery'] = vector4(1702.68, 4917.28, 42.22, 139.27)
     },
 
-    -- Rob's Liquor Locations
+    -- Rob's Liquor 店舗 (Rob's Liquor Locations)
     ['robsliquor'] = {
         ['label'] = 'Rob\'s Liqour',
         ['coords'] = vector4(-1221.58, -908.15, 12.33, 35.49),
@@ -401,7 +401,7 @@ Config.Locations = {
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['liquor'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -417,7 +417,7 @@ Config.Locations = {
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['liquor'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -433,7 +433,7 @@ Config.Locations = {
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['liquor'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -449,7 +449,7 @@ Config.Locations = {
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['liquor'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -465,7 +465,7 @@ Config.Locations = {
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-shopping-basket',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['liquor'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -474,15 +474,15 @@ Config.Locations = {
         ['delivery'] = vector4(1129.73, -989.27, 45.97, 280.98)
     },
 
-    -- Hardware Store Locations
+    -- ハードウェア店 (Hardware Store Locations)
     ['hardware'] = {
-        ['label'] = 'Hardware Store',
+        ['label'] = 'ハードウェア店',
         ['coords'] = vector4(45.68, -1749.04, 29.61, 53.13),
         ['ped'] = 'mp_m_waremech_01',
         ['scenario'] = 'WORLD_HUMAN_CLIPBOARD',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-wrench',
-        ['targetLabel'] = 'Open Hardware Store',
+        ['targetLabel'] = 'ハードウェア店を開く',
         ['products'] = Config.Products['hardware'],
         ['showblip'] = true,
         ['blipsprite'] = 402,
@@ -492,13 +492,13 @@ Config.Locations = {
     },
 
     ['hardware2'] = {
-        ['label'] = 'Hardware Store',
+        ['label'] = 'ハードウェア店',
         ['coords'] = vector4(2747.71, 3472.85, 55.67, 255.08),
         ['ped'] = 'mp_m_waremech_01',
         ['scenario'] = 'WORLD_HUMAN_CLIPBOARD',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-wrench',
-        ['targetLabel'] = 'Open Hardware Store',
+        ['targetLabel'] = 'ハードウェア店を開く',
         ['products'] = Config.Products['hardware'],
         ['showblip'] = true,
         ['blipsprite'] = 402,
@@ -508,13 +508,13 @@ Config.Locations = {
     },
 
     ['hardware3'] = {
-        ['label'] = 'Hardware Store',
+        ['label'] = 'ハードウェア店',
         ['coords'] = vector4(-421.83, 6136.13, 31.88, 228.2),
         ['ped'] = 'mp_m_waremech_01',
         ['scenario'] = 'WORLD_HUMAN_CLIPBOARD',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-wrench',
-        ['targetLabel'] = 'Hardware Store',
+        ['targetLabel'] = 'ハードウェア店を開く',
         ['products'] = Config.Products['hardware'],
         ['showblip'] = true,
         ['blipsprite'] = 402,
@@ -523,16 +523,16 @@ Config.Locations = {
         ['delivery'] = vector4(-438.25, 6146.9, 31.48, 136.99)
     },
 
-    -- Ammunation Locations
+    -- アミュネーション (Ammunation Locations)
     ['ammunation'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(-661.96, -933.53, 21.83, 177.05),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -541,14 +541,14 @@ Config.Locations = {
         ['delivery'] = vector4(-660.61, -938.14, 21.83, 167.22)
     },
     ['ammunation2'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(809.68, -2159.13, 29.62, 1.43),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -557,14 +557,14 @@ Config.Locations = {
         ['delivery'] = vector4(820.97, -2146.7, 28.71, 359.98)
     },
     ['ammunation3'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(1692.67, 3761.38, 34.71, 227.65),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -573,14 +573,14 @@ Config.Locations = {
         ['delivery'] = vector4(1687.17, 3755.47, 34.34, 163.69)
     },
     ['ammunation4'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(-331.23, 6085.37, 31.45, 228.02),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -589,14 +589,14 @@ Config.Locations = {
         ['delivery'] = vector4(-341.72, 6098.49, 31.32, 11.05)
     },
     ['ammunation5'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(253.63, -51.02, 69.94, 72.91),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -605,14 +605,14 @@ Config.Locations = {
         ['delivery'] = vector4(249.0, -50.64, 69.94, 60.71)
     },
     ['ammunation6'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(23.0, -1105.67, 29.8, 162.91),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -621,14 +621,14 @@ Config.Locations = {
         ['delivery'] = vector4(-5.82, -1107.48, 29.0, 164.32)
     },
     ['ammunation7'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(2567.48, 292.59, 108.73, 349.68),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -637,14 +637,14 @@ Config.Locations = {
         ['delivery'] = vector4(2578.77, 285.53, 108.61, 277.2)
     },
     ['ammunation8'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(-1118.59, 2700.05, 18.55, 221.89),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -653,14 +653,14 @@ Config.Locations = {
         ['delivery'] = vector4(-1127.67, 2708.18, 18.8, 41.76)
     },
     ['ammunation9'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(841.92, -1035.32, 28.19, 1.56),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -669,14 +669,14 @@ Config.Locations = {
         ['delivery'] = vector4(847.83, -1020.36, 27.88, 88.29)
     },
     ['ammunation10'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(-1304.19, -395.12, 36.7, 75.03),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -685,14 +685,14 @@ Config.Locations = {
         ['delivery'] = vector4(-1302.44, -385.23, 36.62, 303.79)
     },
     ['ammunation11'] = {
-        ['label'] = 'Ammunation',
+        ['label'] = 'アミュネーション',
         ['type'] = 'weapon',
         ['coords'] = vector4(-3173.31, 1088.85, 20.84, 244.18),
         ['ped'] = 's_m_y_ammucity_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Ammunation',
+        ['targetLabel'] = 'アミュネーションを開く',
         ['products'] = Config.Products['weapons'],
         ['showblip'] = true,
         ['blipsprite'] = 110,
@@ -701,15 +701,15 @@ Config.Locations = {
         ['delivery'] = vector4(-3183.6, 1084.35, 20.84, 68.13)
     },
 
-    -- Weedshop Locations
+    -- ウィードショップ (Weedshop Locations)
     ['weedshop'] = {
-        ['label'] = 'Smoke On The Water',
+        ['label'] = 'スモーク・オン・ザ・ウォーター',
         ['coords'] = vector4(-1168.26, -1573.2, 4.66, 105.24),
         ['ped'] = 'a_m_y_hippy_01',
         ['scenario'] = 'WORLD_HUMAN_AA_SMOKE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-cannabis',
-        ['targetLabel'] = 'Open Weed Shop',
+        ['targetLabel'] = 'ウィードショップを開く',
         ['products'] = Config.Products['weedshop'],
         ['showblip'] = true,
         ['blipsprite'] = 140,
@@ -718,15 +718,15 @@ Config.Locations = {
         ['delivery'] = vector4(-1162.13, -1568.57, 4.39, 328.52)
     },
 
-    -- Sea Word Locations
+    -- シーワード (Sea Word Locations)
     ['seaword'] = {
-        ['label'] = 'Sea Word',
+        ['label'] = 'シーワード',
         ['coords'] = vector4(-1687.03, -1072.18, 13.15, 52.93),
         ['ped'] = 'a_m_y_beach_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_IMPATIENT',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-fish',
-        ['targetLabel'] = 'Sea Word',
+        ['targetLabel'] = 'シーワード',
         ['products'] = Config.Products['gearshop'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -735,15 +735,15 @@ Config.Locations = {
         ['delivery'] = vector4(-1674.18, -1073.7, 13.15, 333.56)
     },
 
-    -- Leisure Shop Locations
+    -- レジャーショップ (Leisure Shop Locations)
     ['leisureshop'] = {
-        ['label'] = 'Leisure Shop',
+        ['label'] = 'レジャーショップ',
         ['coords'] = vector4(-1505.91, 1511.95, 115.29, 257.13),
         ['ped'] = 'a_m_y_beach_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE_CLUBHOUSE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-leaf',
-        ['targetLabel'] = 'Open Leisure Shop',
+        ['targetLabel'] = 'レジャーショップを開く',
         ['products'] = Config.Products['leisureshop'],
         ['showblip'] = true,
         ['blipsprite'] = 52,
@@ -753,33 +753,33 @@ Config.Locations = {
     },
 
     ['police'] = {
-        ['label'] = 'Police Shop',
+        ['label'] = '警察署ショップ',
         ['coords'] = vector4(461.8498, -981.0677, 30.6896, 91.5892),
         ['ped'] = 'mp_m_securoguard_01',
         ['scenario'] = 'WORLD_HUMAN_COP_IDLES',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-gun',
-        ['targetLabel'] = 'Open Armory',
+        ['targetLabel'] = '武器庫を開く',
         ['products'] = Config.Products['police'],
         ['delivery'] = vector4(459.0441, -1008.0366, 28.2627, 271.4695),
         ['requiredJob'] = 'police',
     },
 
     ['ambulance'] = {
-        ['label'] = 'Ambulance Shop',
+        ['label'] = '救急ショップ',
         ['coords'] = vector4(309.93, -602.94, 43.29, 71.0820),
         ['ped'] = 's_m_m_doctor_01',
         ['scenario'] = 'WORLD_HUMAN_STAND_MOBILE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-hand',
-        ['targetLabel'] = 'Open Armory',
+        ['targetLabel'] = '武器庫を開く',
         ['products'] = Config.Products['ambulance'],
         ['delivery'] = vector4(283.5821, -614.8570, 43.3792, 159.2903),
         ['requiredJob'] = 'ambulance'
     },
 
     ['mechanic'] = {
-        ['label'] = 'Mechanic Shop',
+        ['label'] = 'メカニックショップ',
         ['coords'] = vector4(-343.66, -140.78, 39.02, 0),
         ['products'] = Config.Products['mechanic'],
         ['delivery'] = vector4(-354.3936, -128.2882, 39.4307, 251.4931),
@@ -787,7 +787,7 @@ Config.Locations = {
     },
 
     ['mechanic2'] = {
-        ['label'] = 'Mechanic Shop',
+        ['label'] = 'メカニックショップ',
         ['coords'] = vector4(1189.36, 2641.00, 38.44, 0),
         ['products'] = Config.Products['mechanic'],
         ['delivery'] = vector4(1189.9852, 2651.1873, 37.8351, 317.7137),
@@ -795,7 +795,7 @@ Config.Locations = {
     },
 
     ['mechanic3'] = {
-        ['label'] = 'Mechanic Shop',
+        ['label'] = 'メカニックショップ',
         ['coords'] = vector4(-1156.56, -1999.85, 13.19, 0),
         ['products'] = Config.Products['mechanic'],
         ['delivery'] = vector4(-1131.9661, -1972.0144, 13.1603, 358.8637),
@@ -803,7 +803,7 @@ Config.Locations = {
     },
 
     ['bennys'] = {
-        ['label'] = 'Mechanic Shop',
+        ['label'] = 'メカニックショップ',
         ['coords'] = vector4(-195.80, -1318.24, 31.08, 0),
         ['products'] = Config.Products['mechanic'],
         ['delivery'] = vector4(-232.5028, -1311.7202, 31.2960, 180.3716),
@@ -811,7 +811,7 @@ Config.Locations = {
     },
 
     ['beeker'] = {
-        ['label'] = 'Mechanic Shop',
+        ['label'] = 'メカニックショップ',
         ['coords'] = vector4(100.92, 6616.00, 32.47, 0),
         ['products'] = Config.Products['mechanic'],
         ['delivery'] = vector4(119.3033, 6626.7358, 31.9558, 46.1566),
@@ -819,7 +819,7 @@ Config.Locations = {
     },
 
     ['prison'] = {
-        ['label'] = 'Canteen Shop',
+        ['label'] = '売店',
         ['coords'] = vector4(1777.59, 2560.52, 44.62, 187.83),
         ['ped'] = false,
         ['products'] = Config.Products['prison'],
@@ -831,13 +831,13 @@ Config.Locations = {
     },
 
     ['blackmarket'] = {
-        ['label'] = 'Black Market',
+        ['label'] = '闇市場',
         ['coords'] = vector4(-594.7032, -1616.3647, 33.0105, 170.6846),
         ['ped'] = 'a_m_y_smartcaspat_01',
         ['scenario'] = 'WORLD_HUMAN_AA_SMOKE',
         ['radius'] = 1.5,
         ['targetIcon'] = 'fas fa-clipboard',
-        ['targetLabel'] = 'Open Shop',
+        ['targetLabel'] = '店を開く',
         ['products'] = Config.Products['blackmarket'],
         ['delivery'] = vector4(-428.6385, -1728.1962, 19.7838, 75.6646)
     },
