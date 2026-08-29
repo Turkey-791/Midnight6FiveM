@@ -31,6 +31,8 @@ local Translations = {
         tow = "Place A Car On The Back Of Your Flatbed",
         toggle_npc = "Toggle Npc Job",
         skick = "Attempted exploit abuse",
+        accept_job = "Accept Towing Job",
+        receive_payment = "Receive Payment ($%{value})",
     },
     label = {
         payslip = "Payslip",

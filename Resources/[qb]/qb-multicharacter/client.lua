@@ -49,8 +49,8 @@ local function initializePedModel(model, data)
 end
 
 local function skyCam(bool)
-    TriggerEvent('qb-weathersync:client:DisableSync')
     if bool then
+        TriggerEvent('qb-weathersync:client:DisableSync')
         DoScreenFadeIn(1000)
         SetTimecycleModifier('hud_def_blur')
         SetTimecycleModifierStrength(1.0)
@@ -59,6 +59,7 @@ local function skyCam(bool)
         SetCamActive(cam, true)
         RenderScriptCams(true, false, 1, true, true)
     else
+        TriggerEvent('qb-weathersync:client:EnableSync')
         SetTimecycleModifier('default')
         SetCamActive(cam, false)
         DestroyCam(cam, true)

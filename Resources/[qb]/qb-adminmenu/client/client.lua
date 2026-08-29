@@ -860,7 +860,7 @@ end)
 
 -- Adjust time on change
 menu3_server_time:On('select', function(_, value)
-    TriggerServerEvent('qb-weathersync:server:setTime', value, value)
+    TriggerServerEvent('qb-weathersync:server:setTime', value, 0)
     QBCore.Functions.Notify(Lang:t('time.changed', { time = value }))
 end)
 
