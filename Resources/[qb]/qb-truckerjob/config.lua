@@ -11,18 +11,18 @@ Config.TruckerJobPaymentTax = 15
 
 Config.TruckerJobLocations = {
     ["main"] = {
-        label = "Truck Shed",
+        label = "トラック営業所",
         coords = vector4(153.68, -3211.88, 5.91, 274.5),
     },
     ["vehicle"] = {
-        label = "Truck Storage",
+        label = "トラック保管場",
         coords = vector4(141.12, -3204.31, 5.85, 267.5),
     },
 }
 
 Config.TruckerJobVehicles = {
     ["rumpo"] = {
-        ["label"] = "Rumpo Delivery Van",
+        ["label"] = "Rumpo 配送バン",
         ["cargodoors"] = {
             [0] = 2,
             [1] = 3
@@ -30,7 +30,7 @@ Config.TruckerJobVehicles = {
         ["trunkpos"] = 1.5
     },
     ["benson"] = {
-        ["label"] = "Benson Box Truck",
+        ["label"] = "Benson 配送トラック",
         ["jobrep"] = 0,
         ["cargodoors"] = {
             [0] = 5
@@ -38,7 +38,7 @@ Config.TruckerJobVehicles = {
         ["trunkpos"] = 3
     },
     ["mule5"] = {
-        ["label"] = "Mule Box Truck",
+        ["label"] = "Mule 配送トラック",
         ["jobrep"] = 0,
         ["cargodoors"] = {
             [0] = 2,
@@ -47,7 +47,7 @@ Config.TruckerJobVehicles = {
         ["trunkpos"] = 1.5
     },
     ["pounder"] = {
-        ["label"] = "Pounder Box Truck",
+        ["label"] = "Pounder 大型トラック",
         ["jobrep"] = 0,
         ["cargodoors"] = {
             [0] = 2,
@@ -56,7 +56,7 @@ Config.TruckerJobVehicles = {
         ["trunkpos"] = 7
     },
     ["boxville4"] = {
-        ["label"] = "Boxville StepVan",
+        ["label"] = "Boxville 配送バン",
         ["jobrep"] = 0,
         ["cargodoors"] = {
             [0] = 2,
