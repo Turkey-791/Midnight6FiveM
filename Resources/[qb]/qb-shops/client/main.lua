@@ -48,25 +48,34 @@ local function createPeds()
 
     for k, v in pairs(Config.Locations) do
         if not v.ped then
-            exports['qb-target']:AddCircleZone(k, vector3(v.coords.x, v.coords.y, v.coords.z), 0.5, {
-                name = k,
-                debugPoly = false,
-                useZ = true
-            }, {
-                options = {
-                    {
-                        label = v.targetLabel or defaultTargetLabel,
-                        icon = v.targetIcon or defaultTargetIcon,
-                        item = v.requiredItem,
-                        type = 'server',
-                        event = 'qb-shops:server:openShop',
-                        shop = k,
-                        job = v.requiredJob,
-                        gang = v.requiredGang
-                    }
-                },
-                distance = 2.0
-            })
+            -- 2026-09-01 dual-registration fix: qb-target への登録を Config.UseTarget=true の場合のみに限定。
+            -- 従来は UseTarget の値に関わらず常時登録されており、UseTarget=false(既定)でも
+            -- 下記 197行目以降の E-key/DrawText(ComboZone)と同時に有効化されていたため、
+            -- ped なし店舗(mechanic/mechanic2/mechanic3/bennys/beeker/prison)だけ
+            -- インタラクションが二重登録される状態だった。ped ありの分岐(下の AddTargetEntity)は
+            -- 元々 Config.UseTarget で条件分岐されていたため、それと揃える形で対称化した。
+            -- qb-target 自体のサポートは削除していない(UseTarget=true にすれば従来通り動作する)。
+            if Config.UseTarget then
+                exports['qb-target']:AddCircleZone(k, vector3(v.coords.x, v.coords.y, v.coords.z), 0.5, {
+                    name = k,
+                    debugPoly = false,
+                    useZ = true
+                }, {
+                    options = {
+                        {
+                            label = v.targetLabel or defaultTargetLabel,
+                            icon = v.targetIcon or defaultTargetIcon,
+                            item = v.requiredItem,
+                            type = 'server',
+                            event = 'qb-shops:server:openShop',
+                            shop = k,
+                            job = v.requiredJob,
+                            gang = v.requiredGang
+                        }
+                    },
+                    distance = 2.0
+                })
+            end
         else
             local current = type(v['ped']) == 'number' and v['ped'] or joaat(v['ped'])
             RequestModel(current)

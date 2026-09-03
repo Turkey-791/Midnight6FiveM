@@ -2,16 +2,13 @@ RegisterCommand('testwanted', function()
     local player = PlayerId()
 
     SetMaxWantedLevel(5)
-    SetDispatchCopsForPlayer(player, true)
-
-    EnableDispatchService(1, true)
 
     SetPlayerWantedLevel(player, 3, false)
     SetPlayerWantedLevelNow(player, false)
 
-    print('[test-police] Wanted level = ' .. GetPlayerWantedLevel(player))
-end, false)
-
+    print('[test-police] max wanted enabled')
+    print('[test-police] wanted = ' .. GetPlayerWantedLevel(player))
+end, true)
 RegisterCommand('clearwanted', function()
     local player = PlayerId()
 
@@ -21,4 +18,4 @@ RegisterCommand('clearwanted', function()
     SetMaxWantedLevel(0)
 
     print('[test-police] Wanted cleared')
-end, false)
+end, true)

@@ -379,7 +379,14 @@ local function Deliver()
         currentCount = currentCount + 1
         if currentCount == CurrentLocation.dropcount then
             LocationsDone[#LocationsDone + 1] = CurrentLocation.id
-            TriggerServerEvent("qb-shops:server:RestockShopItems", CurrentLocation.store)
+            -- 2026-09-02 Trucker/Delivery修正: qb-shops:server:RestockShopItems の呼び出しを削除した。
+            -- この呼び出しはqb-shops側のdeliveryPay()を発火させ、$500の追加報酬を支払ってしまう
+            -- (qb-truckerjob自体は下のqb-trucker:server:nano、および営業所でのqb-trucker:server:01101110で
+            -- 既に独自のjob制限付き報酬を支払っており、これは完全な二重支払いだった)。
+            -- qb-truckerjobは配送Jobとして正規化され、qb-shops側には一切依存しない設計に変更した。
+            -- qb-shopsのファイルは一切変更していない。店舗在庫補充(useStock)機能への影響については
+            -- Phase A調査報告を参照(247supermarketの扱いは別途確認中)。
+            -- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-02/qb-truckerjob/client/main.lua.orig)を参照。
             exports['qb-core']:HideText()
             Delivering = false
             showMarker = false
@@ -433,7 +440,11 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     JobsDone = 0
     if PlayerJob.name ~= "trucker" then return end
     CreateElements()
-    TriggerServerEvent('qb-shops:server:SetShopList')
+    -- 2026-09-02 Trucker/Delivery修正: qb-shops側にqb-shops:server:SetShopListのハンドラが
+    -- 存在せず、常に無応答(無反応)だったため無効化。配送先はconfig.luaの
+    -- Config.TruckerJobLocations["stores"]に静的定義済み(qb-shopsには一切依存しない)。
+    -- qb-shops側に新規イベントを推測で新設することはしていない。
+    -- TriggerServerEvent('qb-shops:server:SetShopList')
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
@@ -533,9 +544,10 @@ RegisterNetEvent('qb-truckerjob:client:SetShopList', function(shoplist)
     Config.TruckerJobLocations["stores"] = shoplist
 end)
 -- Threads
-CreateThread(function()
-    TriggerServerEvent('qb-shops:server:SetShopList')
-end)
+-- 2026-09-02 Trucker/Delivery修正: 上記コメントと同様の理由でqb-shopsへの問い合わせを無効化。
+-- CreateThread(function()
+--     TriggerServerEvent('qb-shops:server:SetShopList')
+-- end)
 CreateThread(function()
     local sleep
     while true do

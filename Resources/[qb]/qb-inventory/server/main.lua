@@ -28,9 +28,27 @@ local function toQbItem(slotData)
 end
 
 -- qb signature: AddItem(identifier, item, amount, slot, info, reason)
+--
+-- 2026-09-02 無限取得バグ修正:
+-- ox_inventory本体のInventory.AddItem(exports.ox_inventory:AddItem)は、
+-- スロットの空きしか確認せず、所持重量(maxWeight)を一切チェックしない
+-- (重量チェックは呼び出し元の責任、という設計のため)。
+-- 一方、Player.Functions.AddItem(...)経由の付与(qb-lumberjackの木こり、
+-- qb-truckerjob、カジノ各種など)は、このシムを必ず経由してから
+-- ox_inventory:AddItemを直接叩いており、誰も重量チェックをしていなかった。
+-- そのため所持重量30kgを超えてもアイテムを取得し続けられていた。
+-- ここでCanCarryItemによる事前チェックを一箇所挟むことで、
+-- Player.Functions.AddItemを使う全ての呼び出し元に一括で重量制限を効かせる。
 local function AddItem(identifier, item, amount, slot, info, reason)
     amount = amount or 1
-    return ox_inventory:AddItem(identifier, item, amount, (info and info ~= false) and info or nil, (slot and slot ~= false) and slot or nil)
+    local metadata = (info and info ~= false) and info or nil
+
+    if not ox_inventory:CanCarryItem(identifier, item, amount, metadata) then
+        TriggerClientEvent('QBCore:Notify', identifier, 'これ以上は重くて持てません。', 'error')
+        return false
+    end
+
+    return ox_inventory:AddItem(identifier, item, amount, metadata, (slot and slot ~= false) and slot or nil)
 end
 exports('AddItem', AddItem)
 

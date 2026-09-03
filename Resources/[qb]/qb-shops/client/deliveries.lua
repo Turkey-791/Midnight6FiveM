@@ -123,7 +123,21 @@ local function setupZones(type, number)
     end
 end
 
+-- 2026-09-02 Trucker/Delivery整理(Phase A/Section 6): qb-shops内蔵配送(GO Postal)には
+-- job制限が一切無く、どのjobのプレイヤーでも配送報酬(qb-shops:server:PaySlip)を得られる
+-- 状態だったため、配送Jobの正規SSOTをqb-truckerjobに一本化する方針に基づき、
+-- GO Postal配送の受付そのもの(地図blip + 開始インタラクションzone)を無効化した。
+-- setupZones('main') が「配送開始(DoBail→SpawnVehicle→getNewLocation)」への唯一の入口であり、
+-- これを作らないことでプレイヤーはGO Postalの配送を一切開始できなくなる。
+-- qb-shops/server/main.lua(DoBail/RestockShopItems/PaySlip/deliveryPay等、Money Authority対象)は
+-- 一切変更していない — サーバー側のハンドラは残っているが、クライアント側から呼び出す経路が
+-- 無くなるため実質的に到達不能(dead)になる。
+-- setupZones('vehicleDeposit')(配送車両の返却ゾーン)も、'main'が無効化された今、
+-- 配送車自体を受け取る手段が無くなるため合わせて無効化した。
+-- 通常Shop(qb-shops:server:openShop等)・商品データ・店舗価格には一切触れていない。
+-- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-02/qb-shops/client/deliveries.lua.orig)を参照。
 local function CreateBlip()
+    --[[
     TruckerBlip = AddBlipForCoord(Config.DeliveryLocations['main'].coords.x, Config.DeliveryLocations['main'].coords.y, Config.DeliveryLocations['main'].coords.z)
     SetBlipSprite(TruckerBlip, 408)
     SetBlipDisplay(TruckerBlip, 4)
@@ -135,6 +149,7 @@ local function CreateBlip()
     EndTextCommandSetBlipName(TruckerBlip)
     setupZones('main')
     setupZones('vehicleDeposit')
+    ]]
 end
 
 local function getShopList()

@@ -70,8 +70,17 @@ end
 
 -- Callbacks
 
+-- 2026-09-01 Housing Garage修正: houselocations は退役済みqb-houses専用テーブルで、
+-- 現行のps-housing(properties テーブル/property_idキー)には存在しない。ps-housing公式の
+-- README - INSTALL INSTRUCTIONS/QBCore/README.md に記載された正式な移行手順に厳密に従い、
+-- properties テーブル(property_id基準)を参照するよう修正。
+-- 実運用上、この分岐(Config.Garages[formattedHouseName]が未登録の場合のフォールバック)は、
+-- ps-housing側のRegisterGarageZoneがガレージ登録時に必ず先にqb-garages:client:addHouseGarageを
+-- 同期発火してConfig.Garagesを埋めるため、通常到達しない防御的コードと考えられるが、
+-- 修正前は存在しないテーブルへのクエリでエラー・nil参照クラッシュの危険があったため合わせて修正した。
+-- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-01/qb-garages/server.lua.orig)を参照。
 QBCore.Functions.CreateCallback('qb-garages:server:getHouseGarage', function(_, cb, house)
-    local houseInfo = MySQL.single.await('SELECT * FROM houselocations WHERE name = ?', { house })
+    local houseInfo = MySQL.single.await('SELECT * FROM properties WHERE property_id = ?', { house })
     cb(houseInfo)
 end)
 
@@ -152,7 +161,14 @@ QBCore.Functions.CreateCallback('qb-garages:server:canDeposit', function(source,
         cb(false)
         return
     end
-    if type == 'house' and not exports['qb-houses']:hasKey(Player.PlayerData.license, Player.PlayerData.citizenid, Config.Garages[garage].houseName) then
+    -- 2026-09-01 Housing Garage修正: qb-houses は本サーバーでは稼働しておらず([_backup]に退避済み)、
+    -- exports['qb-houses']:hasKey(...) は毎回エラーとなり家ガレージへの車両預け入れが機能しない状態だった。
+    -- 現行構成(ps-housing → qb-garages)に合わせ、ps-housing公式README記載の正式な移行手順に厳密に従い、
+    -- ps-housing の citizenid ベースのアクセス判定(所有者 or has_access リスト)を行う
+    -- exports['ps-housing']:IsOwner(source, property_id) に置き換えた。判定ロジック自体は変更していない
+    -- (「鍵を持っているか」→「このプロパティへのアクセス権を持っているか」という表現の違いのみ)。
+    -- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-01/qb-garages/server.lua.orig)を参照。
+    if type == 'house' and not exports['ps-housing']:IsOwner(source, Config.Garages[garage].houseName) then
         cb(false)
         return
     end

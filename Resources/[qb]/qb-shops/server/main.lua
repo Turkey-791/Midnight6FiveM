@@ -145,6 +145,25 @@ RegisterNetEvent('qb-shops:server:openShop', function(data)
     local Player = exports['qb-core']:GetPlayer(src)
     if not Player then return end
     local playerData = Player.PlayerData
+
+    -- 2026-09-02 Medical(Pillbox Hill)修正 再適用: shopData.requiredJob / requiredGang は
+    -- Config.Locations 側に既に定義済み(police/ambulance/mechanic/mechanic2/mechanic3/bennys/beeker)
+    -- だったが、この openShop ハンドラでは商品単位(curProduct.requiredJob)の判定しか行っておらず、
+    -- ショップ単位の職業制限がサーバー側で一切強制されていなかった(クライアント側UI表示のみ)。
+    -- これにより例えば救急ショップ(ambulance)がジョブ制限をバイパスして誰でも開けてしまう状態だった。
+    -- ここで shopData 単位の requiredJob / requiredGang を追加(既存の checkTable を再利用)して
+    -- サーバー側で強制するようにした。価格($0仕様含む)や商品単位の判定ロジックには一切手を加えていない。
+    -- (2026-09-01に一度適用済みだったが、Money Authority修正版への同期上書きで消失したため再適用。
+    --  今回のMoney Authority関連コード(TruckerDropsCount等)には一切触れていない。)
+    -- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-02/qb-shops/server/main.lua.orig)を参照。
+    if shopData.requiredJob and not checkTable(playerData.job.name, shopData.requiredJob) then
+        return
+    end
+
+    if shopData.requiredGang and not checkTable(playerData.gang.name, shopData.requiredGang) then
+        return
+    end
+
     local products = shopData.products
     local items = {}
 

@@ -449,6 +449,33 @@ RegisterNetEvent('qb-garages:client:addHouseGarage', function(house, garageInfo)
     TriggerServerEvent('qb-garages:server:syncGarage', Config.Garages)
 end)
 
+-- 2026-09-02 Phase B (Housing Garage Lifecycle)修正:
+-- ps-housing の Property:UnregisterGarageZone()(client/cl_property.lua 298-304行目)が
+-- TriggerEvent("qb-garages:client:removeHouseGarage", self.property_id) を発火しているが、
+-- qb-garages側に対応するhandlerが存在しなかった(呼び出しは無反応・無害だが、住宅売却/所有者変更/
+-- ガレージ再設定のタイミングで古いガレージzoneが解除されずに残る可能性があった)。
+-- 発火元はps-housing側の以下3箇所(いずれもUnregisterGarageZone経由、引数はself.property_id 1個のみ):
+--   1. Property破棄処理(売却・削除等の全体クリーンアップ)
+--   2. Property:UpdateOwner (所有者変更時。直後にRegisterGarageZoneでzoneを再生成)
+--   3. Property:UpdateGarage (不動産屋によるガレージ再設定時。直後にRegisterGarageZoneでzoneを再生成)
+-- ※ Property:UpdateHas_access(アクセス権リストの変更のみ)ではUnregisterGarageZoneは呼ばれていない。
+--
+-- 実装は、既存の qb-garages:client:setHouseGarage ハンドラの「not hasKey」分岐が行っている
+-- ゾーン解除処理(ZoneExists + RemoveHouseZone、同じ 'house_' .. formattedHouseName という
+-- 命名規則)をそのまま再利用しているだけで、新しい削除ロジック・新しいイベント・DB削除は
+-- 一切追加していない。Config.Garages[formattedHouseName] 自体の削除も、既存のsetHouseGarage側の
+-- 同種分岐が行っていないのに合わせて今回も行っていない(qb-garages:server:syncGarageで
+-- 後続同期される既存挙動に委ねる)。
+-- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-02/qb-garages/client.lua.orig)を参照。
+RegisterNetEvent('qb-garages:client:removeHouseGarage', function(house)
+    if not house then return end
+    local formattedHouseName = string.gsub(string.lower(house), ' ', '')
+    local zoneName = 'house_' .. formattedHouseName
+    if ZoneExists(zoneName) then
+        RemoveHouseZone(zoneName)
+    end
+end)
+
 -- Handlers
 
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()

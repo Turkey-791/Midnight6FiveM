@@ -1,4 +1,10 @@
 return {
+	-- 2026-09-01 QB/OX二重登録修正: General は qb-shops の「24/7 スーパーマーケット」(247supermarket〜9)
+	-- および「LTDガソリン」の一部店舗と、全10箇所とも1.5〜1.9ユニット差の同一座標で二重登録されていた。
+	-- Shop方針決定(qb-shopsを正規Shopとし、ox_inventory native側の重複店舗のみ無効化)に基づき、
+	-- この店舗タイプ全体を無効化(ブロックコメントアウト)した。qb-shops側に対応がない店舗は無し(全件重複)。
+	-- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-01/ox_inventory/data/shops.lua.orig)を参照。
+	--[[
 	General = {
 		name = 'Shop',
 		blip = {
@@ -31,6 +37,7 @@ return {
 			{ loc = vec3(373.13, 326.29, 103.57), length = 0.6, width = 0.5, heading = 345.0, minZ = 103.57, maxZ = 103.97, distance = 1.5 },
 		}
 	},
+	]]
 
 	Liquor = {
 		name = 'Liquor Store',
@@ -41,19 +48,22 @@ return {
 			{ name = 'cola', price = 10 },
 			{ name = 'burger', price = 15 },
 		}, locations = {
-			vec3(1135.808, -982.281, 46.415),
-			vec3(-1222.915, -906.983, 12.326),
-			vec3(-1487.553, -379.107, 40.163),
-			vec3(-2968.243, 390.910, 15.043),
-			vec3(1166.024, 2708.930, 38.157),
+			-- 2026-09-01: 以下5件は qb-shops「Rob's Liquor」(robsliquor〜5)と同一座標(距離1.7〜2.1)のため無効化。
+			-- vec3(1135.808, -982.281, 46.415),
+			-- vec3(-1222.915, -906.983, 12.326),
+			-- vec3(-1487.553, -379.107, 40.163),
+			-- vec3(-2968.243, 390.910, 15.043),
+			-- vec3(1166.024, 2708.930, 38.157),
+			-- 以下2件は qb-shops に対応店舗がない ox_inventory 固有の Liquor 店舗のため維持。
 			vec3(1392.562, 3604.684, 34.980),
 			vec3(-1393.409, -606.624, 30.319)
 		}, targets = {
-			{ loc = vec3(1134.9, -982.34, 46.41), length = 0.5, width = 0.5, heading = 96.0, minZ = 46.4, maxZ = 46.8, distance = 1.5 },
-			{ loc = vec3(-1222.33, -907.82, 12.43), length = 0.6, width = 0.5, heading = 32.7, minZ = 12.3, maxZ = 12.7, distance = 1.5 },
-			{ loc = vec3(-1486.67, -378.46, 40.26), length = 0.6, width = 0.5, heading = 133.77, minZ = 40.1, maxZ = 40.5, distance = 1.5 },
-			{ loc = vec3(-2967.0, 390.9, 15.14), length = 0.7, width = 0.5, heading = 85.23, minZ = 15.0, maxZ = 15.4, distance = 1.5 },
-			{ loc = vec3(1165.95, 2710.20, 38.26), length = 0.6, width = 0.5, heading = 178.84, minZ = 38.1, maxZ = 38.5, distance = 1.5 },
+			-- 上記5件の無効化に合わせてtargetも無効化(元々7件中6件目までしかtarget定義がなかった)。
+			-- { loc = vec3(1134.9, -982.34, 46.41), length = 0.5, width = 0.5, heading = 96.0, minZ = 46.4, maxZ = 46.8, distance = 1.5 },
+			-- { loc = vec3(-1222.33, -907.82, 12.43), length = 0.6, width = 0.5, heading = 32.7, minZ = 12.3, maxZ = 12.7, distance = 1.5 },
+			-- { loc = vec3(-1486.67, -378.46, 40.26), length = 0.6, width = 0.5, heading = 133.77, minZ = 40.1, maxZ = 40.5, distance = 1.5 },
+			-- { loc = vec3(-2967.0, 390.9, 15.14), length = 0.7, width = 0.5, heading = 85.23, minZ = 15.0, maxZ = 15.4, distance = 1.5 },
+			-- { loc = vec3(1165.95, 2710.20, 38.26), length = 0.6, width = 0.5, heading = 178.84, minZ = 38.1, maxZ = 38.5, distance = 1.5 },
 			{ loc = vec3(1393.0, 3605.95, 35.11), length = 0.6, width = 0.6, heading = 200.0, minZ = 35.0, maxZ = 35.4, distance = 1.5 }
 		}
 	},
@@ -65,13 +75,20 @@ return {
 		}, inventory = {
 			{ name = 'lockpick', price = 10 }
 		}, locations = {
-			vec3(2748.0, 3473.0, 55.67),
+			-- 2026-09-01: 以下1件は qb-shops「ハードウェア店(hardware2)」と同一座標(距離0.33)のため無効化。
+			-- vec3(2748.0, 3473.0, 55.67),
+			-- 以下1件は qb-shops に対応店舗がない ox_inventory 固有の YouTool 店舗のため維持。
 			vec3(342.99, -1298.26, 32.51)
 		}, targets = {
-			{ loc = vec3(2746.8, 3473.13, 55.67), length = 0.6, width = 3.0, heading = 65.0, minZ = 55.0, maxZ = 56.8, distance = 3.0 }
+			-- 上記無効化した1件に対応するtargetも無効化。
+			-- { loc = vec3(2746.8, 3473.13, 55.67), length = 0.6, width = 3.0, heading = 65.0, minZ = 55.0, maxZ = 56.8, distance = 3.0 }
 		}
 	},
 
+	-- 2026-09-01 QB/OX二重登録修正: Ammunation は qb-shops の「アミュネーション」(ammunation〜11のうち9件)と
+	-- 全9箇所とも1.4〜4.2ユニット差の同一座標で二重登録されていた。Shop方針決定に基づき無効化。
+	-- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-01/ox_inventory/data/shops.lua.orig)を参照。
+	--[[
 	Ammunation = {
 		name = 'Ammunation',
 		blip = {
@@ -103,6 +120,7 @@ return {
 			{ loc = vec3(841.05, -1034.76, 28.31), length = 0.6, width = 0.5, heading = 360.0, minZ = 28.2, maxZ = 28.6, distance = 2.0 }
 		}
 	},
+	]]
 
 	PoliceArmoury = {
 		name = 'Police Armoury',
@@ -124,6 +142,12 @@ return {
 		}
 	},
 
+	-- 2026-09-01 Medical方針決定に基づき無効化: qb-shops「救急ショップ」(EMS職限定・$0)と同一病院(Pillbox Hill)内で
+	-- 同一アイテム(bandage)が有料($5)で二重登録されていたため、qb-shops側を正規の窓口として本エントリは無効化。
+	-- なお medikit($26) は ox_inventory/data/items.lua にも qb-core/shared/items.lua にも定義がなく、
+	-- 購入時にエラーになり得る未定義アイテム参照だった(このエントリの無効化により解消)。
+	-- 元の内容は変更前バックアップ([_backup]/audit-fixes-2026-09-01/ox_inventory/data/shops.lua.orig)を参照。
+	--[[
 	Medicine = {
 		name = 'Medicine Cabinet',
 		groups = {
@@ -140,6 +164,7 @@ return {
 
 		}
 	},
+	]]
 
 	BlackMarketArms = {
 		name = 'Black Market (Arms)',
