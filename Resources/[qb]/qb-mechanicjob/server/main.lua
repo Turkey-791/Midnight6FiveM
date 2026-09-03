@@ -62,13 +62,6 @@ local function TransitionVehicleColor(vehicle, section, currentColor, targetColo
     end
 end
 
-local function GetPaintTypeIndex(type)
-    if type == 'metallic' then return 0 end
-    if type == 'matte' then return 12 end
-    if type == 'chrome' then return 120 end
-    return 0
-end
-
 -- Callbacks
 
 QBCore.Functions.CreateCallback('qb-mechanicjob:server:getnitrousVehicles', function(_, cb)
@@ -116,22 +109,46 @@ end)
 
 RegisterNetEvent('qb-mechanicjob:server:sprayVehicleCustom', function(netId, section, type, color)
     local vehicle = NetworkGetEntityFromNetworkId(netId)
+    if not vehicle or vehicle == 0 then return end
     local vehicleCoords = GetEntityCoords(vehicle)
-    local paintTypeIndex = GetPaintTypeIndex(type)
     FreezeEntityPosition(vehicle, true)
     StartParticles(vehicleCoords, netId, color)
-    local r, g, b
+
+    -- [Phase1 fix / P1-1] 「本当にカスタムRGBが設定されている場合」だけ現在色を取得する。
+    -- GTA Vのnativeには標準カラーIndexをRGBへ変換する手段が無いため、
+    -- 標準カラーから遷移する場合は正しい開始色を作れない(白などを適当にfallbackさせない)。
+    -- また、旧実装は塗装タイプ定数(metallic=0/matte=12/chrome=120)を
+    -- SetVehicleColoursの標準カラーIndexとして誤用していたため、この呼び出しは撤去した。
+    local currentColor
     if section == 'primary' then
-        local _, colorSecondary = GetVehicleColours(vehicle)
-        SetVehicleColours(vehicle, paintTypeIndex, colorSecondary)
-        r, g, b = GetVehicleCustomPrimaryColour(vehicle)
+        if GetIsVehiclePrimaryColourCustom(vehicle) then
+            local r, g, b = GetVehicleCustomPrimaryColour(vehicle)
+            if r and g and b then
+                currentColor = { r = r, g = g, b = b }
+            end
+        end
     elseif section == 'secondary' then
-        local colorPrimary, _ = GetVehicleColours(vehicle)
-        SetVehicleColours(vehicle, colorPrimary, paintTypeIndex)
-        r, g, b = GetVehicleCustomSecondaryColour(vehicle)
+        if GetIsVehicleSecondaryColourCustom(vehicle) then
+            local r, g, b = GetVehicleCustomSecondaryColour(vehicle)
+            if r and g and b then
+                currentColor = { r = r, g = g, b = b }
+            end
+        end
     end
-    local currentColor = { r = r, g = g, b = b }
-    TransitionVehicleColor(vehicle, section, currentColor, color, Config.PaintTime * 1000)
+
+    if currentColor then
+        -- 現在色(カスタムRGB)が判明している場合のみ、なめらかにフェードさせる
+        TransitionVehicleColor(vehicle, section, currentColor, color, Config.PaintTime * 1000)
+    else
+        -- 現在色が不明(標準カラーからの変更)な場合は、誤った色を経由させず即時に目的の色を適用する
+        Wait(Config.PaintTime * 1000)
+        if section == 'primary' then
+            SetVehicleCustomPrimaryColour(vehicle, color.r, color.g, color.b)
+        elseif section == 'secondary' then
+            SetVehicleCustomSecondaryColour(vehicle, color.r, color.g, color.b)
+        end
+    end
+
     StopParticles()
     FreezeEntityPosition(vehicle, false)
 end)

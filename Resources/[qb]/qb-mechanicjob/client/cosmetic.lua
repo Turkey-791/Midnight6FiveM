@@ -2,6 +2,25 @@ QBCore = exports['qb-core']:GetCoreObject({ 'Functions' })
 local particleEffects = {}
 local isPainting = false
 
+-- [Phase1 fix / P1-4] アイテム消費を「メニューを開いた時点」ではなく
+-- 「実際にMod変更が確定した時点」まで遅延させるための状態
+local pendingCosmeticItem = nil
+local pendingCosmeticConsumed = false
+
+local function ConsumeCosmeticItemOnce()
+    if pendingCosmeticItem and not pendingCosmeticConsumed then
+        pendingCosmeticConsumed = true
+        TriggerServerEvent('qb-mechanicjob:server:removeItem', pendingCosmeticItem)
+    end
+end
+
+-- qb-menuでプレイヤーが明示的にメニューを閉じた(ESC/×)タイミングでセッションを終了する
+-- (途中でキャンセルした場合はConsumeCosmeticItemOnceが一度も呼ばれていないためアイテムは消費されない)
+AddEventHandler('qb-menu:client:menuClosed', function()
+    pendingCosmeticItem = nil
+    pendingCosmeticConsumed = false
+end)
+
 -- Paint
 
 local function HexToRGB(hex)
@@ -196,6 +215,21 @@ function InteriorModList(id, vehicle, label)
             args = {}
         }
     }
+    -- [Phase1 fix / P1-2] 純正(未装着)へ戻す選択肢
+    mods[#mods + 1] = {
+        header = Lang:t('menu.stock'),
+        icon = 'fas fa-ban',
+        params = {
+            isAction = true,
+            event = function()
+                SetVehicleModKit(vehicle, 0)
+                SetVehicleMod(vehicle, id, -1, false)
+                ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
+                InteriorModList(id, vehicle, label)
+            end,
+            args = {}
+        }
+    }
     for i = 0, GetNumVehicleMods(vehicle, id) - 1 do
         local modHeader
         if id == 14 then
@@ -215,6 +249,7 @@ function InteriorModList(id, vehicle, label)
                     if id == 14 then
                         StartVehicleHorn(vehicle, 10000, 0, false)
                     end
+                    ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
                     InteriorModList(id, vehicle, label)
                 end,
                 args = {
@@ -262,7 +297,23 @@ function ExteriorModList(id, vehicle, label)
             args = {}
         }
     }
-    for i = 1, GetNumVehicleMods(vehicle, id) - 1 do
+    -- [Phase1 fix / P1-2] 純正(未装着)へ戻す選択肢
+    mods[#mods + 1] = {
+        header = Lang:t('menu.stock'),
+        icon = 'fas fa-ban',
+        params = {
+            isAction = true,
+            event = function()
+                SetVehicleModKit(vehicle, 0)
+                SetVehicleMod(vehicle, id, -1, false)
+                ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
+                ExteriorModList(id, vehicle, label)
+            end,
+            args = {}
+        }
+    }
+    -- [Phase1 fix / P1-3] index 0 が選択できなかった不具合を修正(1始まり -> 0始まり)
+    for i = 0, GetNumVehicleMods(vehicle, id) - 1 do
         mods[#mods + 1] = {
             header = GetLabelText(GetModTextLabel(vehicle, id, i)),
             params = {
@@ -270,6 +321,7 @@ function ExteriorModList(id, vehicle, label)
                 event = function()
                     SetVehicleModKit(vehicle, 0)
                     SetVehicleMod(vehicle, id, i, false)
+                    ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
                     ExteriorModList(id, vehicle, label)
                 end,
                 args = {}
@@ -396,7 +448,23 @@ function OpenWheelList(id, vehicle, label)
         }
     }
     SetVehicleWheelType(vehicle, id)
-    for i = 1, GetNumVehicleMods(vehicle, 23) - 1 do
+    -- [Phase1 fix / P1-2] 純正(ホイール未装着)へ戻す選択肢
+    mods[#mods + 1] = {
+        header = Lang:t('menu.stock'),
+        icon = 'fas fa-ban',
+        params = {
+            isAction = true,
+            event = function()
+                SetVehicleModKit(vehicle, 0)
+                SetVehicleMod(vehicle, 23, -1, false)
+                ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
+                OpenWheelList(id, vehicle, label)
+            end,
+            args = {}
+        }
+    }
+    -- [Phase1 fix / P1-3] index 0 が選択できなかった不具合を修正(1始まり -> 0始まり)
+    for i = 0, GetNumVehicleMods(vehicle, 23) - 1 do
         mods[#mods + 1] = {
             header = GetLabelText(GetModTextLabel(vehicle, 23, i)),
             params = {
@@ -404,6 +472,7 @@ function OpenWheelList(id, vehicle, label)
                 event = function()
                     SetVehicleModKit(vehicle, 0)
                     SetVehicleMod(vehicle, 23, i, false)
+                    ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
                     OpenWheelList(id, vehicle, label)
                 end,
                 args = {}
@@ -434,7 +503,7 @@ local function GetNeonColors(color)
     end
 end
 
-local function OpenNeon(vehicle)
+local function OpenNeon(vehicle) -- [Phase1 fix / P1-4] 戻り値でアイテム消費要否を通知する
     local dialog = exports['qb-input']:ShowInput({
         header = Lang:t('menu.neons'),
         submitText = Lang:t('menu.submit'),
@@ -483,7 +552,7 @@ local function OpenNeon(vehicle)
             }
         }
     })
-    if not dialog then return end
+    if not dialog then return false end
 
     if dialog.frontenable == 'enable' then
         SetVehicleNeonLightEnabled(vehicle, 2, true)
@@ -510,6 +579,7 @@ local function OpenNeon(vehicle)
     end
 
     SetVehicleNeonLightsColour(vehicle, GetNeonColors(dialog.color))
+    return true
 end
 
 -- Headlights
@@ -525,7 +595,7 @@ local function GetXenonList()
     return xenons
 end
 
-local function OpenXenon(vehicle)
+local function OpenXenon(vehicle) -- [Phase1 fix / P1-4] 戻り値でアイテム消費要否を通知する
     local dialog = exports['qb-input']:ShowInput({
         header = Lang:t('menu.xenon'),
         submitText = Lang:t('menu.submit'),
@@ -559,31 +629,34 @@ local function OpenXenon(vehicle)
             }
         }
     })
-    if not dialog then return end
+    if not dialog then return false end
 
     if dialog.toggle == 'disable' then
         ToggleVehicleMod(vehicle, 22, false)
-        return
+        return true
     end
 
     if dialog.hex and dialog.hex ~= '' then
         local color = HexToRGB(dialog.hex)
         ToggleVehicleMod(vehicle, 22, true)
         SetVehicleXenonLightsCustomColor(vehicle, color.r, color.g, color.b)
-        return
+        return true
     end
 
     if dialog.colorpicker and dialog.colorpicker ~= '' then
         local color = HexToRGB(dialog.colorpicker)
         ToggleVehicleMod(vehicle, 22, true)
         SetVehicleXenonLightsCustomColor(vehicle, color.r, color.g, color.b)
-        return
+        return true
     end
 
     if dialog.color and tonumber(dialog.color) then
         ToggleVehicleMod(vehicle, 22, true)
         SetVehicleXenonLightsColor(vehicle, tonumber(dialog.color))
+        return true
     end
+
+    return false
 end
 
 -- Window Tint
@@ -599,6 +672,7 @@ local function WindowTint(vehicle)
                     event = function()
                         SetVehicleModKit(vehicle, 0)
                         SetVehicleWindowTint(vehicle, Config.WindowTints[i].id)
+                        ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
                         WindowTint(vehicle)
                     end,
                     args = {}
@@ -620,6 +694,7 @@ local function PlateIndex(vehicle)
                 isAction = true,
                 event = function()
                     SetVehicleNumberPlateTextIndex(vehicle, Config.PlateIndexes[i].id)
+                    ConsumeCosmeticItemOnce() -- [Phase1 fix / P1-4]
                     PlateIndex(vehicle)
                 end,
                 args = {}
@@ -689,28 +764,41 @@ RegisterNetEvent('qb-mechanicjob:client:installCosmetic', function(item)
     local vehicleClass = GetVehicleClass(vehicle)
     if Config.IgnoreClasses[vehicleClass] then return end
     if GetVehicleModKit(vehicle) ~= 0 then SetVehicleModKit(vehicle, 0) end
+    -- [Phase1 fix / P1-4] アイテム消費は「メニューを開いた時点」ではなく
+    -- 「実際に変更が確定した時点」で行う。
+    --  - veh_interior/veh_exterior/veh_wheels/veh_tint/veh_plates は qb-menu(非同期)なので
+    --    ConsumeCosmeticItemOnce() が実際の変更操作の中で呼ばれ、
+    --    プレイヤーがメニュー全体を閉じた時点(qb-menu:client:menuClosed)でセッションをリセットする。
+    --  - veh_neons/veh_xenons は qb-input(同期的なダイアログ)なので、戻り値で判定して即座に消費する。
     if item == 'veh_interior' then
+        pendingCosmeticItem = item
+        pendingCosmeticConsumed = false
         OpenInteriors(vehicle)
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
     elseif item == 'veh_exterior' then
+        pendingCosmeticItem = item
+        pendingCosmeticConsumed = false
         OpenExteriors(vehicle)
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
     elseif item == 'veh_wheels' then
+        pendingCosmeticItem = item
+        pendingCosmeticConsumed = false
         OpenWheels(vehicle)
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
     elseif item == 'veh_neons' then
-        OpenNeon(vehicle)
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
+        if OpenNeon(vehicle) then
+            TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
+        end
     elseif item == 'veh_xenons' then
-        OpenXenon(vehicle)
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
+        if OpenXenon(vehicle) then
+            TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
+        end
     elseif item == 'veh_tint' then
+        pendingCosmeticItem = item
+        pendingCosmeticConsumed = false
         WindowTint(vehicle)
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
     elseif item == 'veh_plates' then
         if not IsNearBone(vehicle, 'platelight') then return end
+        pendingCosmeticItem = item
+        pendingCosmeticConsumed = false
         PlateIndex(vehicle)
-        TriggerServerEvent('qb-mechanicjob:server:removeItem', item)
     end
 end)
 
