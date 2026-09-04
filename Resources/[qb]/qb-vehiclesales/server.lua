@@ -122,6 +122,16 @@ RegisterNetEvent('qb-occasions:server:buyVehicle', function(vehicleData)
                     result[1]['plate'],
                     0
                 })
+            -- 2026-09-03 追加調査③修正: 中古車再販は旧所有者と同じplateで新しいplayer_vehicles行を作るため、
+            -- trunk/glovebox(ox_inventoryではplateキー)に前所有者の私物が残ったまま新所有者に引き継がれてしまう。
+            -- ox_inventory core本体は変更せず、公式exportのClearInventory(メモリを即時空にし変更フラグを立てる)と
+            -- RemoveInventory(変更があればDBへ保存してからメモリを解放=DBも空になる)を使い、
+            -- メモリ・DBの両方を新所有者への引き渡し前に空にする。
+            local newOwnerTrunkId, newOwnerGloveId = ('trunk%s'):format(result[1]['plate']), ('glove%s'):format(result[1]['plate'])
+            exports.ox_inventory:ClearInventory(newOwnerTrunkId)
+            exports.ox_inventory:ClearInventory(newOwnerGloveId)
+            exports.ox_inventory:RemoveInventory(newOwnerTrunkId)
+            exports.ox_inventory:RemoveInventory(newOwnerGloveId)
             if SellerData then
                 SellerData.Functions.AddMoney('bank', NewPrice, 'sold vehicle used lot')
             else

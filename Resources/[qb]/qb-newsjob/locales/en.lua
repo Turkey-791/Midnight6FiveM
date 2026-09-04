@@ -12,8 +12,26 @@ local Translations = {
         go_outside = "~g~E~w~ - Go outside",
         breaking_news = "BREAKING NEWS",
         title_breaking_news = "7:00 AM / Today Weazel News Exclusive",
-        bottom_breaking_news = "We bring you the LATEST NEWS live as it happens"
-    }
+        bottom_breaking_news = "We bring you the LATEST NEWS live as it happens",
+        assignment_blip = "News Assignment",
+    },
+    error = {
+        not_on_duty = "You must be on duty to do this",
+        assignment_in_progress = "You already have an assignment in progress",
+        no_assignment = "You have no active assignment. Use /newsassignment to request one",
+        too_far_from_assignment = "You are too far from the assignment location",
+    },
+    success = {
+        assignment_started = "You received a news assignment: %{label}",
+        assignment_completed = "You filed your report and received $%{value}",
+    },
+    task = {
+        start_report = "[E] Report",
+        cancel_task = "You have cancelled the task",
+    },
+    progress = {
+        reporting = "Reporting and filming ..",
+    },
 }
 
 Lang = Lang or Locale:new({

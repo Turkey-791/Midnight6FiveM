@@ -42,3 +42,13 @@ Config = {
 		}
 	}
 }
+
+-- ============================================================
+-- [2026-09-03 追加] wine納品(換金)報酬 -- 作業報酬システム
+-- QBCore基本給(qb-core/shared/jobs.lua の vineyard.grades[].payment)とは
+-- 別枠の、実際にワインを納品した際の報酬。金額は仮値であり、
+-- Midnight6全体の経済設計確定後に本Configの値のみを変更して調整する。
+-- 詳細は resources/vineyard_newsjob_reward_implementation_2026-09-03.md を参照。
+-- ============================================================
+Config.WineSellPrice = 100    -- wine 1個を納品した際の報酬(仮値・最終決定ではない)
+Config.WineSellRadius = 15.0  -- 納品(売却)を受け付ける、ワインゾーン中心からの許容距離(m)

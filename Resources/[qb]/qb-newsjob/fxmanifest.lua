@@ -16,6 +16,7 @@ client_scripts {
     'client/main.lua',
     'client/spawner.lua',
     'client/camera.lua',
+    'client/assignment.lua',
 }
 
 server_script 'server/main.lua'

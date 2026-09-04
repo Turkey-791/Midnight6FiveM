@@ -79,6 +79,31 @@ local function DepositVehicle(veh, data)
     end, plate, data.type, data.indexgarage, 1)
 end
 
+-- 2026-09-03 BUG-04修正: 出庫中の自車を低頻度で自動保存する。
+-- 従来はDepositVehicle(預け入れ)時にしかdamage/mods/fuelがDBに保存されず、
+-- 破壊・放置・切断・server restart等ではDBが更新されないため、
+-- Config.AutoRespawnによるrestart時のstate復帰(state=0→1)が「最後に保存された(多くの場合は新品時の)状態」を
+-- そのまま復元してしまう(BUG-04)。既存の保存イベントを、車両を削除せずに再利用する。
+-- サーバー側ハンドラ(qb-mechanicjob:server:SaveVehicleProps / qb-garages:server:updateVehicleStats)は
+-- いずれもcitizenid照合済みの既存処理のため、新規サーバー側検証コードは不要。
+CreateThread(function()
+    while true do
+        Wait((Config.OutVehicleSaveInterval or 120) * 1000)
+        local ped = PlayerPedId()
+        local veh = GetVehiclePedIsIn(ped, false)
+        if veh ~= 0 and GetPedInVehicleSeat(veh, -1) == ped then
+            local plate = QBCore.Functions.GetPlate(veh)
+            if plate and plate ~= '' then
+                local bodyDamage = math.ceil(GetVehicleBodyHealth(veh))
+                local engineDamage = math.ceil(GetVehicleEngineHealth(veh))
+                local totalFuel = exports[Config.FuelResource]:GetFuel(veh)
+                TriggerServerEvent('qb-mechanicjob:server:SaveVehicleProps', QBCore.Functions.GetVehicleProperties(veh))
+                TriggerServerEvent('qb-garages:server:updateVehicleStats', plate, totalFuel, engineDamage, bodyDamage)
+            end
+        end
+    end
+end)
+
 local function IsVehicleAllowed(classList, vehicle)
     if not Config.ClassSystem then return true end
     for _, class in ipairs(classList) do

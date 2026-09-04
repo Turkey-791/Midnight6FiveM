@@ -26,10 +26,15 @@ local Translations = {
         no_driver_license = 'No drivers license',
         not_cuffed_dead = 'Civilian isn\'t cuffed or dead',
         fine_yourself = 'You Cannot Fine Yourself',
-        not_online = 'This person is not online'
+        not_online = 'This person is not online',
+        -- 2026-09-03 BUG-05 fix: owner-return flow for fully impounded vehicles
+        full_impound_not_found = 'No matching seized vehicle was found',
+        full_impound_not_enough_money = 'Not enough money for the return fee ($%{fee})',
+        full_impound_conflict = 'This vehicle has already been returned'
     },
     success = {
         uncuffed = 'You have been uncuffed',
+        full_impound_returned = 'Vehicle recovered (paid $%{fee} return fee)',
         granted_license = 'You have been granted a license',
         grant_license = 'You granted a license',
         revoke_license = 'You revoked a license',
@@ -47,6 +52,7 @@ local Translations = {
     info = {
         mr = 'Mr.',
         mrs = 'Mrs.',
+        full_impound_return_fee = 'Return fee: $%{fee}',
         impound_price = 'Price the player pays to get vehicle out of impound (can be 0)',
         plate_number = 'License Plate Number',
         flag_reason = 'Reason for flagging vehicle',
@@ -141,6 +147,7 @@ local Translations = {
         impound = 'Impounded Vehicles',
         pol_impound = 'Police Impound',
         pol_garage = 'Police Garage',
+        full_impound_return = 'Recover Seized Vehicle',
         pol_armory = 'Police Armory',
     },
     email = {

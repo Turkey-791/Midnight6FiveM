@@ -295,6 +295,21 @@ Zones[2].zone:onPlayerInOut(function(isPointInside)
 					Wait(1)
 				end
 			end)
+
+			-- [2026-09-03 追加] wine納品(売却)。既存の醸造フロー(Eキー, 'right'表示)
+			-- とは別スレッド・別キー(Gキー, 'left'表示)にして、「醸造開始」と
+			-- 「完成品納品」を別操作として明確に区別する。数量・価格はいずれも
+			-- サーバー側(qb-vineyard:server:sellWine)で決定するため、ここでは
+			-- イベント送信のみを行う。
+			CreateThread(function()
+				while Zones[2].isInside do
+					exports['qb-core']:DrawText(Lang:t('task.sell_wine'), 'left')
+					if IsControlJustPressed(0, 47) and not LocalPlayer.state.inv_busy then
+						TriggerServerEvent('qb-vineyard:server:sellWine')
+					end
+					Wait(1)
+				end
+			end)
 		end
 	else
 		if Config.Debug then log(Lang:t('text.zone_exited', { zone = 'Wine' })) end

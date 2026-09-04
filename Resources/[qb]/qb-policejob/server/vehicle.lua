@@ -58,6 +58,72 @@ RegisterNetEvent('police:server:TakeOutImpound', function(plate, garage)
     TriggerClientEvent('QBCore:Notify', src, Lang:t('success.impound_vehicle_removed'), 'success')
 end)
 
+-- 2026-09-03 BUG-05修正: 完全差し押さえ(state=2)された車両が所有者から永久に失われる問題への対応。
+-- 既存のTakeOutImpound(警察官専用、officerの元へ車両をspawnする処理)は流用せず、
+-- 所有者本人が手数料を払って自分のガレージへ回収できる専用の新規経路を追加する。
+-- state=2は「引き取り待ち」を意味するだけであり、「永久没収」の概念は導入しない。
+QBCore.Functions.CreateCallback('qb-policejob:server:GetMyFullImpoundedVehicles', function(source, cb)
+    local src = source
+    local Player = exports['qb-core']:GetPlayer(src)
+    if not Player then return cb({}) end
+    local vehicles = {}
+    MySQL.query('SELECT * FROM player_vehicles WHERE citizenid = ? AND state = ?', { Player.PlayerData.citizenid, 2 }, function(result)
+        if result and result[1] then
+            vehicles = result
+        end
+        cb(vehicles)
+    end)
+end)
+
+RegisterNetEvent('qb-policejob:server:ReturnFullImpoundedVehicle', function(plate)
+    local src = source
+    local Player = exports['qb-core']:GetPlayer(src)
+    if not Player then return end
+    local citizenid = Player.PlayerData.citizenid
+
+    -- 1. 所有者・stateをサーバー側で必ず確認する(クライアントの申告は信用しない)
+    local vehicle = MySQL.single.await('SELECT citizenid, state, garage FROM player_vehicles WHERE plate = ?', { plate })
+    if not vehicle or vehicle.citizenid ~= citizenid or vehicle.state ~= 2 then
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.full_impound_not_found'), 'error')
+        return
+    end
+
+    -- 2. 返還手数料の支払い(現金優先、次に銀行。既存のqb-garages:server:PayDepotPriceと同じ優先順)
+    local fee = Config.FullImpoundReturnFee or 0
+    local cashBalance = Player.PlayerData.money['cash']
+    local bankBalance = Player.PlayerData.money['bank']
+    local paidFrom = 'none'
+    if fee > 0 then
+        if cashBalance >= fee then
+            Player.RemoveMoney('cash', fee, 'full-impound-return')
+            paidFrom = 'cash'
+        elseif bankBalance >= fee then
+            Player.RemoveMoney('bank', fee, 'full-impound-return')
+            paidFrom = 'bank'
+        else
+            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.full_impound_not_enough_money', { fee = fee }), 'error')
+            return
+        end
+    end
+
+    -- 3. state=2条件付きUPDATE(二重返還・競合を防止)。mods/engine/body/fuel/plate/citizenidは一切変更しない。
+    -- garage列も変更しない(最後に有効だったガレージのまま=通常のqb-garages出庫フローに合流する)。
+    local result = MySQL.update.await('UPDATE player_vehicles SET state = 1, depotprice = 0 WHERE plate = ? AND citizenid = ? AND state = 2', { plate, citizenid })
+
+    if not result or result == 0 then
+        -- 4. 更新できなかった場合(既に他の経路で返還済み等の競合)は必ず全額返金する
+        if paidFrom == 'cash' then
+            Player.AddMoney('cash', fee, 'full-impound-return-refund')
+        elseif paidFrom == 'bank' then
+            Player.AddMoney('bank', fee, 'full-impound-return-refund')
+        end
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.full_impound_conflict'), 'error')
+        return
+    end
+
+    TriggerClientEvent('QBCore:Notify', src, Lang:t('success.full_impound_returned', { fee = fee }), 'success')
+end)
+
 RegisterNetEvent('police:server:FlaggedPlateTriggered', function(coords, plate)
     for _, Player in pairs(QBCore.Functions.GetQBPlayers()) do
         if Player then

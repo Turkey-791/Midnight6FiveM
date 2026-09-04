@@ -238,8 +238,16 @@ end)
 
 -- House Garages
 
+-- 2026-09-03 BUG-01修正: 従来はクライアントが把握しているConfig.Garages全体(自分のhouse以外は知らない)で
+-- 毎回まるごと上書きしていたため、resource再起動直後に別プレイヤーの家ガレージがまだ登録されていない状態で
+-- 誰かがsyncすると、既存のhouseエントリが消えてしまっていた(BUG-01)。
+-- house種別のみをマージする方式に変更し、public/gang/job/depot(静的config由来、常に正しい)を保護する。
 RegisterNetEvent('qb-garages:server:syncGarage', function(updatedGarages)
-    Config.Garages = updatedGarages
+    for k, v in pairs(updatedGarages) do
+        if v.type == 'house' then
+            Config.Garages[k] = v
+        end
+    end
 end)
 
 --Call from qb-phone

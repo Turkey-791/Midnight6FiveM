@@ -41,7 +41,13 @@ Citizen.CreateThreadNow(function()
         playerTable = 'players'
         playerColumn = 'citizenid'
         vehicleTable = 'player_vehicles'
-        vehicleColumn = 'id'
+        -- 2026-09-03 BUG-03修正: qb-coreのplayer_vehicles.idはINT AUTO_INCREMENTの主キーだが、
+        -- server.getOwnedVehicleId(qb)(modules/bridge/qb/server.lua)はplate文字列を返すため、
+        -- 'id'列を条件にするとtrunk/gloveboxのSELECT/UPDATEが型不一致で一致しない(BUG-03の根本原因)。
+        -- qb系リソース(qb-garages/qb-policejob/qb-vehicleshop/qb-vehiclesales/qb-mechanicjob)は
+        -- 全てplateを車両の実質的な一意キーとして使っているため、列名をplateに揃えて整合させる。
+        -- bridge側(getOwnedVehicleId)は変更していない。qbx/ox/esx/nd分岐には影響しない。
+        vehicleColumn = 'plate'
     else
         return
     end

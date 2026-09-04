@@ -33,10 +33,15 @@ local Translations = {
         no_driver_license = '運転免許証がありません',
         not_cuffed_dead = '民間人が手錠をかけられていないか、死亡しています',
         fine_yourself = '自分自身に罰金を科すことはできません',
-        not_online = 'この人はオンラインではありません'
+        not_online = 'この人はオンラインではありません',
+        -- 2026-09-03 BUG-05修正: 完全差し押さえ車両の所有者返還フロー用
+        full_impound_not_found = '該当する差し押さえ車両が見つかりません',
+        full_impound_not_enough_money = '返還手数料(%{fee}ドル)が不足しています',
+        full_impound_conflict = 'この車両は既に返還処理が行われています'
     },
     success = {
         uncuffed = '手錠が解除されました',
+        full_impound_returned = '車両を回収しました(返還手数料 %{fee}ドルを支払いました)',
         granted_license = 'ライセンスが付与されました',
         grant_license = 'ライセンスを付与しました',
         revoke_license = 'ライセンスを取り消しました',
@@ -54,6 +59,7 @@ local Translations = {
     info = {
         mr = 'Mr.',
         mrs = 'Mrs.',
+        full_impound_return_fee = '返還手数料: %{fee}ドル',
         impound_price = 'プレイヤーが車両を差し押さえから解除するために支払う料金（0でも可）',
         plate_number = 'ナンバープレート番号',
         flag_reason = '車両にフラグを立てる理由',
@@ -148,6 +154,7 @@ local Translations = {
         impound = '差し押さえられた車両',
         pol_impound = '警察差し押さえ',
         pol_garage = '警察ガレージ',
+        full_impound_return = '差し押さえ車両の回収',
         pol_armory = '警察武器庫',
     },
     email = {

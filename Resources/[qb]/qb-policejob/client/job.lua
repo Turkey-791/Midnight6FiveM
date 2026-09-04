@@ -280,6 +280,50 @@ function MenuImpound(currentSelection)
     end)
 end
 
+-- 2026-09-03 BUG-05修正: 完全差し押さえ(state=2)された自分の車両を、警察官を介さず自分で確認・回収するための
+-- 専用メニュー。既存のMenuImpound(警察官専用、TakeOutImpoundでofficerの元へspawnする)とは別経路。
+-- ここではDBのstateを1(格納中)に戻すだけで、通常のqb-garagesの出庫フローに合流させる(新規spawn処理なし)。
+function MenuFullImpoundReturn()
+    local returnMenu = {
+        {
+            header = Lang:t('menu.full_impound_return'),
+            isMenuHeader = true
+        }
+    }
+    QBCore.Functions.TriggerCallback('qb-policejob:server:GetMyFullImpoundedVehicles', function(result)
+        local shouldContinue = false
+        if not result or #result == 0 then
+            QBCore.Functions.Notify(Lang:t('error.no_impound'), 'error', 5000)
+        else
+            shouldContinue = true
+            for _, v in pairs(result) do
+                local vname = sharedVehicles[v.vehicle] and sharedVehicles[v.vehicle].name or v.vehicle
+                returnMenu[#returnMenu + 1] = {
+                    header = vname .. ' [' .. v.plate .. ']',
+                    txt = Lang:t('info.full_impound_return_fee', { fee = Config.FullImpoundReturnFee or 0 }),
+                    params = {
+                        event = 'police:client:ReturnFullImpoundedVehicle',
+                        args = {
+                            plate = v.plate,
+                        }
+                    }
+                }
+            end
+        end
+
+        if shouldContinue then
+            returnMenu[#returnMenu + 1] = {
+                header = Lang:t('menu.close'),
+                txt = '',
+                params = {
+                    event = 'qb-menu:client:closeMenu'
+                }
+            }
+            exports['qb-menu']:openMenu(returnMenu)
+        end
+    end)
+end
+
 function closeMenuFull()
     exports['qb-menu']:closeMenu()
 end
@@ -420,6 +464,17 @@ RegisterNetEvent('police:client:TakeOutImpound', function(data)
         local vehicle = data.vehicle
         TakeOutImpound(vehicle)
     end
+end)
+
+-- 2026-09-03 BUG-05修正: 完全差し押さえ車両の所有者返還フロー(job制限なし、既存TakeOutImpoundとは別経路)
+RegisterNetEvent('police:client:OpenFullImpoundReturnMenu', function()
+    if inImpound then
+        MenuFullImpoundReturn()
+    end
+end)
+
+RegisterNetEvent('police:client:ReturnFullImpoundedVehicle', function(data)
+    TriggerServerEvent('qb-policejob:server:ReturnFullImpoundedVehicle', data.plate)
 end)
 
 RegisterNetEvent('police:client:TakeOutVehicle', function(data)
@@ -978,6 +1033,18 @@ CreateThread(function()
                         }
                     })
                 end
+            else
+                -- 2026-09-03 BUG-05修正: 警察官でなくても(勤務中の警察官のオンラインは不要)、
+                -- 完全差し押さえされた自分の車両を確認・回収できるようにする。
+                -- 既存の警察専用メニュー(上のif分岐)とは完全に独立した、job制限のないメニュー。
+                exports['qb-menu']:showHeader({
+                    {
+                        header = Lang:t('menu.full_impound_return'),
+                        params = {
+                            event = 'police:client:OpenFullImpoundReturnMenu',
+                        }
+                    }
+                })
             end
         else
             inImpound = false

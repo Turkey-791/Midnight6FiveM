@@ -258,7 +258,12 @@ end
 function Property:RegisterGarageZone()
     if not next(self.propertyData.garage_data) then return end
 
-    if not (self.has_access or self.owner) or not self.owner then
+    -- 2026-09-03 BUG-01修正: 元のコードは `or not self.owner` が余分なため、実質的にowner以外
+    -- (has_accessのみを持つ同居人等)を常に弾いていた。ps-housingの他の全ての権限チェック
+    -- (server/sv_property.lua の CheckForAccess、furniture/door/stash等)は例外なく
+    -- owner OR has_access で判定しており、この関数だけが孤立して矛盾していた。
+    -- 既存の権限モデルに揃え、余分な条件を削除する。
+    if not (self.has_access or self.owner) then
         return
     end
 
