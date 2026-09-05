@@ -24,7 +24,7 @@ local Translations = {
     task = {
         ["start_task"] = "[E] 開始",
         ["load_ingrediants"] = "[E] 材料を積み込む",
-        ["wine_process"] = "[E] ワイン作りを開始",
+        ["wine_process"] = "[E] ワインを醸造する",
         ["get_wine"] = "[E] ワインを手に入れる",
         ["make_grape_juice"] = "[E] ブドウジュースを作る",
         ["countdown"] = "残り時間 %{time}秒",
@@ -40,6 +40,7 @@ local Translations = {
         ["zone_entered"] = "%{zone}ゾーンに入りました",
         ["zone_exited"] = "%{zone}ゾーンから出ました",
         ["go_to_processing"] = "ブドウジュース加工場へ向かいましょう！",
+        ["wine_brewing_started"] = "%{time}秒後、ワインが完成します",
     },
     success = {
         ["wine_sold"] = "ワインを納品し、$%{value}を受け取りました",

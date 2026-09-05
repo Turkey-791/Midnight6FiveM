@@ -129,6 +129,14 @@ function openLocker(bankId, lockerId) -- Globally Used
             local DrillObject = CreateObject(`hei_prop_heist_drill`, pos.x, pos.y, pos.z, true, true, true)
             AttachEntityToEntity(DrillObject, ped, GetPedBoneIndex(ped, 57005), 0.14, 0, -0.01, 90.0, -90.0, 180.0, true, true, false, true, 1, true)
             IsDrilling = true
+
+            -- 2026-09-05 追加: ドリル使用中の火花エフェクト(見た目のみ、判定には影響しない)
+            RequestNamedPtfxAsset('scr_ornate_bank')
+            while not HasNamedPtfxAssetLoaded('scr_ornate_bank') do
+                Wait(0)
+            end
+            UseParticleFxAssetNextCall('scr_ornate_bank')
+            local drillPtfx = StartParticleFxLoopedOnEntity('scr_env_grind_sparks', DrillObject, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, false, false, false)
             QBCore.Functions.Progressbar('open_locker_drill', Lang:t('general.breaking_open_safe'), math.random(18000, 30000), false, true, {
                 disableMovement = true,
                 disableCarMovement = true,
@@ -136,6 +144,9 @@ function openLocker(bankId, lockerId) -- Globally Used
                 disableCombat = true,
             }, {}, {}, {}, function() -- Done
                 StopAnimTask(ped, 'anim@heists@fleeca_bank@drilling', 'drill_straight_idle', 1.0)
+                if drillPtfx then
+                    StopParticleFxLooped(drillPtfx, false)
+                end
                 DetachEntity(DrillObject, true, true)
                 DeleteObject(DrillObject)
                 TriggerServerEvent('qb-bankrobbery:server:setLockerState', bankId, lockerId, 'isOpened', true)
@@ -148,6 +159,9 @@ function openLocker(bankId, lockerId) -- Globally Used
             end, function() -- Cancel
                 StopAnimTask(ped, 'anim@heists@fleeca_bank@drilling', 'drill_straight_idle', 1.0)
                 TriggerServerEvent('qb-bankrobbery:server:setLockerState', bankId, lockerId, 'isBusy', false)
+                if drillPtfx then
+                    StopParticleFxLooped(drillPtfx, false)
+                end
                 DetachEntity(DrillObject, true, true)
                 DeleteObject(DrillObject)
                 QBCore.Functions.Notify(Lang:t('error.cancel_message'), 'error')
@@ -167,6 +181,14 @@ function openLocker(bankId, lockerId) -- Globally Used
             local DrillObject = CreateObject(`hei_prop_heist_drill`, pos.x, pos.y, pos.z, true, true, true)
             AttachEntityToEntity(DrillObject, ped, GetPedBoneIndex(ped, 57005), 0.14, 0, -0.01, 90.0, -90.0, 180.0, true, true, false, true, 1, true)
             IsDrilling = true
+
+            -- 2026-09-05 追加: ドリル使用中の火花エフェクト(見た目のみ、判定には影響しない)
+            RequestNamedPtfxAsset('scr_ornate_bank')
+            while not HasNamedPtfxAssetLoaded('scr_ornate_bank') do
+                Wait(0)
+            end
+            UseParticleFxAssetNextCall('scr_ornate_bank')
+            local drillPtfx = StartParticleFxLoopedOnEntity('scr_env_grind_sparks', DrillObject, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, false, false, false)
             QBCore.Functions.Progressbar('open_locker_drill', Lang:t('general.breaking_open_safe'), math.random(18000, 30000), false, true, {
                 disableMovement = true,
                 disableCarMovement = true,
@@ -174,6 +196,9 @@ function openLocker(bankId, lockerId) -- Globally Used
                 disableCombat = true,
             }, {}, {}, {}, function() -- Done
                 StopAnimTask(ped, 'anim@heists@fleeca_bank@drilling', 'drill_straight_idle', 1.0)
+                if drillPtfx then
+                    StopParticleFxLooped(drillPtfx, false)
+                end
                 DetachEntity(DrillObject, true, true)
                 DeleteObject(DrillObject)
 
@@ -187,6 +212,9 @@ function openLocker(bankId, lockerId) -- Globally Used
             end, function() -- Cancel
                 StopAnimTask(ped, 'anim@heists@fleeca_bank@drilling', 'drill_straight_idle', 1.0)
                 TriggerServerEvent('qb-bankrobbery:server:setLockerState', bankId, lockerId, 'isBusy', false)
+                if drillPtfx then
+                    StopParticleFxLooped(drillPtfx, false)
+                end
                 DetachEntity(DrillObject, true, true)
                 DeleteObject(DrillObject)
                 QBCore.Functions.Notify(Lang:t('error.cancel_message'), 'error')

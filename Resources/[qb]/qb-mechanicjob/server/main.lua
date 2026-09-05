@@ -74,7 +74,10 @@ QBCore.Functions.CreateCallback('qb-mechanicjob:server:checkTune', function(_, c
 end)
 
 QBCore.Functions.CreateCallback('qb-mechanicjob:server:getVehicleStatus', function(_, cb, plate)
-    if not vehicleComponents[plate] then cb(false) end
+    if not vehicleComponents[plate] then
+        cb(false)
+        return
+    end
     cb(vehicleComponents[plate])
 end)
 
@@ -234,6 +237,18 @@ RegisterNetEvent('qb-mechanicjob:server:repairVehicleComponent', function(plate,
             vehicleComponents[plate][component] = 100
         end
     end
+end)
+
+RegisterNetEvent('qb-mechanicjob:server:repairAllVehicleComponents', function(plate)
+    if not plate or not Config.UseWearableParts then return end
+    if not vehicleComponents[plate] then
+        vehicleComponents[plate] = {}
+    end
+    for component, data in pairs(Config.WearableParts) do
+        vehicleComponents[plate][component] = data.maxValue
+    end
+    local isOwned = IsVehicleOwned(plate)
+    if isOwned then MySQL.update('UPDATE player_vehicles SET status = ? WHERE plate = ?', { json.encode(vehicleComponents[plate]), plate }) end
 end)
 
 RegisterNetEvent('qb-mechanicjob:server:updateVehicleComponents', function(plate, componentData)

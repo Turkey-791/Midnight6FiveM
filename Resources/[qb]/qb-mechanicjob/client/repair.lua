@@ -108,6 +108,7 @@ RegisterNetEvent('qb-mechanicjob:client:repairVehicle', function()
     local vehicle, distance = QBCore.Functions.GetClosestVehicle()
     if vehicle == 0 or distance > 5.0 then return end
     if not IsNearBone(vehicle, 'engine') then return end
+    local plate = QBCore.Functions.GetPlate(vehicle)
     local engineHealth = GetVehicleEngineHealth(vehicle)
     local bodyHealth = GetVehicleBodyHealth(vehicle)
     ToggleHood(vehicle)
@@ -128,9 +129,15 @@ RegisterNetEvent('qb-mechanicjob:client:repairVehicle', function()
     }, {}, function()
         SetVehicleEngineHealth(vehicle, engineHealth + 100)
         SetVehicleBodyHealth(vehicle, bodyHealth + 100)
+        SetVehicleDeformationFixed(vehicle)
+        WashDecalsFromVehicle(vehicle, 1.0)
+        for i = 0, 7 do
+            FixVehicleWindow(vehicle, i)
+        end
         ToggleHood(vehicle)
         QBCore.Functions.Notify(Lang:t('success.repaired'), 'success')
         TriggerServerEvent('qb-mechanicjob:server:removeItem', 'repairkit')
+        TriggerServerEvent('qb-mechanicjob:server:repairAllVehicleComponents', plate)
     end, function()
         ToggleHood(vehicle)
     end)
@@ -140,6 +147,7 @@ RegisterNetEvent('qb-mechanicjob:client:repairVehicleFull', function()
     local vehicle, distance = QBCore.Functions.GetClosestVehicle()
     if vehicle == 0 or distance > 5.0 then return end
     if not IsNearBone(vehicle, 'engine') then return end
+    local plate = QBCore.Functions.GetPlate(vehicle)
     ToggleHood(vehicle)
     QBCore.Functions.Progressbar('repairing_vehicle', Lang:t('progress.repair_vehicle'), 10000, false, true, {
         disableMovement = true,
@@ -156,14 +164,24 @@ RegisterNetEvent('qb-mechanicjob:client:repairVehicleFull', function()
         coords = vec3(0.06, 0.01, -0.02),
         rotation = vec3(0.0, 0.0, 0.0),
     }, {}, function()
+        SetVehicleUndriveable(vehicle, false)
         SetVehicleEngineHealth(vehicle, 1000.0)
         SetVehicleBodyHealth(vehicle, 1000.0)
         SetVehicleDeformationFixed(vehicle)
         SetVehiclePetrolTankHealth(vehicle, 1000.0)
         SetVehicleFixed(vehicle)
+        SetVehicleDirtLevel(vehicle, 0.0)
+        WashDecalsFromVehicle(vehicle, 1.0)
+        for i = 0, 5 do
+            SetVehicleTyreFixed(vehicle, i)
+        end
+        for i = 0, 7 do
+            FixVehicleWindow(vehicle, i)
+        end
         ToggleHood(vehicle)
         QBCore.Functions.Notify(Lang:t('success.repaired'), 'success')
         TriggerServerEvent('qb-mechanicjob:server:removeItem', 'advancedrepairkit')
+        TriggerServerEvent('qb-mechanicjob:server:repairAllVehicleComponents', plate)
     end, function()
         ToggleHood(vehicle)
     end)

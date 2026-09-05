@@ -17,7 +17,7 @@ local Translations = {
     task = {
         ["start_task"] = "[E] To Start",
         ["load_ingrediants"] = "[E] Load Ingredients",
-        ["wine_process"] = "[E] Start WineProcess",
+        ["wine_process"] = "[E] Brew Wine",
         ["get_wine"] = "[E] Get Wine",
         ["make_grape_juice"] = "[E] Make Grape Juice",
         ["countdown"] = "Time Remaining %{time}s",
@@ -33,6 +33,7 @@ local Translations = {
         ["zone_entered"] = "%{zone} Zone Entered",
         ["zone_exited"] = "%{zone} Zone Exited",
         ["go_to_processing"] = "Head to the grape juice processing plant!",
+        ["wine_brewing_started"] = "The wine will be ready in %{time} seconds",
     },
     success = {
         ["wine_sold"] = "You delivered the wine and received $%{value}",

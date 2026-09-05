@@ -157,12 +157,37 @@ local function CreateProcessingBlip()
 end
 
 -- ============================================================
--- [2026-09-05 追加] 加工場ゾーンの装飾オブジェクト(見た目のみ・機能なし)
+-- [2026-09-05 追加] 加工場・ワインゾーンの装飾オブジェクト(見た目のみ・機能なし)
 -- 「プレハブのみで寂しい」との要望のため、加工設備っぽい樽・木箱を
--- 加工場ゾーン付近に配置する。PlaceObjectOnGroundProperlyで地面に
--- スナップさせるため、Config側のZ座標が多少ずれていても浮いたり
--- 埋まったりしにくい。ゲームプレイには一切影響しない純粋な装飾。
+-- ゾーン付近に配置する。ゲームプレイには一切影響しない純粋な装飾。
+--
+-- [2026-09-05 修正] ワインゾーンの装飾が「地中に埋まる」との報告を受けて
+-- 一度はGetGroundZFor_3dCoordによる自動地表検索を追加したが、実際の
+-- 原因は「建物の地下に座標があった」ことで、その後プレイヤーが実機で
+-- 建物のドア正面の正確な座標を/coordsで確認・提供してくれたため、
+-- Config側の座標(ドア正面、実測値)をそのまま信用する方式に戻した。
+-- 自動検索(高い位置から地面を探す方式)は、建物のように上に屋根がある
+-- 場所では屋根に当たってしまう恐れがあり、実測値がある場合はかえって
+-- 不正確になるため使用しない。PlaceObjectOnGroundProperlyのみで
+-- 微調整する(近傍の地面へわずかにスナップさせる、局所的な補正)。
+--
+-- 生成タイミングについては、プレイヤーが実際に近づく(コリジョンが
+-- 読み込まれる)まで待つ処理は残している(遠く離れた場所でいきなり
+-- CreateObjectすると、地形コリジョン未読み込みのため
+-- PlaceObjectOnGroundProperlyが正しく機能しないことがあるため)。
 -- ============================================================
+local function WaitUntilNear(coords, maxDist)
+	while #(GetEntityCoords(PlayerPedId()) - coords) > maxDist do
+		Wait(2000)
+	end
+	RequestCollisionAtCoord(coords.x, coords.y, coords.z)
+	local tries = 0
+	while not HasCollisionLoadedAroundEntity(PlayerPedId()) and tries < 100 do
+		Wait(50)
+		tries = tries + 1
+	end
+end
+
 local function SpawnDecorProp(model, coords, heading)
 	local hash = GetHashKey(model)
 	RequestModel(hash)
@@ -187,6 +212,7 @@ local function CreateProcessingProps()
 	if not Config.ProcessingProps.enabled then return end
 	CreateThread(function()
 		local base = Config.ProcessingProps.coords
+		WaitUntilNear(base, 150.0)
 		for _, item in ipairs(Config.ProcessingProps.items) do
 			SpawnDecorProp(item.model, base + item.offset, item.heading)
 		end
@@ -219,12 +245,16 @@ local function CreateWineProps()
 	if not Config.WineProps.enabled then return end
 	CreateThread(function()
 		local base = Config.WineProps.coords
+		WaitUntilNear(base, 150.0)
 		for _, item in ipairs(Config.WineProps.items) do
 			SpawnDecorProp(item.model, base + item.offset, item.heading)
 		end
 	end)
 end
 
+-- [2026-09-05 修正] 建物ドア正面の実測座標(プレイヤーが/coordsで確認・
+-- 提供)に更新されたため、GetGroundZFor_3dCoordによる自動検索(屋根に
+-- 当たる恐れがある)は使わず、Config座標をそのまま信用して描画する。
 local function CreateWineMarker()
 	if not Config.WineMarker.enabled then return end
 	CreateThread(function()
@@ -237,7 +267,7 @@ local function CreateWineMarker()
 			local dist = #(pcoords - coords)
 			if dist < Config.WineMarker.radius then
 				sleep = 0
-				DrawMarker(1, coords.x, coords.y, coords.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+				DrawMarker(1, coords.x, coords.y, coords.z - 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 					mSize.x, mSize.y, mSize.z,
 					mColor.r, mColor.g, mColor.b, mColor.a,
 					false, true, 2, false, nil, nil, false)
@@ -447,54 +477,62 @@ Zones[2].zone:onPlayerInOut(function(isPointInside)
 		if Config.Debug then log(Lang:t('text.zone_entered', { zone = 'Wine' })) end
 
 		if not startVineyard and PlayerJob.name == 'vineyard' then
+			-- [2026-09-05 修正1] 従来はEフロー(材料投入→醸造開始→受取, 'right'表示)と
+			-- Gフロー(納品, 'left'表示)を別々のCreateThreadで同時に動かしていたが、
+			-- qb-coreのDrawTextは画面上に1つのDOM要素(#text)しか持たず、呼び出す
+			-- たびに中身を丸ごと上書きし、position用のCSSクラスも解除せず蓄積する
+			-- 実装だった。そのため毎フレーム2つのスレッドが同じ要素を取り合い、
+			-- 表示が壊れて見えていた(「ボタンの長さがバグっている」という症状の原因)。
+			-- 1つのスレッドにまとめ、DrawTextの呼び出しを毎フレーム1回に統一し、
+			-- 醸造フローの案内文とワイン納品の案内文を同じ表示枠内に改行でまとめて
+			-- 表示するように修正。
+			--
+			-- [2026-09-05 修正2] 「材料投入(E)」→「醸造開始(E)」の2回のEキー操作を、
+			-- ユーザー要望により1回のEキー操作に統合した(グレープジュース納品と
+			-- 醸造開始を同時に行う)。ブドウジュース→ワインへの変換工程自体は
+			-- 削除・移動しておらず、このゾーン内でEキーにより行う
+			-- (グレープジュース納品+醸造開始→(180秒待機)→ワイン受取)という
+			-- 流れに変更はない。
 			CreateThread(function()
 				while Zones[2].isInside do
+					local mainText
+
 					if not wineStarted then
-						if not loadIngredients then
-							exports['qb-core']:DrawText(Lang:t('task.load_ingrediants'), 'right')
+						if not finishedWine then
+							mainText = Lang:t('task.wine_process')
 							if IsControlJustPressed(0, 38) and not LocalPlayer.state.inv_busy then
 								QBCore.Functions.TriggerCallback('qb-vineyard:server:loadIngredients', function(result)
-									if result then loadIngredients = true end
+									if result then
+										StartWineProcess()
+										QBCore.Functions.Notify(Lang:t('text.wine_brewing_started', { time = Config.wineTimer }))
+									end
 								end)
 							end
 						else
-							if not finishedWine then
-								exports['qb-core']:DrawText(Lang:t('task.wine_process'), 'right')
-								if IsControlJustPressed(0, 38) and not LocalPlayer.state.inv_busy then
-									StartWineProcess()
-								end
-							else
-								exports['qb-core']:DrawText(Lang:t('task.get_wine'), 'right')
-								if IsControlJustPressed(0, 38) and not LocalPlayer.state.inv_busy then
-									TriggerServerEvent('qb-vineyard:server:receiveWine')
-									finishedWine = false
-									loadIngredients = false
-									wineStarted = false
-								end
+							mainText = Lang:t('task.get_wine')
+							if IsControlJustPressed(0, 38) and not LocalPlayer.state.inv_busy then
+								TriggerServerEvent('qb-vineyard:server:receiveWine')
+								finishedWine = false
+								wineStarted = false
 							end
 						end
 					else
-						exports['qb-core']:DrawText(Lang:t('task.countdown', { time = winetimer }), 'right')
-						Wait(999)
+						mainText = Lang:t('task.countdown', { time = winetimer })
 					end
+
+					-- ワイン納品(Gキー)は醸造フローの進捗に関わらず常に受付可能
+					-- (以前受け取ったワインをこのゾーンで納品するケースがあるため)。
+					-- 数量・価格の妥当性はサーバー側(qb-vineyard:server:sellWine)で
+					-- 検証するため、ここではイベント送信のみを行う。
+					exports['qb-core']:DrawText(mainText .. '<br>' .. Lang:t('task.sell_wine'), 'right')
+					if IsControlJustPressed(0, 47) and not LocalPlayer.state.inv_busy then
+						TriggerServerEvent('qb-vineyard:server:sellWine')
+					end
+
 					Wait(1)
 				end
 			end)
 
-			-- [2026-09-03 追加] wine納品(売却)。既存の醸造フロー(Eキー, 'right'表示)
-			-- とは別スレッド・別キー(Gキー, 'left'表示)にして、「醸造開始」と
-			-- 「完成品納品」を別操作として明確に区別する。数量・価格はいずれも
-			-- サーバー側(qb-vineyard:server:sellWine)で決定するため、ここでは
-			-- イベント送信のみを行う。
-			CreateThread(function()
-				while Zones[2].isInside do
-					exports['qb-core']:DrawText(Lang:t('task.sell_wine'), 'left')
-					if IsControlJustPressed(0, 47) and not LocalPlayer.state.inv_busy then
-						TriggerServerEvent('qb-vineyard:server:sellWine')
-					end
-					Wait(1)
-				end
-			end)
 		end
 	else
 		if Config.Debug then log(Lang:t('text.zone_exited', { zone = 'Wine' })) end
