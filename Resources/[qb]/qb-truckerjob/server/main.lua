@@ -4,7 +4,17 @@ local Bail = {}
 RegisterNetEvent('qb-trucker:server:DoBail', function(bool, vehInfo)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
     if bool then
+        -- 2026-09-05 Trucker二重貸出し修正: 既に保証金支払い済み(Bail保持中)の状態で
+        -- 新規貸出しリクエストが来た場合は拒否する。これにより、ゾーンの多重登録など
+        -- 何らかの理由でこのイベントが連続発火しても、保証金の二重請求や
+        -- 既存トラックの意図しない差し替えが発生しなくなる。保証金の金額・報酬計算式など
+        -- 既存の値は一切変更していない。
+        if Bail[Player.PlayerData.citizenid] then
+            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.vehicle_already_out'), 'error')
+            return
+        end
         if Player.PlayerData.money.cash >= Config.TruckerJobTruckDeposit then
             Bail[Player.PlayerData.citizenid] = Config.TruckerJobTruckDeposit
             Player.Functions.RemoveMoney('cash', Config.TruckerJobTruckDeposit, 'tow-received-bail')

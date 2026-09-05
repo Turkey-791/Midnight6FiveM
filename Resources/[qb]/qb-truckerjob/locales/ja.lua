@@ -8,7 +8,8 @@ local Translations = {
         backdoors_not_open = "車両の後部ドアが開いていません",
         get_out_vehicle = "この操作を行うには車両から降りる必要があります",
         too_far_from_trunk = "車両の荷台から商品箱を取り出してください",
-        too_far_from_delivery = "配達地点にもっと近づいてください"
+        too_far_from_delivery = "配達地点にもっと近づいてください",
+        vehicle_already_out = "既にトラックを借用中です。営業所近くのトラック保管場で返却してから、次の車両を借りてください"
     },
 
     success = {

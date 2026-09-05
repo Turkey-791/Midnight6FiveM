@@ -16,6 +16,14 @@ local showMarker = false
 local markerLocation
 local zoneCombo = nil
 local returningToStation = false
+local ActiveTruckerZones = {} -- 2026-09-05 Trucker二重発行修正: CreateElements()内で生成される
+-- 'main'/'vehicle'ゾーン(と付随するvehicle受け渡し用マーカーゾーン)を保持し、再生成前に
+-- 確実に破棄できるようにするための一覧。以前はモジュール共通の`zoneCombo`変数１つに
+-- 最後に生成したゾーンだけを保持しており、配送先(stores)ゾーンの生成で上書きされるため、
+-- Job変更時にmain/vehicleゾーンを正しく破棄できず、再度trucker jobに就いた際に
+-- ゾーンとblipが多重生成される不具合があった(乗車済み扱いの車両受け渡しゾーンが
+-- 二重に反応し、既に受領済みのトラックが選び直しで差し替わる/保証金が二重に引かれる
+-- 症状の原因)。座標・報酬額など既存の値は一切変更していない。
 
 -- Functions
 
@@ -95,6 +103,19 @@ local function RemoveTruckerBlips()
         RemoveBlip(CurrentBlip)
         CurrentBlip = nil
     end
+end
+
+local function DestroyTruckerElements()
+    -- 2026-09-05 Trucker二重発行修正: main/vehicleゾーンをすべて破棄してからblipも除去する。
+    -- ActiveTruckerZonesに保持されているゾーンのみを対象とし、配送先(stores)ゾーンの
+    -- 破棄処理(CurrentLocation.zoneCombo:destroy())には一切手を加えていない。
+    for i = 1, #ActiveTruckerZones do
+        if ActiveTruckerZones[i] and ActiveTruckerZones[i].destroy then
+            ActiveTruckerZones[i]:destroy()
+        end
+    end
+    ActiveTruckerZones = {}
+    RemoveTruckerBlips()
 end
 
 local function MenuGarage()
@@ -248,8 +269,15 @@ local function CreateZone(type, number)
                     ShowMarker(false)
                 end
             end)
+            -- 2026-09-05 Trucker二重発行修正: これらのゾーンをDestroyTruckerElements()で
+            -- 確実に破棄できるよう保持する。
+            ActiveTruckerZones[#ActiveTruckerZones + 1] = zoneCombo
+            ActiveTruckerZones[#ActiveTruckerZones + 1] = zoneCombodel
         elseif type == "stores" then
             CurrentLocation.zoneCombo = zoneCombo
+        elseif type == "main" then
+            -- 2026-09-05 Trucker二重発行修正: mainゾーンも同様に保持する。
+            ActiveTruckerZones[#ActiveTruckerZones + 1] = zoneCombo
         end
     end
 end
@@ -281,6 +309,7 @@ local function getNewLocation()
 end
 
 local function CreateElements()
+    DestroyTruckerElements() -- 2026-09-05 Trucker二重発行修正: 何回呼ばれても常に単一セットのみが存在するようにする
     TruckVehBlip = AddBlipForCoord(Config.TruckerJobLocations["vehicle"].coords.x, Config.TruckerJobLocations["vehicle"].coords.y, Config.TruckerJobLocations["vehicle"].coords.z)
     SetBlipSprite(TruckVehBlip, 326)
     SetBlipDisplay(TruckVehBlip, 4)
@@ -448,7 +477,7 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
-    RemoveTruckerBlips()
+    DestroyTruckerElements() -- 2026-09-05 Trucker二重発行修正: ログアウト時にもゾーンを確実に破棄する
     CurrentLocation = nil
     CurrentBlip = nil
     hasBox = false
@@ -460,8 +489,7 @@ RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
     local OldPlayerJob = PlayerJob.name
     PlayerJob = JobInfo
     if OldPlayerJob == "trucker" then
-        RemoveTruckerBlips()
-        zoneCombo:destroy()
+        DestroyTruckerElements() -- 2026-09-05 Trucker二重発行修正: main/vehicleゾーンを漏れなく破棄(旧実装は最後に上書きされたzoneComboしか破棄できていなかった)
         exports['qb-core']:HideText()
         Delivering = false
         showMarker = false
