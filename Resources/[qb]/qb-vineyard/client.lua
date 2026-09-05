@@ -98,6 +98,12 @@ local function startVinyard()
 				startVineyard = false
 				pickedGrapes = 0
 				QBCore.Functions.Notify(Lang:t('text.end_shift'))
+				-- [2026-09-05 追加] 収穫終了時、加工場(グレープジュースゾーン)への
+				-- 案内メッセージ+ウェイポイントを自動セットする
+				if Config.GuideToProcessing.enabled then
+					QBCore.Functions.Notify(Lang:t('text.go_to_processing'))
+					SetNewWaypoint(Config.Vineyard.grapejuice.coords.x, Config.Vineyard.grapejuice.coords.y)
+				end
 			end
 		end
 		Wait(5)
@@ -130,10 +136,154 @@ local function CreateJobBlip()
 	EndTextCommandSetBlipName(jobBlip)
 end
 
+-- ============================================================
+-- [2026-09-05 追加] 加工場(グレープジュースゾーン)マップブリップ(常時表示)
+-- 求人ブリップと同じ考え方で、ジョブの有無に関わらず常時表示する。
+-- ============================================================
+local processingBlip = nil
+local function CreateProcessingBlip()
+	if not Config.ProcessingBlip.enabled then return end
+	if processingBlip and DoesBlipExist(processingBlip) then return end
+
+	local coords = Config.ProcessingBlip.coords
+	processingBlip = AddBlipForCoord(coords.x, coords.y, coords.z)
+	SetBlipSprite(processingBlip, Config.ProcessingBlip.sprite)
+	SetBlipColour(processingBlip, Config.ProcessingBlip.color)
+	SetBlipScale(processingBlip, Config.ProcessingBlip.scale)
+	SetBlipAsShortRange(processingBlip, true)
+	BeginTextCommandSetBlipName('STRING')
+	AddTextComponentSubstringPlayerName(Config.ProcessingBlip.label)
+	EndTextCommandSetBlipName(processingBlip)
+end
+
+-- ============================================================
+-- [2026-09-05 追加] 加工場ゾーンの装飾オブジェクト(見た目のみ・機能なし)
+-- 「プレハブのみで寂しい」との要望のため、加工設備っぽい樽・木箱を
+-- 加工場ゾーン付近に配置する。PlaceObjectOnGroundProperlyで地面に
+-- スナップさせるため、Config側のZ座標が多少ずれていても浮いたり
+-- 埋まったりしにくい。ゲームプレイには一切影響しない純粋な装飾。
+-- ============================================================
+local function SpawnDecorProp(model, coords, heading)
+	local hash = GetHashKey(model)
+	RequestModel(hash)
+	local tries = 0
+	while not HasModelLoaded(hash) and tries < 100 do
+		Wait(10)
+		tries = tries + 1
+	end
+	if not HasModelLoaded(hash) then
+		log(('装飾オブジェクトのモデル読み込みに失敗しました: %s'):format(model))
+		return
+	end
+	local obj = CreateObject(hash, coords.x, coords.y, coords.z, false, false, false)
+	PlaceObjectOnGroundProperly(obj)
+	SetEntityHeading(obj, heading or 0.0)
+	FreezeEntityPosition(obj, true)
+	SetModelAsNoLongerNeeded(hash)
+	return obj
+end
+
+local function CreateProcessingProps()
+	if not Config.ProcessingProps.enabled then return end
+	CreateThread(function()
+		local base = Config.ProcessingProps.coords
+		for _, item in ipairs(Config.ProcessingProps.items) do
+			SpawnDecorProp(item.model, base + item.offset, item.heading)
+		end
+	end)
+end
+
+-- ============================================================
+-- [2026-09-05 追加] ワイン醸造ゾーンの目印(ブリップ + 地面マーカー + 樽)
+-- 加工場と同じ考え方で、常時表示のブリップと装飾オブジェクトを追加する。
+-- さらに、建物が存在しないため近づいた際に地面にマーカーを表示し、
+-- 遠くから見ても位置がわかるようにする。
+-- ============================================================
+local wineBlip = nil
+local function CreateWineBlip()
+	if not Config.WineBlip.enabled then return end
+	if wineBlip and DoesBlipExist(wineBlip) then return end
+
+	local coords = Config.WineBlip.coords
+	wineBlip = AddBlipForCoord(coords.x, coords.y, coords.z)
+	SetBlipSprite(wineBlip, Config.WineBlip.sprite)
+	SetBlipColour(wineBlip, Config.WineBlip.color)
+	SetBlipScale(wineBlip, Config.WineBlip.scale)
+	SetBlipAsShortRange(wineBlip, true)
+	BeginTextCommandSetBlipName('STRING')
+	AddTextComponentSubstringPlayerName(Config.WineBlip.label)
+	EndTextCommandSetBlipName(wineBlip)
+end
+
+local function CreateWineProps()
+	if not Config.WineProps.enabled then return end
+	CreateThread(function()
+		local base = Config.WineProps.coords
+		for _, item in ipairs(Config.WineProps.items) do
+			SpawnDecorProp(item.model, base + item.offset, item.heading)
+		end
+	end)
+end
+
+local function CreateWineMarker()
+	if not Config.WineMarker.enabled then return end
+	CreateThread(function()
+		local coords = Config.Vineyard.wine.coords
+		local mSize = Config.WineMarker.size
+		local mColor = Config.WineMarker.color
+		while true do
+			local sleep = 1000
+			local pcoords = GetEntityCoords(PlayerPedId())
+			local dist = #(pcoords - coords)
+			if dist < Config.WineMarker.radius then
+				sleep = 0
+				DrawMarker(1, coords.x, coords.y, coords.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+					mSize.x, mSize.y, mSize.z,
+					mColor.r, mColor.g, mColor.b, mColor.a,
+					false, true, 2, false, nil, nil, false)
+			end
+			Wait(sleep)
+		end
+	end)
+end
+
+-- ============================================================
+-- [2026-09-05 追加] 収穫地点の地面マーカー(白い輪っか)
+-- ブリップの「?」マークだけだと立ち位置がわかりづらいとの要望のため、
+-- 現在有効な収穫地点(tasking中の grapeLocations[random])に、
+-- シフト中のみ薄い白色のマーカーを表示する。tasking/randomは
+-- ファイル先頭で宣言済みのアップバリューをそのまま参照する。
+-- ============================================================
+local function CreateGrapeMarkerThread()
+	if not Config.GrapeMarker.enabled then return end
+	CreateThread(function()
+		local mSize = Config.GrapeMarker.size
+		local mColor = Config.GrapeMarker.color
+		while true do
+			local sleep = 250
+			if tasking and random ~= 0 and grapeLocations[random] then
+				sleep = 0
+				local coords = grapeLocations[random]
+				DrawMarker(1, coords.x, coords.y, coords.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+					mSize.x, mSize.y, mSize.z,
+					mColor.r, mColor.g, mColor.b, mColor.a,
+					false, true, 2, false, nil, nil, false)
+			end
+			Wait(sleep)
+		end
+	end)
+end
+
 -- resourceの開始タイミングに関わらず(既に起動済みのリソースへ後から
 -- 接続してきたプレイヤーも含めて)確実に表示されるよう、クライアント
 -- スクリプトの読み込み時に直接呼び出す(プレイヤーデータ取得を待たない)。
 CreateJobBlip()
+CreateProcessingBlip()
+CreateProcessingProps()
+CreateWineBlip()
+CreateWineProps()
+CreateWineMarker()
+CreateGrapeMarkerThread()
 
 local function pickProcess()
 	QBCore.Functions.Progressbar('pick_grape', Lang:t('progress.pick_grapes'), math.random(6000, 8000), false, true, {

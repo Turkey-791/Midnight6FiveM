@@ -39,6 +39,7 @@ local Translations = {
         ["invalid_zone"] = "無効なゾーンです！",
         ["zone_entered"] = "%{zone}ゾーンに入りました",
         ["zone_exited"] = "%{zone}ゾーンから出ました",
+        ["go_to_processing"] = "ブドウジュース加工場へ向かいましょう！",
     },
     success = {
         ["wine_sold"] = "ワインを納品し、$%{value}を受け取りました",

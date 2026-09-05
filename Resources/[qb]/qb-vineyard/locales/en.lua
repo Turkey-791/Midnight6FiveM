@@ -32,6 +32,7 @@ local Translations = {
         ["invalid_zone"] = "Invalid Zone!",
         ["zone_entered"] = "%{zone} Zone Entered",
         ["zone_exited"] = "%{zone} Zone Exited",
+        ["go_to_processing"] = "Head to the grape juice processing plant!",
     },
     success = {
         ["wine_sold"] = "You delivered the wine and received $%{value}",
