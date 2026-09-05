@@ -791,7 +791,7 @@ Config.Locations = {
         ['coords'] = vector4(1189.36, 2641.00, 38.44, 0),
         ['products'] = Config.Products['mechanic'],
         ['delivery'] = vector4(1189.9852, 2651.1873, 37.8351, 317.7137),
-        ['requiredJob'] = 'mechanic2'
+        ['requiredJob'] = 'mechanic' -- [ジョブ統一] mechanic2 -> mechanic に統一
     },
 
     ['mechanic3'] = {
@@ -799,7 +799,7 @@ Config.Locations = {
         ['coords'] = vector4(-1156.56, -1999.85, 13.19, 0),
         ['products'] = Config.Products['mechanic'],
         ['delivery'] = vector4(-1131.9661, -1972.0144, 13.1603, 358.8637),
-        ['requiredJob'] = 'mechanic3'
+        ['requiredJob'] = 'mechanic' -- [ジョブ統一] mechanic3 -> mechanic に統一
     },
 
     ['bennys'] = {

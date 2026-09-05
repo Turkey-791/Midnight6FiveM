@@ -7,6 +7,35 @@ local sharedItems = exports['qb-core']:GetShared('Items')
 -- 可否はこちらのサーバー側経過時間で判定する。
 local WineBrewStarted = {}
 
+-- ============================================================
+-- [2026-09-04 追加] ジョブ受注(入社) -- 建物入口(ドア)でのEキー受注
+--
+-- 遵守事項:
+--   - 距離はサーバー側でも検証する(クライアントのPolyZone判定だけに頼らない)
+--   - 既にvineyard jobの場合は何もしない(二重受注防止)
+-- ============================================================
+RegisterNetEvent('qb-vineyard:server:applyJob', function()
+    local src = source
+    local Player = exports['qb-core']:GetPlayer(src)
+    if not Player then return end
+
+    if Player.PlayerData.job.name == 'vineyard' then
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.already_employed'), 'error')
+        return
+    end
+
+    local ped = GetPlayerPed(src)
+    local pcoords = GetEntityCoords(ped)
+    local doorCoords = Config.JobDoor.coords
+    if #(pcoords - doorCoords) > Config.JobDoor.radius then
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.too_far_to_apply'), 'error')
+        return
+    end
+
+    Player.Functions.SetJob('vineyard', 0)
+    TriggerClientEvent('QBCore:Notify', src, Lang:t('success.job_applied'), 'success')
+end)
+
 RegisterNetEvent('qb-vineyard:server:getGrapes', function()
     local Player = exports['qb-core']:GetPlayer(source)
     -- [2026-09-03 追加] job認証(サーバー側)

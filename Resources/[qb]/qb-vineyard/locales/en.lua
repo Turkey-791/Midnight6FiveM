@@ -7,6 +7,8 @@ local Translations = {
         ["too_far_to_sell"] = "You are too far from the delivery point",
         ["no_wine"] = "You do not have any wine to deliver",
         ["not_on_duty"] = "You must be on duty to do this",
+        ["already_employed"] = "You are already employed here",
+        ["too_far_to_apply"] = "You are too far from the entrance",
     },
     progress = {
         ["pick_grapes"] = "Picking Grapes ..",
@@ -21,6 +23,7 @@ local Translations = {
         ["countdown"] = "Time Remaining %{time}s",
         ['cancel_task'] = "You have cancelled the task",
         ["sell_wine"] = "[G] Deliver Wine",
+        ["apply_job"] = "[E] Apply For Job",
     },
     text = {
         ["start_shift"] = "You have started your shift at the vineyard!",
@@ -32,6 +35,7 @@ local Translations = {
     },
     success = {
         ["wine_sold"] = "You delivered the wine and received $%{value}",
+        ["job_applied"] = "You are now employed at the vineyard!",
     },
 }
 

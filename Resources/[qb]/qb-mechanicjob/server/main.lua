@@ -90,11 +90,14 @@ end)
 
 RegisterNetEvent('qb-mechanicjob:server:stash', function(data)
     local src = source
-    local shopName = data.job
+    -- [ジョブ統一] data.job は統一後のジョブ名(例: 'mechanic')になったため、
+    -- 金庫がどの物理店舗のものかは data.shop (qb-target側で追加した物理店舗キー)で判定する。
+    -- これにより、mechanic/mechanic2/mechanic3の金庫は引き続き物理的に別々のまま残る。
+    local shopName = data.shop
     if not Config.Shops[shopName] then return end
     local Player = exports['qb-core']:GetPlayer(src)
     if not Player then return end
-    if Config.Shops[shopName].managed and Player.PlayerData.job.name ~= shopName then return end
+    if Config.Shops[shopName].managed and Player.PlayerData.job.name ~= Config.Shops[shopName].job then return end
     local playerPed = GetPlayerPed(src)
     local playerCoords = GetEntityCoords(playerPed)
     local stashCoords = Config.Shops[shopName].stash

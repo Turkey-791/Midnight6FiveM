@@ -102,34 +102,12 @@ QBCore.Shared.Jobs = {
 			['4'] = { name = 'マネージャー', isboss = true, payment = 150 },
 		},
 	},
-	-- メカニック2 (LS Customs)
-	mechanic2 = {
-		label = 'LSカスタムズ',
-		type = 'mechanic',
-		defaultDuty = true,
-		offDutyPay = false,
-		grades = {
-			['0'] = { name = '研修生', payment = 50 },
-			['1'] = { name = '見習い', payment = 75 },
-			['2'] = { name = '熟練者', payment = 100 },
-			['3'] = { name = '上級者', payment = 125 },
-			['4'] = { name = 'マネージャー', isboss = true, payment = 150 },
-		},
-	},
-	-- メカニック3 (LS Customs)
-	mechanic3 = {
-		label = 'LSカスタムズ',
-		type = 'mechanic',
-		defaultDuty = true,
-		offDutyPay = false,
-		grades = {
-			['0'] = { name = '研修生', payment = 50 },
-			['1'] = { name = '見習い', payment = 75 },
-			['2'] = { name = '熟練者', payment = 100 },
-			['3'] = { name = '上級者', payment = 125 },
-			['4'] = { name = 'マネージャー', isboss = true, payment = 150 },
-		},
-	},
+	-- [ジョブ統一] mechanic2 / mechanic3 は mechanic に統合したため削除しました。
+	-- 物理的な3店舗(mechanic/mechanic2/mechanic3)は qb-mechanicjob/config/config.lua の
+	-- Config.Shops に引き続き残っており、全て job='mechanic' として扱われます。
+	-- 既存にmechanic2/mechanic3で保存されているプレイヤーは、別途お渡しするマイグレーション
+	-- SQLを実行してjob名を'mechanic'へ更新してください(グレード段階は完全に同一のため
+	-- グレードの読み替えは不要です)。
 	-- ビーカース・ガレージ
 	beeker = {
 		label = 'ビーカース・ガレージ',

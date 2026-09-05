@@ -142,7 +142,7 @@ CreateThread(function()
                 event = 'QBCore:ToggleDuty',
                 label = Lang:t('target.duty'),
                 icon = 'fas fa-user-clock',
-                job = v.managed and k or nil
+                job = v.managed and v.job or nil -- [ジョブ統一] 物理店舗キー(k)ではなく統一ジョブ(v.job)で判定
             } },
             distance = 2.0
         })
@@ -155,7 +155,8 @@ CreateThread(function()
             options = { {
                 label = Lang:t('target.stash'),
                 icon = 'fas fa-box-open',
-                job = v.managed and k or nil,
+                job = v.managed and v.job or nil, -- [ジョブ統一] 物理店舗キー(k)ではなく統一ジョブ(v.job)で判定
+                shop = k, -- [ジョブ統一] 金庫の物理店舗識別用。サーバー側で店舗ごとに金庫を分離するために使用
                 type = 'server',
                 event = 'qb-mechanicjob:server:stash',
             } },
@@ -170,7 +171,7 @@ CreateThread(function()
             options = { {
                 label = Lang:t('target.paint'),
                 icon = 'fas fa-fill-drip',
-                job = v.managed and k or nil,
+                job = v.managed and v.job or nil, -- [ジョブ統一] 物理店舗キー(k)ではなく統一ジョブ(v.job)で判定
                 action = function()
                     PaintCategories() -- cosmetics.lua
                 end
@@ -187,7 +188,7 @@ CreateThread(function()
                 {
                     label = Lang:t('target.withdraw'),
                     icon = 'fas fa-car',
-                    job = v.managed and k or nil,
+                    job = v.managed and v.job or nil, -- [ジョブ統一] 物理店舗キー(k)ではなく統一ジョブ(v.job)で判定
                     canInteract = function()
                         local inVehicle = GetVehiclePedIsUsing(PlayerPedId())
                         if inVehicle ~= 0 then return false end
@@ -200,7 +201,7 @@ CreateThread(function()
                 {
                     label = Lang:t('target.deposit'),
                     icon = 'fas fa-car',
-                    job = k,
+                    job = v.job, -- [ジョブ統一] 物理店舗キー(k)ではなく統一ジョブ(v.job)で判定
                     canInteract = function()
                         local inVehicle = GetVehiclePedIsUsing(PlayerPedId())
                         if inVehicle == 0 then return false end

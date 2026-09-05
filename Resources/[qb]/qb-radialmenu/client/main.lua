@@ -267,16 +267,6 @@ RegisterNetEvent('QBCore:Client:OnPlayerUpdated', function(key, val)
     PlayerData = val
 end)
 
--- Keeps PlayerData.job / PlayerData.gang in sync with partial updates (e.g. Player:SetJob, Player:SetJobDuty),
--- which QBCore:Client:OnPlayerUpdated does not cover unless key == 'all'.
-RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
-    PlayerData.job = JobInfo
-end)
-
-RegisterNetEvent('QBCore:Client:OnGangUpdate', function(GangInfo)
-    PlayerData.gang = GangInfo
-end)
-
 RegisterNetEvent('qb-radialmenu:client:noPlayers', function()
     QBCore.Functions.Notify(Lang:t('error.no_people_nearby'), 'error', 2500)
 end)

@@ -33,6 +33,7 @@ Config.WearableParts = { -- unused if Config.UseWearableParts is false (feel fre
 Config.Shops = {
     mechanic = { -- City location
         managed = true,
+        job = 'mechanic', -- [ジョブ統一] mechanic/mechanic2/mechanic3は全てjob='mechanic'で扱う
         shopLabel = 'LS Customs',
         showBlip = true,
         blipSprite = 72,
@@ -49,6 +50,7 @@ Config.Shops = {
     },
     mechanic2 = { -- Harmony Location
         managed = true,
+        job = 'mechanic', -- [ジョブ統一] 物理店舗キーはmechanic2のままだが、雇用ジョブはmechanicへ統一
         shopLabel = 'LS Customs',
         showBlip = true,
         blipSprite = 72,
@@ -65,6 +67,7 @@ Config.Shops = {
     },
     mechanic3 = { -- Airport Location
         managed = true,
+        job = 'mechanic', -- [ジョブ統一] 物理店舗キーはmechanic3のままだが、雇用ジョブはmechanicへ統一
         shopLabel = 'LS Customs',
         showBlip = true,
         blipSprite = 72,
@@ -81,6 +84,7 @@ Config.Shops = {
     },
     bennys = { -- Default Bennys Location
         managed = true,
+        job = 'bennys', -- [ジョブ統一] bennysは従来通り独立ジョブ(変更なし)
         shopLabel = 'Benny\'s Motorworks',
         showBlip = true,
         blipSprite = 72,
@@ -97,6 +101,7 @@ Config.Shops = {
     },
     beeker = { -- Paleto Location
         managed = true,
+        job = 'beeker', -- [ジョブ統一] beekerは従来通り独立ジョブ(変更なし)
         shopLabel = 'Beeker\'s Garage',
         showBlip = true,
         blipSprite = 72,

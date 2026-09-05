@@ -14,6 +14,8 @@ local Translations = {
         ["too_far_to_sell"] = "納品場所から離れすぎています",
         ["no_wine"] = "納品できるワインを持っていません",
         ["not_on_duty"] = "勤務中のみ利用できます",
+        ["already_employed"] = "すでにこの仕事に就いています",
+        ["too_far_to_apply"] = "受付(建物入口)から離れすぎています",
     },
     progress = {
         ["pick_grapes"] = "ブドウを収穫しています ..",
@@ -28,6 +30,7 @@ local Translations = {
         ["countdown"] = "残り時間 %{time}秒",
         ['cancel_task'] = "タスクをキャンセルしました",
         ["sell_wine"] = "[G] ワインを納品する",
+        ["apply_job"] = "[E] 求人に応募する",
     },
     text = {
         ["start_shift"] = "ブドウ園でのシフトが開始されました！",
@@ -39,6 +42,7 @@ local Translations = {
     },
     success = {
         ["wine_sold"] = "ワインを納品し、$%{value}を受け取りました",
+        ["job_applied"] = "ぶどう園の仕事に就きました！",
     },
 }
 

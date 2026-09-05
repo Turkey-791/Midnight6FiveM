@@ -33,6 +33,7 @@ local winetimer = Config.wineTimer
 local loadIngredients = false
 local wineStarted = false
 local finishedWine = false
+local jobBlip = nil -- [2026-09-04 追加] 求人マップブリップ(常時表示)のハンドル
 
 local grapeLocations = {
 	[1] = vector3(-1875.41, 2100.37, 138.86),
@@ -108,6 +109,31 @@ local function DeleteBlip()
 		RemoveBlip(blip)
 	end
 end
+
+-- ============================================================
+-- [2026-09-04 追加] 求人マップブリップ(建物入口に常時表示)
+-- 収穫地点の一時的なブリップ(CreateBlip/DeleteBlip)とは別物で、
+-- ジョブに就いているかどうかに関わらず常に表示しておく。
+-- ============================================================
+local function CreateJobBlip()
+	if not Config.JobBlip.enabled then return end
+	if jobBlip and DoesBlipExist(jobBlip) then return end
+
+	local coords = Config.JobDoor.coords
+	jobBlip = AddBlipForCoord(coords.x, coords.y, coords.z)
+	SetBlipSprite(jobBlip, Config.JobBlip.sprite)
+	SetBlipColour(jobBlip, Config.JobBlip.color)
+	SetBlipScale(jobBlip, Config.JobBlip.scale)
+	SetBlipAsShortRange(jobBlip, true)
+	BeginTextCommandSetBlipName('STRING')
+	AddTextComponentSubstringPlayerName(Config.JobBlip.label)
+	EndTextCommandSetBlipName(jobBlip)
+end
+
+-- resourceの開始タイミングに関わらず(既に起動済みのリソースへ後から
+-- 接続してきたプレイヤーも含めて)確実に表示されるよう、クライアント
+-- スクリプトの読み込み時に直接呼び出す(プレイヤーデータ取得を待たない)。
+CreateJobBlip()
 
 local function pickProcess()
 	QBCore.Functions.Progressbar('pick_grape', Lang:t('progress.pick_grapes'), math.random(6000, 8000), false, true, {
@@ -229,18 +255,27 @@ Zones[1].zone:onPlayerInOut(function(isPointInside)
 	Zones[1].isInside = isPointInside
 	if isPointInside then
 		if Config.Debug then log(Lang:t('text.zone_entered', { zone = 'Start' })) end
-		if not startVineyard and PlayerJob.name == 'vineyard' then
-			exports['qb-core']:DrawText(Lang:t('task.start_task'), 'right')
-			CreateThread(function()
-				while Zones[1].isInside do
-					if IsControlJustReleased(0, 38) and not startVineyard then
-						startVineyard = true
-						startVinyard()
+		CreateThread(function()
+			while Zones[1].isInside do
+				if PlayerJob.name == 'vineyard' then
+					if not startVineyard then
+						exports['qb-core']:DrawText(Lang:t('task.start_task'), 'right')
+						if IsControlJustReleased(0, 38) and not startVineyard then
+							startVineyard = true
+							startVinyard()
+						end
 					end
-					Wait(1)
+				else
+					-- [2026-09-04 追加] まだvineyard jobではないプレイヤー向けの
+					-- 求人受付(建物入口でEキーを押すと受注する)
+					exports['qb-core']:DrawText(Lang:t('task.apply_job'), 'right')
+					if IsControlJustReleased(0, 38) then
+						TriggerServerEvent('qb-vineyard:server:applyJob')
+					end
 				end
-			end)
-		end
+				Wait(1)
+			end
+		end)
 	else
 		if Config.Debug then log(Lang:t('text.zone_exited', { zone = 'Start' })) end
 		exports['qb-core']:HideText()
