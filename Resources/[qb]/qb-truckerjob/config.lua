@@ -2,7 +2,10 @@ Config = {}
 
 Config.UseTarget = GetConvar('UseTarget', 'false') == 'true'
 
-Config.TruckerJobTruckDeposit = 125
+Config.TruckerJobTruckDeposit = 5000 -- 2026-09-06 ご要望により保証金を引き上げ(旧: 125)
+Config.TruckerJobDestroyedFine = 2500 -- 2026-09-06 新設: ジョブトラックが修理不能なレベルで大破・爆発した場合に
+-- 銀行口座から追加で徴収する罰金。保証金(上記)は別途没収されたままになり返金されない。
+-- 銀行口座はQBCore側の設定(qb-core/config.lua Money.MinusLimit、既定-5000)によりマイナスになり得る。
 Config.TruckerJobFixedLocation = false
 Config.TruckerJobMaxDrops = 20 -- amount of locations before being forced to return to station to reload
 Config.TruckerJobDropPrice = 500

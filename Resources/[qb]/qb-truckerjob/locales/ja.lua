@@ -9,7 +9,10 @@ local Translations = {
         get_out_vehicle = "この操作を行うには車両から降りる必要があります",
         too_far_from_trunk = "車両の荷台から商品箱を取り出してください",
         too_far_from_delivery = "配達地点にもっと近づいてください",
-        vehicle_already_out = "既にトラックを借用中です。営業所近くのトラック保管場で返却してから、次の車両を借りてください"
+        vehicle_already_out = "既にトラックを借用中です。営業所近くのトラック保管場で返却してから、次の車両を借りてください",
+        vehicle_destroyed = "トラックが走行不能なほど大破しました",
+        vehicle_destroyed_fine = "保証金は没収されました。さらに罰金として銀行口座から$%{value}を徴収しました",
+        vehicle_destroyed_no_fine = "保証金は没収されました(口座残高の下限のため罰金は徴収できませんでした)"
     },
 
     success = {

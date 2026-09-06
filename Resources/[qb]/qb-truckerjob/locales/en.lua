@@ -9,7 +9,10 @@ local Translations = {
         get_out_vehicle = "You need to step out of the vehicle to perform this action",
         too_far_from_trunk = "You need to grab the boxes from the trunk of your vehicle",
         too_far_from_delivery = "You need to be closer to the delivery point",
-        vehicle_already_out = "You already have a delivery truck checked out. Return it at the vehicle depot before taking out another one."
+        vehicle_already_out = "You already have a delivery truck checked out. Return it at the vehicle depot before taking out another one.",
+        vehicle_destroyed = "The truck has been wrecked beyond repair",
+        vehicle_destroyed_fine = "Your deposit has been forfeited, and an additional $%{value} fine was charged to your bank account",
+        vehicle_destroyed_no_fine = "Your deposit has been forfeited (the fine could not be charged due to your bank account's negative balance limit)"
     },
     success = {
         paid_with_cash = "$%{value} Deposit Paid With Cash",

@@ -24,6 +24,12 @@ local ActiveTruckerZones = {} -- 2026-09-05 Trucker二重発行修正: CreateEle
 -- ゾーンとblipが多重生成される不具合があった(乗車済み扱いの車両受け渡しゾーンが
 -- 二重に反応し、既に受領済みのトラックが選び直しで差し替わる/保証金が二重に引かれる
 -- 症状の原因)。座標・報酬額など既存の値は一切変更していない。
+local CurrentTruckVehicle = nil -- 2026-09-06 新設: 現在借用中のジョブトラックの車両ハンドル。
+-- 大破・爆発を監視するスレッドで使用する。正規返却/強制回収時は必ずnilに戻す。
+local BoxProp = nil -- 2026-09-06 新設: 荷物を運んでいる間、見た目上実際に持たせる箱のプロップ(実体)。
+-- 以前はこのプロップが一切生成されておらず、常に「透明な箱を持っている」ように見えていた。
+local VehicleRentalEnding = false -- 2026-09-06 新設: 大破検知〜サーバー通知までの間に、後始末処理が
+-- 二重に走らないようにするためのガードフラグ。
 
 -- Functions
 
@@ -116,6 +122,34 @@ local function DestroyTruckerElements()
     end
     ActiveTruckerZones = {}
     RemoveTruckerBlips()
+end
+
+local function CreateBoxProp()
+    -- 2026-09-06 新設: 荷物取得時に見た目の箱(プロップ)を持たせる。
+    if BoxProp and DoesEntityExist(BoxProp) then
+        DeleteObject(BoxProp)
+        BoxProp = nil
+    end
+    local ped = PlayerPedId()
+    local model = joaat("prop_cs_cardboard_box")
+    RequestModel(model)
+    local attempts = 0
+    while not HasModelLoaded(model) and attempts < 200 do
+        Wait(10)
+        attempts = attempts + 1
+    end
+    if not HasModelLoaded(model) then return end
+    local coords = GetEntityCoords(ped)
+    BoxProp = CreateObject(model, coords.x, coords.y, coords.z, true, true, false)
+    AttachEntityToEntity(BoxProp, ped, GetPedBoneIndex(ped, 28422), 0.0, 0.02, 0.0, 0.0, 0.0, 0.0, true, true, false, true, 1, true)
+    SetModelAsNoLongerNeeded(model)
+end
+
+local function DeleteBoxProp()
+    if BoxProp and DoesEntityExist(BoxProp) then
+        DeleteObject(BoxProp)
+    end
+    BoxProp = nil
 end
 
 local function MenuGarage()
@@ -378,16 +412,19 @@ local function GetInTrunk()
         disableMouse = false,
         disableCombat = true,
     }, {
-        animDict = "anim@gangops@facility@servers@",
-        anim = "hotwire",
-        flags = 16,
+        -- 2026-09-06 荷物エモート修正: 以前はハッキング用アニメ(hotwire)を流用しており、
+        -- 箱を持つ動作として不自然だったため、荷物を抱えるアニメに変更した。
+        animDict = "anim@heists@box_carry@",
+        anim = "idle",
+        flags = 49,
     }, {}, {}, function() -- Done
         isWorking = false
-        StopAnimTask(ped, "anim@gangops@facility@servers@", "hotwire", 1.0)
+        ClearPedTasksImmediately(ped) -- 2026-09-06: StopAnimTaskから変更し、確実にアニメを止める
         hasBox = true
+        CreateBoxProp() -- 2026-09-06 新設: 箱のプロップ(実体)を持たせる(以前は何も持っていなかった)
     end, function() -- Cancel
         isWorking = false
-        StopAnimTask(ped, "anim@gangops@facility@servers@", "hotwire", 1.0)
+        ClearPedTasksImmediately(ped)
         QBCore.Functions.Notify(Lang:t("error.cancelled"), "error")
     end)
 end
@@ -395,7 +432,17 @@ end
 local function Deliver()
     isWorking = true
     Wait(500)
-    TaskStartScenarioInPlace(PlayerPedId(), "PROP_HUMAN_BUM_BIN", 0, true)
+    -- 2026-09-06 荷物エモート修正: 以前は「ホームレスがゴミ箱をあさる」ループシナリオ(PROP_HUMAN_BUM_BIN)を
+    -- 流用しており、荷物を置く動作として不自然な上、シナリオ特有の挙動でエモートがループし続ける
+    -- 原因になっていた。ループしない通常のアニメ再生(TaskPlayAnim)に置き換えた。
+    local deliverPed = PlayerPedId()
+    RequestAnimDict("anim@heists@box_carry@")
+    local dictAttempts = 0
+    while not HasAnimDictLoaded("anim@heists@box_carry@") and dictAttempts < 200 do
+        Wait(10)
+        dictAttempts = dictAttempts + 1
+    end
+    TaskPlayAnim(deliverPed, "anim@heists@box_carry@", "idle", 3.0, 3.0, -1, 49, 0, false, false, false)
     QBCore.Functions.Progressbar("work_dropbox", Lang:t("mission.deliver_box"), 2000, false, true, {
         disableMovement = true,
         disableCarMovement = true,
@@ -403,7 +450,8 @@ local function Deliver()
         disableCombat = true,
     }, {}, {}, {}, function() -- Done
         isWorking = false
-        ClearPedTasks(PlayerPedId())
+        ClearPedTasksImmediately(PlayerPedId()) -- 2026-09-06: ClearPedTasksから変更し、確実にアニメを止める(ループ対策)
+        DeleteBoxProp() -- 2026-09-06 新設: 荷物を置いたタイミングでプロップ(実体)を消す
         hasBox = false
         currentCount = currentCount + 1
         if currentCount == CurrentLocation.dropcount then
@@ -441,9 +489,41 @@ local function Deliver()
         end
     end, function() -- Cancel
         isWorking = false
-        ClearPedTasks(PlayerPedId())
+        ClearPedTasksImmediately(PlayerPedId()) -- 2026-09-06: ClearPedTasksから変更(ループ対策)
         QBCore.Functions.Notify(Lang:t("error.cancelled"), "error")
     end)
+end
+
+local function EndVehicleRentalAbnormally(applyFine)
+    -- 2026-09-06 新設: 車両の大破・ログアウト・Job変更など、正規の返却フロー以外でレンタルが
+    -- 終わる場合の共通後始末。保証金は没収したまま(サーバー側では返金しない)。
+    if VehicleRentalEnding then return end
+    VehicleRentalEnding = true
+
+    if CurrentTruckVehicle and DoesEntityExist(CurrentTruckVehicle) then
+        DeleteEntity(CurrentTruckVehicle)
+    end
+    CurrentTruckVehicle = nil
+    DeleteBoxProp()
+
+    if CurrentBlip ~= nil then
+        RemoveBlip(CurrentBlip)
+        ClearAllBlipRoutes()
+        CurrentBlip = nil
+    end
+    if CurrentLocation and CurrentLocation.zoneCombo then
+        CurrentLocation.zoneCombo:destroy()
+    end
+    CurrentLocation = nil
+    Delivering = false
+    showMarker = false
+    hasBox = false
+    isWorking = false
+    currentCount = 0
+    JobsDone = 0
+    returningToStation = false
+
+    TriggerServerEvent('qb-trucker:server:EndVehicleRental', applyFine)
 end
 
 -- Events
@@ -478,6 +558,9 @@ end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     DestroyTruckerElements() -- 2026-09-05 Trucker二重発行修正: ログアウト時にもゾーンを確実に破棄する
+    -- 2026-09-06: 車両の削除・キーの剥奪はサーバー側(QBCore:Server:OnPlayerUnload)で確実に処理される。
+    CurrentTruckVehicle = nil
+    DeleteBoxProp()
     CurrentLocation = nil
     CurrentBlip = nil
     hasBox = false
@@ -489,6 +572,12 @@ RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
     local OldPlayerJob = PlayerJob.name
     PlayerJob = JobInfo
     if OldPlayerJob == "trucker" then
+        if CurrentTruckVehicle then
+            -- 2026-09-06 新設: トラックを借りたまま職業を変更した場合、正規の返却ができないため
+            -- 強制的に車両を回収する(保証金は没収、罰金は科さない)。以前はここで何も処理されず、
+            -- 借りたトラックが放置され、鍵だけが永続的に残ってしまっていた。
+            EndVehicleRentalAbnormally(false)
+        end
         DestroyTruckerElements() -- 2026-09-05 Trucker二重発行修正: main/vehicleゾーンを漏れなく破棄(旧実装は最後に上書きされたzoneComboしか破棄できていなかった)
         exports['qb-core']:HideText()
         Delivering = false
@@ -514,6 +603,11 @@ RegisterNetEvent('qb-trucker:client:SpawnVehicle', function()
         TriggerEvent("vehiclekeys:client:SetOwner", QBCore.Functions.GetPlate(veh))
         SetVehicleEngineOn(veh, true, true)
         CurrentPlate = QBCore.Functions.GetPlate(veh)
+        -- 2026-09-06 新設: 大破監視・強制回収(ログアウト等)でキー剥奪や車両削除ができるよう、
+        -- サーバー側にプレートとnetIdを通知しておく。
+        CurrentTruckVehicle = veh
+        VehicleRentalEnding = false
+        TriggerServerEvent('qb-trucker:server:RegisterActiveVehicle', CurrentPlate, netId)
         getNewLocation()
     end, vehicleInfo, coords, true)
 end)
@@ -528,6 +622,8 @@ RegisterNetEvent('qb-truckerjob:client:Vehicle', function()
     if IsPedInAnyVehicle(PlayerPedId()) and isTruckerVehicle(GetVehiclePedIsIn(PlayerPedId(), false)) then
         if GetPedInVehicleSeat(GetVehiclePedIsIn(PlayerPedId()), -1) == PlayerPedId() then
             if isTruckerVehicle(GetVehiclePedIsIn(PlayerPedId(), false)) then
+                CurrentTruckVehicle = nil -- 2026-09-06: 正規返却なので大破監視スレッドを解除してから削除する
+                DeleteBoxProp()
                 DeleteVehicle(GetVehiclePedIsIn(PlayerPedId()))
                 TriggerServerEvent('qb-trucker:server:DoBail', false)
                 if CurrentBlip ~= nil then
@@ -570,6 +666,20 @@ end)
 
 RegisterNetEvent('qb-truckerjob:client:SetShopList', function(shoplist)
     Config.TruckerJobLocations["stores"] = shoplist
+end)
+
+-- 2026-09-06 新設: ジョブトラックの大破・爆発を監視するスレッド。
+-- 修理不能なレベルで壊れたことを検知すると、保証金を没収したまま罰金を科す処理を呼び出す。
+CreateThread(function()
+    while true do
+        Wait(1500)
+        if CurrentTruckVehicle and not VehicleRentalEnding then
+            if not DoesEntityExist(CurrentTruckVehicle) or IsEntityDead(CurrentTruckVehicle) or GetVehicleEngineHealth(CurrentTruckVehicle) <= 0.0 then
+                QBCore.Functions.Notify(Lang:t("error.vehicle_destroyed"), "error")
+                EndVehicleRentalAbnormally(true)
+            end
+        end
+    end
 end)
 -- Threads
 -- 2026-09-02 Trucker/Delivery修正: 上記コメントと同様の理由でqb-shopsへの問い合わせを無効化。

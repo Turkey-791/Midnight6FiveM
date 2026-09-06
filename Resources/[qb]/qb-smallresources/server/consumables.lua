@@ -44,6 +44,25 @@ QBCore.Functions.CreateUseableItem('joint', function(source, item)
     TriggerClientEvent('consumables:client:UseJoint', source)
 end)
 
+----------- / Cigarette (2026-09-06 AO依頼: 市販タバコ・手巻きタバコ追加)
+
+QBCore.Functions.CreateUseableItem('cigarette_pack', function(source, item)
+    if not exports['qb-inventory']:RemoveItem(source, item.name, 1, item.slot, 'qb-smallresources:cigarette_pack:open') then return end
+    -- 1パック10本(仮仕様。実際の本数は未確定のため要確認)
+    exports['qb-inventory']:AddItem(source, 'cigarette', 10, false, nil, 'qb-smallresources:cigarette_pack:open')
+    TriggerClientEvent('consumables:client:OpenCigarettePack', source)
+end)
+
+QBCore.Functions.CreateUseableItem('cigarette', function(source, item)
+    if not exports['qb-inventory']:RemoveItem(source, item.name, 1, item.slot, 'qb-smallresources:cigarette') then return end
+    TriggerClientEvent('consumables:client:UseCigarette', source)
+end)
+
+QBCore.Functions.CreateUseableItem('handrolled_cigarette', function(source, item)
+    if not exports['qb-inventory']:RemoveItem(source, item.name, 1, item.slot, 'qb-smallresources:handrolled_cigarette') then return end
+    TriggerClientEvent('consumables:client:UseHandrolledCigarette', source)
+end)
+
 QBCore.Functions.CreateUseableItem('cokebaggy', function(source)
     TriggerClientEvent('consumables:client:Cokebaggy', source)
 end)

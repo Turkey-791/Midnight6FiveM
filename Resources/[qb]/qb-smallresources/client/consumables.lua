@@ -369,22 +369,92 @@ RegisterNetEvent('consumables:client:meth', function()
 end)
 
 RegisterNetEvent('consumables:client:UseJoint', function()
+    -- 2026-09-06 AO依頼: 喫煙Animationが表示されない不具合の修正。
+    -- 従来はProgressbar完了後(onFinish内)でQBCore.Functions.PlayAnimを個別に呼んでいたが、
+    -- この経路はDoesAnimDictExist等のチェックに失敗した場合サイレントに何も起きない上、
+    -- Progressbar自体には空の animation={} を渡していたため、Progressbar表示中は
+    -- 一切Animationが再生されない作りになっていた。
+    -- Eat/Drinkハンドラと同じ「Progressbarのanimation/propパラメータで演出する」方式
+    -- (実際の再生・後片付けは[standalone]/progressbar/client.luaのStartActions/ActionCleanupが
+    --  担当し、Eat/Drinkで動作実績あり)に統一し、Progressbar表示中に喫煙Animationが
+    -- 再生されるようにした。Jointのprop(p_cs_joint_01)もこの機会に追加(仮の装着位置。
+    -- 実機で位置がずれる場合はcoords/rotationを調整すること)。
     QBCore.Functions.Progressbar('smoke_joint', Lang:t('consumables.joint_progress'), 1500, false, true, {
         disableMovement = false,
         disableCarMovement = false,
         disableMouse = false,
         disableCombat = true,
-    }, {}, {}, {}, function() -- Done
+    }, {
+        animDict = 'timetable@gardener@smoking_joint',
+        anim = 'smoke_idle',
+        flags = 49,
+    }, {
+        model = 'p_cs_joint_01',
+        bone = 60309,
+        coords = vec3(0.0, 0.0, -0.02),
+        rotation = vec3(0.0, 0.0, 0.0),
+    }, {}, function() -- Done
         TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items['joint'], 'remove')
-        if IsPedInAnyVehicle(PlayerPedId(), false) then
-            QBCore.Functions.PlayAnim('timetable@gardener@smoking_joint', 'smoke_idle', false)
-        else
-            QBCore.Functions.PlayAnim('timetable@gardener@smoking_joint', 'smoke_idle', false)
-        end
         TriggerEvent('evidence:client:SetStatus', 'weedsmell', 300)
         TriggerServerEvent('hud:server:RelieveStress', Config.RelieveWeedStress)
     end)
 end)
+
+-- 2026-09-06 AO依頼: 市販タバコ・手巻きタバコ追加。
+-- Animationは実ファイルで存在が確認できているJoint用のtimetable@gardener@smoking_joint / smoke_idleを
+-- 暫定的に流用している(cigarette専用のAnimDictを実ファイルから確認できなかったため、
+-- 未検証のAnimDict名を推測で導入して13番の不具合と同じ症状を再発させるリスクを避けた)。
+-- 3種の性能差はStress軽減量(config.lua)とProgressbarの持続時間(標準/短い)で表現している。
+-- 喫煙Prop(ng_proc_cigarette01a)も実ファイルのentityhashesから存在確認済みのものを使用。
+-- いずれも仮の装着位置・仮値のため、実機で見た目やバランスを確認して調整すること。
+
+RegisterNetEvent('consumables:client:OpenCigarettePack', function()
+    TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items['cigarette_pack'], 'remove')
+    TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items['cigarette'], 'add')
+end)
+
+RegisterNetEvent('consumables:client:UseCigarette', function()
+    QBCore.Functions.Progressbar('smoke_cigarette', Lang:t('consumables.cigarette_progress'), Config.SmokeCigaretteDuration, false, true, {
+        disableMovement = false,
+        disableCarMovement = false,
+        disableMouse = false,
+        disableCombat = true,
+    }, {
+        animDict = 'timetable@gardener@smoking_joint',
+        anim = 'smoke_idle',
+        flags = 49,
+    }, {
+        model = 'ng_proc_cigarette01a',
+        bone = 60309,
+        coords = vec3(0.0, 0.0, -0.02),
+        rotation = vec3(0.0, 0.0, 0.0),
+    }, {}, function() -- Done
+        TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items['cigarette'], 'remove')
+        TriggerServerEvent('hud:server:RelieveStress', Config.RelieveCigaretteStress)
+    end)
+end)
+
+RegisterNetEvent('consumables:client:UseHandrolledCigarette', function()
+    QBCore.Functions.Progressbar('smoke_handrolled_cigarette', Lang:t('consumables.handrolled_cigarette_progress'), Config.SmokeHandrolledDuration, false, true, {
+        disableMovement = false,
+        disableCarMovement = false,
+        disableMouse = false,
+        disableCombat = true,
+    }, {
+        animDict = 'timetable@gardener@smoking_joint',
+        anim = 'smoke_idle',
+        flags = 49,
+    }, {
+        model = 'ng_proc_cigarette01a',
+        bone = 60309,
+        coords = vec3(0.0, 0.0, -0.02),
+        rotation = vec3(0.0, 0.0, 0.0),
+    }, {}, function() -- Done
+        TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items['handrolled_cigarette'], 'remove')
+        TriggerServerEvent('hud:server:RelieveStress', Config.RelieveHandrolledCigaretteStress)
+    end)
+end)
+
 
 RegisterNetEvent('consumables:client:UseParachute', function()
     equipParachuteAnim()
