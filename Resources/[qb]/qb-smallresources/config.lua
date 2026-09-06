@@ -93,13 +93,12 @@ Config.Disable = {
 
 Config.RelieveWeedStress = math.random(15, 20) -- stress relief amount (100 max)
 
--- 2026-09-06 AO依頼: 喫煙システム追加分(市販タバコ/手巻きタバコ)。
--- 数値は全て仮値。価格・Stress量・喫煙時間は未確定のため、実際の運用値は別途調整すること。
+-- 2026-09-06 AO依頼: 喫煙システム追加分(市販タバコ/手巻きタバコ)。数値確定(2026-09-06)。
 -- 性能順: 市販タバコ(cigarette) < 手巻きタバコ(handrolled_cigarette) < ジョイント(joint、上のRelieveWeedStress=15-20は既存のまま変更していない)
-Config.RelieveCigaretteStress = math.random(5, 8) -- 仮値。市販タバコのstress軽減量(100 max)
-Config.RelieveHandrolledCigaretteStress = math.random(10, 14) -- 仮値。手巻きタバコのstress軽減量(joint未満・cigarette超)
-Config.SmokeCigaretteDuration = 4000 -- 仮値(ms)。市販タバコの喫煙時間(標準)
-Config.SmokeHandrolledDuration = 2500 -- 仮値(ms)。手巻きタバコの喫煙時間(市販タバコより短く/速く)
+Config.RelieveCigaretteStress = math.random(5, 8) -- 市販タバコのstress軽減量(100 max)
+Config.RelieveHandrolledCigaretteStress = math.random(10, 14) -- 手巻きタバコのstress軽減量(joint未満・cigarette超)
+Config.SmokeCigaretteDuration = 4000 -- (ms) 市販タバコの喫煙時間(標準)
+Config.SmokeHandrolledDuration = 2500 -- (ms) 手巻きタバコの喫煙時間(市販タバコより短く/速く)
 
 Config.Consumables = {
     eat = { -- default food items

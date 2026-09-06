@@ -94,6 +94,19 @@ return {
 				duration = 6000,
 				count = 1,
 			},
+			-- 2026-09-06 AO依頼: 手巻きタバコ(rolling_paper + tobacco_leaf)追加。
+			-- 新規ベンチの座標を勝手に作らず、既存item_benchの実在座標(上記points、
+			-- 既にプレイヤーが利用しているクラフト台)にレシピを追加する形にした。
+			-- 材料数(rolling_paper1+tobacco_leaf1)・生成数1・duration 2000msで確定(2026-09-06)。
+			-- ox-crafting-ext(XP/スキルチェック拡張)はRequirementsテーブルに
+			-- 明示的に列挙されたレシピ名だけを対象にし、無い場合はそのまま許可する
+			-- 実装になっているため、ここに追加してもox-crafting-extの変更は不要。
+			{
+				name = 'handrolled_cigarette',
+				ingredients = { rolling_paper = 1, tobacco_leaf = 1 },
+				duration = 2000,
+				count = 1,
+			},
 		},
 		points = {
 			vec3(-1147.083008, -2002.662109, 13.180260),

@@ -915,6 +915,30 @@ return {
 		description = 'Paper made specifically for encasing and smoking tobacco or cannabis.',
 		client = { image = 'rolling_paper.png' },
 	},
+	['cigarette_pack'] = {
+		label = 'Cigarette Pack',
+		weight = 50,
+		description = '10本入りの市販タバコ。使用するとcigaretteを10本受け取る。',
+		client = { image = 'cigarette_pack.png' },
+	},
+	['cigarette'] = {
+		label = 'Cigarette',
+		weight = 5,
+		description = '市販の紙巻きタバコ。1本吸うとストレスが軽減される。',
+		client = { image = 'cigarette.png' },
+	},
+	['tobacco_leaf'] = {
+		label = 'Tobacco Leaf',
+		weight = 10,
+		description = '乾燥させたタバコの葉。手巻きタバコの材料。タバコ自動販売機で購入可能。',
+		client = { image = 'tobacco_leaf.png' },
+	},
+	['handrolled_cigarette'] = {
+		label = 'Hand-rolled Cigarette',
+		weight = 8,
+		description = 'rolling_paperとtobacco_leafから手作りした手巻きタバコ。市販タバコより短時間で、より高いストレス軽減効果がある。',
+		client = { image = 'handrolled_cigarette.png' },
+	},
 	['weed_whitewidow'] = {
 		label = 'White Widow 2g',
 		weight = 20,

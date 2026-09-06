@@ -406,7 +406,10 @@ end)
 -- 未検証のAnimDict名を推測で導入して13番の不具合と同じ症状を再発させるリスクを避けた)。
 -- 3種の性能差はStress軽減量(config.lua)とProgressbarの持続時間(標準/短い)で表現している。
 -- 喫煙Prop(ng_proc_cigarette01a)も実ファイルのentityhashesから存在確認済みのものを使用。
--- いずれも仮の装着位置・仮値のため、実機で見た目やバランスを確認して調整すること。
+-- Stress軽減量・喫煙時間はConfig.RelieveCigaretteStress/RelieveHandrolledCigaretteStress/
+-- SmokeCigaretteDuration/SmokeHandrolledDurationとして確定済み(config.lua参照、2026-09-06)。
+-- 喫煙Propの装着位置(coords/rotation)のみ未検証のため、実機で位置がずれる場合は
+-- 各Progressbar呼び出し内のcoords/rotationを調整すること。
 
 RegisterNetEvent('consumables:client:OpenCigarettePack', function()
     TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items['cigarette_pack'], 'remove')

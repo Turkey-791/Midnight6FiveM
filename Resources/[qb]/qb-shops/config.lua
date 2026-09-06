@@ -34,6 +34,7 @@ Config.Products = {
         { name = 'bandage',       price = 100, amount = 50 },
         { name = 'lighter',       price = 2,   amount = 50 },
         { name = 'rolling_paper', price = 2,   amount = 5000 },
+        { name = 'cigarette_pack', price = 15,  amount = 200 }, -- 2026-09-06 AO依頼: 市販タバコ追加。価格・在庫は他アイテム(beer=7,whiskey=10,vodka=12,bandage=100)の水準に合わせて確定。
     },
     ['liquor'] = {
         { name = 'beer',    price = 7,  amount = 50 },

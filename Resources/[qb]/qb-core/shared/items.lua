@@ -255,6 +255,10 @@ QBCore.Shared.Items = {
     oxy                          = { name = 'oxy', label = 'Prescription Oxy', weight = 0, type = 'item', image = 'oxy.png', unique = false, useable = true, shouldClose = true, description = 'The Label Has Been Ripped Off' },
     meth                         = { name = 'meth', label = 'Meth', weight = 100, type = 'item', image = 'meth_baggy.png', unique = false, useable = true, shouldClose = true, description = 'A baggie of Meth' },
     rolling_paper                = { name = 'rolling_paper', label = 'Rolling Paper', weight = 0, type = 'item', image = 'rolling_paper.png', unique = false, useable = false, shouldClose = true, description = 'Paper made specifically for encasing and smoking tobacco or cannabis.' },
+    cigarette_pack               = { name = 'cigarette_pack', label = 'Cigarette Pack', weight = 50, type = 'item', image = 'cigarette_pack.png', unique = false, useable = true, shouldClose = true, description = '10本入りの市販タバコ。使用するとcigaretteを10本受け取る。' },
+    cigarette                    = { name = 'cigarette', label = 'Cigarette', weight = 5, type = 'item', image = 'cigarette.png', unique = false, useable = true, shouldClose = true, description = '市販の紙巻きタバコ。1本吸うとストレスが軽減される。' },
+    tobacco_leaf                 = { name = 'tobacco_leaf', label = 'Tobacco Leaf', weight = 10, type = 'item', image = 'tobacco_leaf.png', unique = false, useable = false, shouldClose = true, description = '乾燥させたタバコの葉。手巻きタバコの材料。タバコ自動販売機で購入可能。' },
+    handrolled_cigarette         = { name = 'handrolled_cigarette', label = 'Hand-rolled Cigarette', weight = 8, type = 'item', image = 'handrolled_cigarette.png', unique = false, useable = true, shouldClose = true, description = 'rolling_paperとtobacco_leafから手作りした手巻きタバコ。市販タバコより短時間で、より高いストレス軽減効果がある。' },
 
     -- Seed And Weed
     weed_whitewidow              = { name = 'weed_whitewidow', label = 'White Widow 2g', weight = 200, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, description = 'A weed bag with 2g White Widow' },

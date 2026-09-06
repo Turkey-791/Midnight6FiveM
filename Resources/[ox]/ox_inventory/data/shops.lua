@@ -190,5 +190,29 @@ return {
 		model = {
 			`prop_vend_soda_02`, `prop_vend_fridge01`, `prop_vend_water_01`, `prop_vend_soda_01`
 		}
+	},
+
+	-- 2026-09-06 AO依頼: タバコ自動販売機。
+	-- 注意: 現状 inventory:target convar が false のため、ox_inventory本体の
+	-- shops/client.lua 側のmodel分岐(shared.target前提)はこのままでは動かない
+	-- (VendingMachineDrinksと同じ理由。詳細はsmoking_vending_machine_investigation
+	-- レポート参照)。そのためこのShop定義自体は「品揃え(name/inventory)の正本」として
+	-- 使い、実際のTarget登録は[midnight6-custom]/cigarette-vendingから
+	-- exports.ox_target:addModel()で直接行っている(inventory:targetは変更していない)。
+	CigaretteVendingMachine = {
+		name = 'タバコ自動販売機',
+		inventory = {
+			{ name = 'cigarette_pack', price = 15 },
+			-- 2026-09-06 AO依頼: tobacco_leafの入手手段がどこにも無かったため、
+			-- rolling_paper・lighterと合わせてここで販売する形に決定。価格は
+			-- qb-shopsのコンビニ価格(lighter=2, rolling_paper=2)に揃え、
+			-- tobacco_leafは同系統の消耗素材として8で確定。
+			{ name = 'rolling_paper', price = 2 },
+			{ name = 'tobacco_leaf', price = 8 },
+			{ name = 'lighter', price = 2 },
+		},
+		model = {
+			`prop_vend_fags_01`
+		}
 	}
 }

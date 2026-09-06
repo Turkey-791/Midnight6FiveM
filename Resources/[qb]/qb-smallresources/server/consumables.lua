@@ -48,7 +48,7 @@ end)
 
 QBCore.Functions.CreateUseableItem('cigarette_pack', function(source, item)
     if not exports['qb-inventory']:RemoveItem(source, item.name, 1, item.slot, 'qb-smallresources:cigarette_pack:open') then return end
-    -- 1パック10本(仮仕様。実際の本数は未確定のため要確認)
+    -- 1パック10本で確定(2026-09-06。qb-core/shared/items.luaのcigarette_pack説明文と一致)
     exports['qb-inventory']:AddItem(source, 'cigarette', 10, false, nil, 'qb-smallresources:cigarette_pack:open')
     TriggerClientEvent('consumables:client:OpenCigarettePack', source)
 end)
