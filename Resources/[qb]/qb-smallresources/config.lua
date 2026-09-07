@@ -100,6 +100,25 @@ Config.RelieveHandrolledCigaretteStress = math.random(10, 14) -- 手巻きタバ
 Config.SmokeCigaretteDuration = 4000 -- (ms) 市販タバコの喫煙時間(標準)
 Config.SmokeHandrolledDuration = 2500 -- (ms) 手巻きタバコの喫煙時間(市販タバコより短く/速く)
 
+-- 2026-09-07 AO依頼: 喫煙時の煙(ptfx)設定。
+-- 参考にした実装は jayz666/my-smoking。asset 'core' / effect 'exp_grd_bzgas_smoke' を
+-- Pedのボーンにloopで貼る方式で、GTA V標準アセットのため追加streamは不要。
+-- 数値はすべて調整可能。実機で /cigsmoke <bone> <scale> を使って詰められる。
+Config.SmokeFxEnable = true                    -- 煙のON/OFF
+Config.SmokeFxAsset = 'core'                   -- ptfxアセット名(GTA V標準)
+Config.SmokeFxEffect = 'exp_grd_bzgas_smoke'   -- エフェクト名
+Config.SmokeFxBone = 31086                     -- 31086 = 頭。jayz666は 20279(口)と31086(頭)を使用
+Config.SmokeFxOffsetX = 0.0
+Config.SmokeFxOffsetY = 0.0
+Config.SmokeFxOffsetZ = 0.0
+Config.SmokeFxRotX = 0.0
+Config.SmokeFxRotY = 0.0
+Config.SmokeFxRotZ = 0.0
+Config.SmokeFxScale = 0.1                      -- 大きすぎると煙幕になるので注意
+-- true: 他プレイヤーにも見える(ネットワーク版) / false: 自分だけ(jayz666と同じローカル版)
+-- 万一ネットワーク版で煙が全く出ない場合は false にして再確認すること。
+Config.SmokeFxNetworked = true
+
 Config.Consumables = {
     eat = { -- default food items
         ['sandwich'] = math.random(35, 54),
