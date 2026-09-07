@@ -97,27 +97,53 @@ Config.RelieveWeedStress = math.random(15, 20) -- stress relief amount (100 max)
 -- 性能順: 市販タバコ(cigarette) < 手巻きタバコ(handrolled_cigarette) < ジョイント(joint、上のRelieveWeedStress=15-20は既存のまま変更していない)
 Config.RelieveCigaretteStress = math.random(5, 8) -- 市販タバコのstress軽減量(100 max)
 Config.RelieveHandrolledCigaretteStress = math.random(10, 14) -- 手巻きタバコのstress軽減量(joint未満・cigarette超)
-Config.SmokeCigaretteDuration = 4000 -- (ms) 市販タバコの喫煙時間(標準)
-Config.SmokeHandrolledDuration = 2500 -- (ms) 手巻きタバコの喫煙時間(市販タバコより短く/速く)
+-- 2026-09-07 AO判断(案A): 吸い終わりが早すぎたため全体を延長し、傾斜をかけた。
+-- 性能順(強いほど短時間)は維持: joint 4秒 < handrolled 6秒 < cigarette 8秒。
+-- ジョイントの4秒は「変更前の市販タバコの喫煙時間」に合わせた基準値。
+-- Animation(smoke_idle / flags 49)はループフラグ付きなので、延長しても途中で止まらない。
+Config.SmokeCigaretteDuration = 8000 -- (ms) 市販タバコの喫煙時間(一番長い)
+Config.SmokeHandrolledDuration = 6000 -- (ms) 手巻きタバコの喫煙時間(市販タバコより短く/速く)
+Config.SmokeJointDuration = 4000 -- (ms) ジョイントの喫煙時間(一番短く/強い)
 
 -- 2026-09-07 AO依頼: 喫煙時の煙(ptfx)設定。
 -- 参考にした実装は jayz666/my-smoking。asset 'core' / effect 'exp_grd_bzgas_smoke' を
 -- Pedのボーンにloopで貼る方式で、GTA V標準アセットのため追加streamは不要。
--- 数値はすべて調整可能。実機で /cigsmoke <bone> <scale> を使って詰められる。
+-- 実機で /cigsmoke を使って詰められる。
 Config.SmokeFxEnable = true                    -- 煙のON/OFF
 Config.SmokeFxAsset = 'core'                   -- ptfxアセット名(GTA V標準)
 Config.SmokeFxEffect = 'exp_grd_bzgas_smoke'   -- エフェクト名
-Config.SmokeFxBone = 31086                     -- 31086 = 頭。jayz666は 20279(口)と31086(頭)を使用
+Config.SmokeFxBone = 31086                     -- 31086 = 頭 / 20279 = 口元
 Config.SmokeFxOffsetX = 0.0
 Config.SmokeFxOffsetY = 0.0
 Config.SmokeFxOffsetZ = 0.0
 Config.SmokeFxRotX = 0.0
 Config.SmokeFxRotY = 0.0
 Config.SmokeFxRotZ = 0.0
-Config.SmokeFxScale = 0.1                      -- 大きすぎると煙幕になるので注意
--- true: 他プレイヤーにも見える(ネットワーク版) / false: 自分だけ(jayz666と同じローカル版)
--- 万一ネットワーク版で煙が全く出ない場合は false にして再確認すること。
+-- true: 他プレイヤーにも見える / false: 自分だけ(jayz666と同じローカル版)
+-- ネットワーク版で煙が全く出ない場合は false にして再確認すること。
 Config.SmokeFxNetworked = true
+
+-- 2026-09-07 AO依頼: 煙をアイテム別に調整する。
+--   delay = 喫煙開始から煙が出るまでの待ち時間(ms)。口元へ持っていく前に煙が出る問題の対策。
+--   scale = 煙の量/大きさ。大きすぎると煙幕になるので注意。
+--   r,g,b = 煙の色(0-255)。数値を下げるほど濃いグレーになる。
+--   alpha = 濃さ(0.0-1.0)。
+-- ※ 色/濃さの指定(SetParticleFxLoopedColour / SetParticleFxLoopedAlpha)が
+--    exp_grd_bzgas_smoke に効くかは実機未検証。効かない場合は scale で差をつけること。
+-- 【重要】delay は必ず喫煙時間(Duration)より短くすること。長いと煙が一度も出ない。
+-- 現行Duration: cigarette 8000ms / handrolled 6000ms / joint 4000ms
+-- delayは「手を口元へ持っていくまでの時間」であり、Animationで決まる固定値なので
+-- Durationに比例させず3種とも同じ2000msにしている(2026-09-07 案A適用時)。
+-- 早すぎる/遅すぎる場合は /cigsmoke set <key> <delay> ... で詰めること。
+Config.SmokeFxDefault = { delay = 2000, scale = 0.10, r = 255, g = 255, b = 255, alpha = 1.0 }
+Config.SmokeFxItems = {
+    -- 市販タバコ: 現状の量を基準にする(AO指示)
+    ['cigarette']            = { delay = 2000, scale = 0.10, r = 255, g = 255, b = 255, alpha = 1.0 },
+    -- 手巻きタバコ: 少し灰色を濃くする(AO指示)
+    ['handrolled_cigarette'] = { delay = 2000, scale = 0.12, r = 150, g = 150, b = 150, alpha = 1.0 },
+    -- ジョイント: 一番煙の量を多くする(AO指示)。Durationが一番短いので煙の出る時間も短い
+    ['joint']                = { delay = 1800, scale = 0.22, r = 255, g = 255, b = 255, alpha = 1.0 },
+}
 
 Config.Consumables = {
     eat = { -- default food items

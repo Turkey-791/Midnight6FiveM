@@ -235,6 +235,12 @@ QBCore.Shared.Items = {
     water_bottle                 = { name = 'water_bottle', label = 'Bottle of Water', weight = 500, type = 'item', image = 'water_bottle.png', unique = false, useable = true, shouldClose = true, description = 'For all the thirsty out there' },
     coffee                       = { name = 'coffee', label = 'Coffee', weight = 200, type = 'item', image = 'coffee.png', unique = false, useable = true, shouldClose = true, description = 'Pump 4 Caffeine' },
     kurkakola                    = { name = 'kurkakola', label = 'Cola', weight = 500, type = 'item', image = 'cola.png', unique = false, useable = true, shouldClose = true, description = 'For all the thirsty out there' },
+    -- 2026-09-07 AO依頼: sprunkはox_inventory側にしか定義が無く、bridgeのtoQbShapeが
+    -- QBCore.Shared.Itemsに無いアイテムをスキップするため、PlayerData.itemsを直接読む
+    -- 旧QB系リソース(qb-hud等)から見えない状態だった。kurkakolaと同じ形で定義を揃える。
+    -- ※消費効果はox_inventory側のclient.statusが処理するので、qb-smallresourcesの
+    --   Config.Consumablesには追加しないこと(二重発動の原因になる)。
+    sprunk                       = { name = 'sprunk', label = 'Sprunk', weight = 350, type = 'item', image = 'sprunk.png', unique = false, useable = true, shouldClose = true, description = 'For all the thirsty out there' },
 
     -- Alcohol
     beer                         = { name = 'beer', label = 'Beer', weight = 500, type = 'item', image = 'beer.png', unique = false, useable = true, shouldClose = true, description = 'Nothing like a good cold beer!' },

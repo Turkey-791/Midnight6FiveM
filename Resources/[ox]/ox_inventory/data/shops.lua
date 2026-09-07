@@ -181,14 +181,61 @@ return {
 		}
 	},
 
+	-- 2026-09-07 AO依頼: GTA V標準の自動販売機を種類ごとにShop化。
+	-- 実際のTarget登録は [midnight6-custom]/vending-machines から
+	-- exports.ox_target:addModel() で行う(inventory:target convarは変更していない)。
+	-- ここは「品揃え(name/inventory)の正本」として使う。
+	-- ※ 旧定義では存在しないアイテム 'cola' を参照していたため kurkakola に修正。
 	VendingMachineDrinks = {
-		name = 'Vending Machine',
+		name = 'ドリンク自動販売機',
 		inventory = {
-			{ name = 'water', price = 10 },
-			{ name = 'cola', price = 10 },
+			{ name = 'water_bottle', price = 2 },
+			{ name = 'kurkakola', price = 2 },
+			-- 2026-09-07 AO依頼: sprunkを追加。ox_inventoryネイティブ定義のアイテムで
+			-- client.status = { thirst = 200000 } を持つ(bridgeのsetPlayerStatusで
+			-- ×0.0001され、喉の渇き+20として反映される)。kurkakolaと同価格に統一。
+			{ name = 'sprunk', price = 2 },
+			{ name = 'grapejuice', price = 3 },
 		},
 		model = {
-			`prop_vend_soda_02`, `prop_vend_fridge01`, `prop_vend_water_01`, `prop_vend_soda_01`
+			`prop_vend_soda_01`, `prop_vend_soda_02`, `prop_vend_water_01`, `prop_vend_fridge01`
+		}
+	},
+
+	-- 2026-09-07 AO依頼: スナック自動販売機。価格はqb-shopsのコンビニ価格(2)に統一。
+	VendingMachineSnacks = {
+		name = 'スナック自動販売機',
+		inventory = {
+			{ name = 'twerks_candy', price = 2 },
+			{ name = 'snikkel_candy', price = 2 },
+			{ name = 'sandwich', price = 2 },
+			{ name = 'tosti', price = 2 },
+		},
+		model = {
+			`prop_vend_snak_01`, `prop_vend_snak_01_tu`
+		}
+	},
+
+	-- 2026-09-07 AO依頼: コーヒー自動販売機。
+	VendingMachineCoffee = {
+		name = 'コーヒー自動販売機',
+		inventory = {
+			{ name = 'coffee', price = 3 },
+		},
+		model = {
+			`prop_vend_coffe_01`
+		}
+	},
+
+	-- 2026-09-07 AO依頼: バーガー自動販売機(prop_vend_burger_01)。
+	-- 調理済みの温かい食事という扱いでスナックより高めの5に設定。
+	VendingMachineBurger = {
+		name = 'バーガー自動販売機',
+		inventory = {
+			{ name = 'burger', price = 5 },
+		},
+		model = {
+			`prop_vend_burger_01`
 		}
 	},
 
@@ -197,8 +244,9 @@ return {
 	-- shops/client.lua 側のmodel分岐(shared.target前提)はこのままでは動かない
 	-- (VendingMachineDrinksと同じ理由。詳細はsmoking_vending_machine_investigation
 	-- レポート参照)。そのためこのShop定義自体は「品揃え(name/inventory)の正本」として
-	-- 使い、実際のTarget登録は[midnight6-custom]/cigarette-vendingから
+	-- 使い、実際のTarget登録は[midnight6-custom]/vending-machinesから
 	-- exports.ox_target:addModel()で直接行っている(inventory:targetは変更していない)。
+	-- 2026-09-07: 旧cigarette-vendingリソースを全自販機対応のvending-machinesへ統合。
 	CigaretteVendingMachine = {
 		name = 'タバコ自動販売機',
 		inventory = {

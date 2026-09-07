@@ -263,6 +263,15 @@ end)
 
 -- This will update all the PlayerData that doesn't get updated with a specific event other than this like the metadata
 RegisterNetEvent('QBCore:Client:OnPlayerUpdated', function(key, val)
+    -- [2026-09-07 追加] job変更(Player.Functions.SetJob)は 'job' キーのみで
+    -- 送られてきて 'all' では来ないため、従来のコードだと転職後に
+    -- リログ/リソース再起動するまでこのリソース内のPlayerData.jobが古いまま
+    -- になっていた(F1メニューのWork項目にジョブ専用メニューが出ない原因)。
+    -- 'job' キーの場合はPlayerData.jobだけを更新して即座に反映させる。
+    if key == 'job' then
+        PlayerData.job = val
+        return
+    end
     if key ~= 'all' then return end
     PlayerData = val
 end)
