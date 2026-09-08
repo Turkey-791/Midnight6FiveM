@@ -78,7 +78,13 @@ end
 --   - 完了地点はサーバー側で実座標から検証する(クライアント申告値は使わない)
 -- ============================================================
 
-QBCore.Commands.Add('newsassignment', 'Request a news assignment', {}, false, function(source, _)
+-- [2026-09-06 追加] /newsassignment コマンドの中身を関数化し、
+-- qb-radialmenu(トグルメニュー)の「Work」メニューからも同じ処理を
+-- 呼び出せるようにした(qb-radialmenu/config.lua の
+-- Config.JobInteractions['reporter'] を参照)。コマンド自体は
+-- 後方互換のためそのまま残している。
+
+local function RequestNewsAssignment(source)
     local src = source
     local Player = exports['qb-core']:GetPlayer(src)
     if not Player or Player.PlayerData.job.name ~= 'reporter' then
@@ -107,6 +113,16 @@ QBCore.Commands.Add('newsassignment', 'Request a news assignment', {}, false, fu
 
     TriggerClientEvent('qb-newsjob:client:setAssignment', src, location)
     TriggerClientEvent('QBCore:Notify', src, Lang:t('success.assignment_started', { label = location.label }), 'success')
+end
+
+QBCore.Commands.Add('newsassignment', 'Request a news assignment', {}, false, function(source, _)
+    RequestNewsAssignment(source)
+end)
+
+-- [2026-09-06 追加] qb-radialmenu(トグルメニュー)の「Work」メニューから
+-- 取材依頼を受けるためのイベント。処理内容は /newsassignment と同一。
+RegisterNetEvent('qb-newsjob:server:requestAssignment', function()
+    RequestNewsAssignment(source)
 end)
 
 RegisterNetEvent('qb-newsjob:server:completeAssignment', function()
@@ -130,7 +146,13 @@ RegisterNetEvent('qb-newsjob:server:completeAssignment', function()
     local ped = GetPlayerPed(src)
     local pcoords = GetEntityCoords(ped)
     local target = assignment.coords
-    if #(pcoords - target) > Config.NewsReportRadius then
+    -- [2026-09-07 追加] Config.NewsLocationsの座標は実機未確認の仮座標で、
+    -- Z(高さ)が実際の地面とズレているケースがある。3D距離のままだと
+    -- クライアント側で表示・実行できても、この完了判定だけZのズレ分
+    -- 余計に不利になり失敗する恐れがあるため、水平(2D)距離で判定する
+    -- (client/assignment.luaの出現判定と揃えている)。
+    local dist2d = #(vector2(pcoords.x, pcoords.y) - vector2(target.x, target.y))
+    if dist2d > Config.NewsReportRadius then
         TriggerClientEvent('QBCore:Notify', src, Lang:t('error.too_far_from_assignment'), 'error')
         return
     end

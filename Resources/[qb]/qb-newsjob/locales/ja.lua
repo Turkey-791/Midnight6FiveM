@@ -11,6 +11,14 @@ local Translations = {
         weazel_news_vehicles = "WEAZEL News車両",
         close_menu = "⬅ メニューを閉じる",
         weazel_news_helicopters = "WEAZEL Newsヘリコプター",
+        -- [2026-09-07 追加] コード側は 'text.vehicle' / 'text.heli' というキー名で
+        -- 参照している(client/main.luaのブリップ名、spawner.luaの車両/ヘリ選択
+        -- メニューのヘッダー)が、この日本語翻訳では上のweazel_news_vehicles /
+        -- weazel_news_helicoptersという別名で登録されていたため、
+        -- "Missing phrase for key" 警告が出ていた。同じ文言を正しいキー名でも
+        -- 登録しておく。
+        vehicle = "WEAZEL News車両",
+        heli = "WEAZEL Newsヘリコプター",
         store_vehicle = "~g~E~w~ - 車両を保管する",
         vehicles = "~g~E~w~ - 車両",
         store_helicopters = "~g~E~w~ - ヘリコプターを保管する",

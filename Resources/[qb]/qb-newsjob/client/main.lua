@@ -2,10 +2,11 @@ QBCore = exports['qb-core']:GetCoreObject({ 'Functions' })
 PlayerJob = {}
 CurrentPlate = {}
 
-RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
-    PlayerJob = QBCore.Functions.GetPlayerData().job
-    if PlayerJob.name ~= 'reporter' then return end
-
+-- [2026-09-07 追加] 取材ブリップ(車庫)の表示処理を関数化。
+-- 元は「ログイン時」「ジョブ変更時(key='job')」「'all'更新時」の3箇所に
+-- 全く同じコードが重複していたのを1つの関数にまとめただけで、動作自体は
+-- 変えていない。
+local function CreateVehicleBlip()
     local blip = AddBlipForCoord(Config.Locations['vehicle'].coords.x, Config.Locations['vehicle'].coords.y, Config.Locations['vehicle'].coords.z)
     SetBlipSprite(blip, 225)
     SetBlipDisplay(blip, 4)
@@ -15,37 +16,41 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     BeginTextCommandSetBlipName('STRING')
     AddTextComponentSubstringPlayerName(Lang:t('text.vehicle'))
     EndTextCommandSetBlipName(blip)
+end
+
+-- [2026-09-07 追加] 根本原因の修正:
+-- 従来はPlayerJobが「ログイン時(QBCore:Client:OnPlayerLoaded)」にしか
+-- 初期化されなかった。そのためプレイ中(リログなし)にqb-newsjobリソース
+-- だけを再起動すると、再起動直後はPlayerJobが空テーブル{}のまま
+-- (PlayerJob.nameがnil)になり、client/assignment.luaの取材マーカー
+-- 判定(PlayerJob.name == 'reporter')が常にfalseになって、どの取材地点
+-- でも一切何も表示されなくなっていた。座標の精度とは無関係に起きる、
+-- リソース単体再起動時特有の不具合だった(qb-radialmenuには同種の
+-- 対策が既にあったが、qb-newsjobには無かった)。
+-- リソース起動時点で必ず現在のジョブ情報を取得しておくことで解決する。
+do
+    local pdata = QBCore.Functions.GetPlayerData()
+    PlayerJob = (pdata and pdata.job) or {}
+    if PlayerJob.name == 'reporter' then
+        CreateVehicleBlip()
+    end
+end
+
+RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
+    PlayerJob = QBCore.Functions.GetPlayerData().job
+    if PlayerJob.name ~= 'reporter' then return end
+    CreateVehicleBlip()
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUpdated', function(key, val)
     if key == 'job' then
-        local JobInfo = val
-        PlayerJob = JobInfo
+        PlayerJob = val
         if PlayerJob.name ~= 'reporter' then return end
-
-        local blip = AddBlipForCoord(Config.Locations['vehicle'].coords.x, Config.Locations['vehicle'].coords.y, Config.Locations['vehicle'].coords.z)
-        SetBlipSprite(blip, 225)
-        SetBlipDisplay(blip, 4)
-        SetBlipScale(blip, 0.6)
-        SetBlipAsShortRange(blip, true)
-        SetBlipColour(blip, 1)
-        BeginTextCommandSetBlipName('STRING')
-        AddTextComponentSubstringPlayerName(Lang:t('text.vehicle'))
-        EndTextCommandSetBlipName(blip)
+        CreateVehicleBlip()
     elseif key == 'all' then
-        local JobInfo = val.job
-        PlayerJob = JobInfo
+        PlayerJob = val.job
         if PlayerJob.name ~= 'reporter' then return end
-
-        local blip = AddBlipForCoord(Config.Locations['vehicle'].coords.x, Config.Locations['vehicle'].coords.y, Config.Locations['vehicle'].coords.z)
-        SetBlipSprite(blip, 225)
-        SetBlipDisplay(blip, 4)
-        SetBlipScale(blip, 0.6)
-        SetBlipAsShortRange(blip, true)
-        SetBlipColour(blip, 1)
-        BeginTextCommandSetBlipName('STRING')
-        AddTextComponentSubstringPlayerName(Lang:t('text.vehicle'))
-        EndTextCommandSetBlipName(blip)
+        CreateVehicleBlip()
     end
 end)
 

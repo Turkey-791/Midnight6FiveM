@@ -5,6 +5,22 @@
 local currentAssignment = nil
 local assignmentBlip = nil
 local reporting = false
+-- [2026-09-07 追加] Config.NewsLocationsの座標は実機未確認の仮座標だったため、
+-- 3D距離(#(pos-coords))で判定していると、Zがズレている時に至近距離まで
+-- 近づいても30m/2.5mの閾値を超えたと判定され、マーカーもEプロンプトも
+-- 一切表示されない不具合が起きていた。対策として出現判定は水平(2D)距離
+-- のみで行うように変更した(これは現在も有効)。
+--
+-- [2026-09-07 追加後、同日撤去] マーカーの見た目の高さを、近づいた時点で
+-- GetGroundZFor_3dCoord(真上から下向きにレイを飛ばして最初に当たった
+-- 面の高さを取得する関数)で補正する処理を一時的に追加していたが、
+-- ミッションロウ署受付前(屋内・頭上に別フロア/屋根がある座標)では
+-- レイが天井や屋根に先に当たってしまい、マーカーが実際の受付ではなく
+-- 屋上に出現するという新たな不具合を引き起こしていた
+-- (受付前 Z=30.69 に対し、この補正で屋上 Z=43.69 相当の高さに
+-- 書き換えられてしまっていた)。
+-- 現在は全5地点とも実機で/coords確認済みの正確な座標になっているため、
+-- この地面補正処理自体を撤去し、config.luaのZ座標をそのまま使う。
 
 local function ClearAssignmentBlip()
     if assignmentBlip and DoesBlipExist(assignmentBlip) then
@@ -53,9 +69,11 @@ CreateThread(function()
         if currentAssignment and PlayerJob and PlayerJob.name == 'reporter' and not reporting then
             local coords = currentAssignment.coords
             local pos = GetEntityCoords(PlayerPedId())
-            local dist = #(pos - vector3(coords.x, coords.y, coords.z))
+            -- [2026-09-07 追加] 出現判定は水平(2D)距離のみで行う(Zのズレの影響を受けない)
+            local dist = #(vector2(pos.x, pos.y) - vector2(coords.x, coords.y))
             if dist < 30.0 then
                 sleep = 0
+
                 DrawMarker(2, coords.x, coords.y, coords.z + 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.4, 0.4, 235, 158, 46, 200, false, false, false, true, false, false, false)
                 if dist < 2.5 then
                     DrawText3D(coords.x, coords.y, coords.z + 1.0, Lang:t('task.start_report'))

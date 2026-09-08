@@ -1,94 +1,94 @@
 Config = {}
-Config.Keybind = 'F1'           -- FiveM Keyboard, this is registered keymapping, so needs changed in keybindings if player already has this mapped.
-Config.Toggle = false           -- use toggle mode. False requires hold of key
-Config.UseWhilstWalking = false -- use whilst walking
+Config.Keybind = 'F1'           -- FiveM キーボードのキー割り当てです。プレイヤーが既にこのキーをマッピングしている場合、キー割り当てで変更する必要があります。
+Config.Toggle = false           -- トグルモードを使用します。false の場合、キーを押し続ける必要があります
+Config.UseWhilstWalking = false -- 歩行中に使用
 Config.EnableExtraMenu = true
 Config.Fliptime = 15000
 
 Config.MenuItems = {
     {
         id = 'citizen',
-        title = 'Citizen',
+        title = '市民',
         icon = 'user',
         items = {
             {
                 id = 'givenum',
-                title = 'Give Contact Details',
+                title = '連絡先を教える',
                 icon = 'address-book',
                 type = 'client',
                 event = 'qb-phone:client:GiveContactDetails',
                 shouldClose = true
             }, {
             id = 'getintrunk',
-            title = 'Get In Trunk',
+            title = 'トランクに入る',
             icon = 'car',
             type = 'client',
             event = 'qb-trunk:client:GetIn',
             shouldClose = true
         }, {
             id = 'cornerselling',
-            title = 'Corner Selling',
+            title = '路上販売',
             icon = 'cannabis',
             type = 'client',
             event = 'qb-drugs:client:cornerselling',
             shouldClose = true
         }, {
             id = 'togglehotdogsell',
-            title = 'Hotdog Selling',
+            title = 'ホットドッグ販売',
             icon = 'hotdog',
             type = 'client',
             event = 'qb-hotdogjob:client:ToggleSell',
             shouldClose = true
         }, {
             id = 'interactions',
-            title = 'Interaction',
+            title = 'インタラクション',
             icon = 'triangle-exclamation',
             items = {
                 {
                     id = 'handcuff',
-                    title = 'Cuff',
+                    title = '手錠をかける',
                     icon = 'user-lock',
                     type = 'client',
                     event = 'police:client:CuffPlayerSoft',
                     shouldClose = true
                 }, {
                 id = 'playerinvehicle',
-                title = 'Put In Vehicle',
+                title = '車両に乗せる',
                 icon = 'car-side',
                 type = 'client',
                 event = 'police:client:PutPlayerInVehicle',
                 shouldClose = true
             }, {
                 id = 'playeroutvehicle',
-                title = 'Take Out Of Vehicle',
+                title = '車両から降ろす',
                 icon = 'car-side',
                 type = 'client',
                 event = 'police:client:SetPlayerOutVehicle',
                 shouldClose = true
             }, {
                 id = 'stealplayer',
-                title = 'Rob',
+                title = '強盗する',
                 icon = 'mask',
                 type = 'client',
                 event = 'police:client:RobPlayer',
                 shouldClose = true
             }, {
                 id = 'escort',
-                title = 'Kidnap',
+                title = '誘拐する',
                 icon = 'user-group',
                 type = 'client',
                 event = 'police:client:KidnapPlayer',
                 shouldClose = true
             }, {
                 id = 'escort2',
-                title = 'Escort',
+                title = '護送する',
                 icon = 'user-group',
                 type = 'client',
                 event = 'police:client:EscortPlayer',
                 shouldClose = true
             }, {
                 id = 'escort554',
-                title = 'Hostage',
+                title = '人質にする',
                 icon = 'child',
                 type = 'client',
                 event = 'A5:Client:TakeHostage',
@@ -100,64 +100,64 @@ Config.MenuItems = {
     },
     {
         id = 'general',
-        title = 'General',
+        title = '一般',
         icon = 'rectangle-list',
         items = {
             {
                 id = 'house',
-                title = 'House Interaction',
+                title = '家とのインタラクション',
                 icon = 'house',
                 items = {
                     {
                         id = 'givehousekey',
-                        title = 'Give House Keys',
+                        title = '家の鍵を渡す',
                         icon = 'key',
                         type = 'client',
                         event = 'qb-houses:client:giveHouseKey',
                         shouldClose = true
                     }, {
                     id = 'removehousekey',
-                    title = 'Remove House Keys',
+                    title = '家の鍵を回収する',
                     icon = 'key',
                     type = 'client',
                     event = 'qb-houses:client:removeHouseKey',
                     shouldClose = true
                 }, {
                     id = 'togglelock',
-                    title = 'Toggle Doorlock',
+                    title = 'ドアロックを切り替える',
                     icon = 'door-closed',
                     type = 'client',
                     event = 'qb-houses:client:toggleDoorlock',
                     shouldClose = true
                 }, {
                     id = 'decoratehouse',
-                    title = 'Decorate House',
+                    title = '家を装飾する',
                     icon = 'box',
                     type = 'client',
                     event = 'qb-houses:client:decorate',
                     shouldClose = true
                 }, {
                     id = 'houseLocations',
-                    title = 'Interaction Locations',
+                    title = 'インタラクション場所',
                     icon = 'house',
                     items = {
                         {
                             id = 'setstash',
-                            title = 'Set Stash',
+                            title = 'スタッシュを設定',
                             icon = 'box-open',
                             type = 'client',
                             event = 'qb-houses:client:setLocation',
                             shouldClose = true
                         }, {
                         id = 'setoutift',
-                        title = 'Set Wardrobe',
+                        title = 'ワードローブを設定',
                         icon = 'shirt',
                         type = 'client',
                         event = 'qb-houses:client:setLocation',
                         shouldClose = true
                     }, {
                         id = 'setlogout',
-                        title = 'Set Logout',
+                        title = 'ログアウト場所を設定',
                         icon = 'door-open',
                         type = 'client',
                         event = 'qb-houses:client:setLocation',
@@ -168,122 +168,122 @@ Config.MenuItems = {
                 }
             }, {
             id = 'clothesmenu',
-            title = 'Clothing',
+            title = '服装',
             icon = 'shirt',
             items = {
                 {
                     id = 'Hair',
-                    title = 'Hair',
+                    title = '髪',
                     icon = 'user',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleClothing',
                     shouldClose = true
                 }, {
                 id = 'Ear',
-                title = 'Ear Piece',
+                title = '耳飾り',
                 icon = 'ear-deaf',
                 type = 'client',
                 event = 'qb-radialmenu:ToggleProps',
                 shouldClose = true
             }, {
                 id = 'Neck',
-                title = 'Neck',
+                title = '首飾り',
                 icon = 'user-tie',
                 type = 'client',
                 event = 'qb-radialmenu:ToggleClothing',
                 shouldClose = true
             }, {
                 id = 'Top',
-                title = 'Top',
+                title = 'トップス',
                 icon = 'shirt',
                 type = 'client',
                 event = 'qb-radialmenu:ToggleClothing',
                 shouldClose = true
             }, {
                 id = 'Shirt',
-                title = 'Shirt',
+                title = 'シャツ',
                 icon = 'shirt',
                 type = 'client',
                 event = 'qb-radialmenu:ToggleClothing',
                 shouldClose = true
             }, {
                 id = 'Pants',
-                title = 'Pants',
+                title = 'パンツ',
                 icon = 'user',
                 type = 'client',
                 event = 'qb-radialmenu:ToggleClothing',
                 shouldClose = true
             }, {
                 id = 'Shoes',
-                title = 'Shoes',
+                title = '靴',
                 icon = 'shoe-prints',
                 type = 'client',
                 event = 'qb-radialmenu:ToggleClothing',
                 shouldClose = true
             }, {
                 id = 'meer',
-                title = 'Extras',
+                title = 'その他',
                 icon = 'plus',
                 items = {
                     {
                         id = 'Hat',
-                        title = 'Hat',
+                        title = '帽子',
                         icon = 'hat-cowboy-side',
                         type = 'client',
                         event = 'qb-radialmenu:ToggleProps',
                         shouldClose = true
                     }, {
                     id = 'Glasses',
-                    title = 'Glasses',
+                    title = 'メガネ',
                     icon = 'glasses',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleProps',
                     shouldClose = true
                 }, {
                     id = 'Visor',
-                    title = 'Visor',
+                    title = 'バイザー',
                     icon = 'hat-cowboy-side',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleProps',
                     shouldClose = true
                 }, {
                     id = 'Mask',
-                    title = 'Mask',
+                    title = 'マスク',
                     icon = 'masks-theater',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleClothing',
                     shouldClose = true
                 }, {
                     id = 'Vest',
-                    title = 'Vest',
+                    title = 'ベスト',
                     icon = 'vest',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleClothing',
                     shouldClose = true
                 }, {
                     id = 'Bag',
-                    title = 'Bag',
+                    title = 'バッグ',
                     icon = 'bag-shopping',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleClothing',
                     shouldClose = true
                 }, {
                     id = 'Bracelet',
-                    title = 'Bracelet',
+                    title = 'ブレスレット',
                     icon = 'user',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleProps',
                     shouldClose = true
                 }, {
                     id = 'Watch',
-                    title = 'Watch',
+                    title = '時計',
                     icon = 'stopwatch',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleProps',
                     shouldClose = true
                 }, {
                     id = 'Gloves',
-                    title = 'Gloves',
+                    title = '手袋',
                     icon = 'mitten',
                     type = 'client',
                     event = 'qb-radialmenu:ToggleClothing',
@@ -299,47 +299,47 @@ Config.MenuItems = {
 
 Config.VehicleDoors = {
     id = 'vehicledoors',
-    title = 'Vehicle Doors',
+    title = '車両ドア',
     icon = 'car-side',
     items = {
         {
             id = 'door0',
-            title = 'Drivers door',
+            title = '運転席ドア',
             icon = 'car-side',
             type = 'client',
             event = 'qb-radialmenu:client:openDoor',
             shouldClose = false
         }, {
         id = 'door4',
-        title = 'Hood',
+        title = 'ボンネット',
         icon = 'car',
         type = 'client',
         event = 'qb-radialmenu:client:openDoor',
         shouldClose = false
     }, {
         id = 'door1',
-        title = 'Passengers door',
+        title = '助手席ドア',
         icon = 'car-side',
         type = 'client',
         event = 'qb-radialmenu:client:openDoor',
         shouldClose = false
     }, {
         id = 'door3',
-        title = 'Right rear',
+        title = '右後部',
         icon = 'car-side',
         type = 'client',
         event = 'qb-radialmenu:client:openDoor',
         shouldClose = false
     }, {
         id = 'door5',
-        title = 'Trunk',
+        title = 'トランク',
         icon = 'car',
         type = 'client',
         event = 'qb-radialmenu:client:openDoor',
         shouldClose = false
     }, {
         id = 'door2',
-        title = 'Left rear',
+        title = '左後部',
         icon = 'car-side',
         type = 'client',
         event = 'qb-radialmenu:client:openDoor',
@@ -350,96 +350,96 @@ Config.VehicleDoors = {
 
 Config.VehicleExtras = {
     id = 'vehicleextras',
-    title = 'Vehicle Extras',
+    title = '車両エクストラ',
     icon = 'plus',
     items = {
         {
             id = 'extra1',
-            title = 'Extra 1',
+            title = 'エクストラ 1',
             icon = 'box-open',
             type = 'client',
             event = 'qb-radialmenu:client:setExtra',
             shouldClose = false
         }, {
         id = 'extra2',
-        title = 'Extra 2',
+        title = 'エクストラ 2',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra3',
-        title = 'Extra 3',
+        title = 'エクストラ 3',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra4',
-        title = 'Extra 4',
+        title = 'エクストラ 4',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra5',
-        title = 'Extra 5',
+        title = 'エクストラ 5',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra6',
-        title = 'Extra 6',
+        title = 'エクストラ 6',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra7',
-        title = 'Extra 7',
+        title = 'エクストラ 7',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra8',
-        title = 'Extra 8',
+        title = 'エクストラ 8',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra9',
-        title = 'Extra 9',
+        title = 'エクストラ 9',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra10',
-        title = 'Extra 10',
+        title = 'エクストラ 10',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra11',
-        title = 'Extra 11',
+        title = 'エクストラ 11',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra12',
-        title = 'Extra 12',
+        title = 'エクストラ 12',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
         shouldClose = false
     }, {
         id = 'extra13',
-        title = 'Extra 13',
+        title = 'エクストラ 13',
         icon = 'box-open',
         type = 'client',
         event = 'qb-radialmenu:client:setExtra',
@@ -450,7 +450,7 @@ Config.VehicleExtras = {
 
 Config.VehicleSeats = {
     id = 'vehicleseats',
-    title = 'Vehicle Seats',
+    title = '車両座席',
     icon = 'chair',
     items = {}
 }
@@ -459,54 +459,54 @@ Config.JobInteractions = {
     ['ambulance'] = {
         {
             id = 'statuscheck',
-            title = 'Check Health Status',
+            title = '健康状態を確認',
             icon = 'heart-pulse',
             type = 'client',
             event = 'hospital:client:CheckStatus',
             shouldClose = true
         }, {
         id = 'revivep',
-        title = 'Revive',
+        title = '蘇生する',
         icon = 'user-doctor',
         type = 'client',
         event = 'hospital:client:RevivePlayer',
         shouldClose = true
     }, {
         id = 'treatwounds',
-        title = 'Heal wounds',
+        title = '傷を治療する',
         icon = 'bandage',
         type = 'client',
         event = 'hospital:client:TreatWounds',
         shouldClose = true
     }, {
         id = 'emergencybutton2',
-        title = 'Emergency button',
+        title = '緊急ボタン',
         icon = 'bell',
         type = 'client',
         event = 'police:client:SendPoliceEmergencyAlert',
         shouldClose = true
     }, {
         id = 'escort',
-        title = 'Escort',
+        title = '護送する',
         icon = 'user-group',
         type = 'client',
         event = 'police:client:EscortPlayer',
         shouldClose = true
     }, {
         id = 'stretcheroptions',
-        title = 'Stretcher',
+        title = 'ストレッチャー',
         icon = 'bed-pulse',
         items = {
             {
                 id = 'spawnstretcher',
-                title = 'Spawn Stretcher',
+                title = 'ストレッチャーを出す',
                 icon = 'plus',
                 type = 'client',
                 event = 'qb-radialmenu:client:TakeStretcher',
                 shouldClose = false
             }, {
             id = 'despawnstretcher',
-            title = 'Remove Stretcher',
+            title = 'ストレッチャーを片付ける',
             icon = 'minus',
             type = 'client',
             event = 'qb-radialmenu:client:RemoveStretcher',
@@ -518,21 +518,21 @@ Config.JobInteractions = {
     ['taxi'] = {
         {
             id = 'togglemeter',
-            title = 'Show/Hide Meter',
+            title = 'メーターを表示/非表示',
             icon = 'eye-slash',
             type = 'client',
             event = 'qb-taxi:client:toggleMeter',
             shouldClose = false
         }, {
         id = 'togglemouse',
-        title = 'Start/Stop Meter',
+        title = 'メーターを開始/停止',
         icon = 'hourglass-start',
         type = 'client',
         event = 'qb-taxi:client:enableMeter',
         shouldClose = true
     }, {
         id = 'npc_mission',
-        title = 'NPC Mission',
+        title = 'NPCミッション',
         icon = 'taxi',
         type = 'client',
         event = 'qb-taxi:client:DoTaxiNpc',
@@ -542,14 +542,14 @@ Config.JobInteractions = {
     ['tow'] = {
         {
             id = 'togglenpc',
-            title = 'Toggle NPC',
+            title = 'NPCを切り替える',
             icon = 'toggle-on',
             type = 'client',
             event = 'jobs:client:ToggleNpc',
             shouldClose = true
         }, {
         id = 'towvehicle',
-        title = 'Tow vehicle',
+        title = '車両を牽引する',
         icon = 'truck-pickup',
         type = 'client',
         event = 'qb-tow:client:TowVehicle',
@@ -559,7 +559,7 @@ Config.JobInteractions = {
     ['mechanic'] = {
         {
             id = 'towvehicle',
-            title = 'Tow vehicle',
+            title = '車両を牽引する',
             icon = 'truck-pickup',
             type = 'client',
             event = 'qb-tow:client:TowVehicle',
@@ -569,68 +569,68 @@ Config.JobInteractions = {
     ['police'] = {
         {
             id = 'emergencybutton',
-            title = 'Emergency button',
+            title = '緊急ボタン',
             icon = 'bell',
             type = 'client',
             event = 'police:client:SendPoliceEmergencyAlert',
             shouldClose = true
         }, {
         id = 'checkvehstatus',
-        title = 'Check Tune Status',
+        title = '改造状態を確認',
         icon = 'circle-info',
         type = 'client',
         event = 'qb-tunerchip:client:TuneStatus',
         shouldClose = true
     }, {
         id = 'resethouse',
-        title = 'Reset house lock',
+        title = '家のロックをリセット',
         icon = 'key',
         type = 'client',
         event = 'qb-houses:client:ResetHouse',
         shouldClose = true
     }, {
         id = 'takedriverlicense',
-        title = 'Revoke Drivers License',
+        title = '運転免許を取り消す',
         icon = 'id-card',
         type = 'client',
         event = 'police:client:SeizeDriverLicense',
         shouldClose = true
     }, {
         id = 'policeinteraction',
-        title = 'Police Actions',
+        title = '警察アクション',
         icon = 'list-check',
         items = {
             {
                 id = 'statuscheck',
-                title = 'Check Health Status',
+                title = '健康状態を確認',
                 icon = 'heart-pulse',
                 type = 'client',
                 event = 'hospital:client:CheckStatus',
                 shouldClose = true
             }, {
             id = 'checkstatus',
-            title = 'Check status',
+            title = '状態を確認',
             icon = 'question',
             type = 'client',
             event = 'police:client:CheckStatus',
             shouldClose = true
         }, {
             id = 'escort',
-            title = 'Escort',
+            title = '護送する',
             icon = 'user-group',
             type = 'client',
             event = 'police:client:EscortPlayer',
             shouldClose = true
         }, {
             id = 'searchplayer',
-            title = 'Search',
+            title = '捜索する',
             icon = 'magnifying-glass',
             type = 'server',
             event = 'police:server:SearchPlayer',
             shouldClose = true
         }, {
             id = 'jailplayer',
-            title = 'Jail',
+            title = '逮捕する',
             icon = 'user-lock',
             type = 'client',
             event = 'police:client:JailPlayer',
@@ -639,54 +639,54 @@ Config.JobInteractions = {
         }
     }, {
         id = 'policeobjects',
-        title = 'Objects',
+        title = 'オブジェクト',
         icon = 'road',
         items = {
             {
                 id = 'spawnpion',
-                title = 'Cone',
+                title = 'コーン',
                 icon = 'triangle-exclamation',
                 type = 'client',
                 event = 'police:client:spawnCone',
                 shouldClose = false
             }, {
             id = 'spawnhek',
-            title = 'Gate',
+            title = 'ゲート',
             icon = 'torii-gate',
             type = 'client',
             event = 'police:client:spawnBarrier',
             shouldClose = false
         }, {
             id = 'spawnschotten',
-            title = 'Speed Limit Sign',
+            title = '制限速度標識',
             icon = 'sign-hanging',
             type = 'client',
             event = 'police:client:spawnRoadSign',
             shouldClose = false
         }, {
             id = 'spawntent',
-            title = 'Tent',
+            title = 'テント',
             icon = 'campground',
             type = 'client',
             event = 'police:client:spawnTent',
             shouldClose = false
         }, {
             id = 'spawnverlichting',
-            title = 'Lighting',
+            title = '照明',
             icon = 'lightbulb',
             type = 'client',
             event = 'police:client:spawnLight',
             shouldClose = false
         }, {
             id = 'spikestrip',
-            title = 'Spike Strips',
+            title = 'スパイクストリップ',
             icon = 'caret-up',
             type = 'client',
             event = 'police:client:SpawnSpikeStrip',
             shouldClose = false
         }, {
             id = 'deleteobject',
-            title = 'Remove object',
+            title = 'オブジェクトを削除',
             icon = 'trash',
             type = 'client',
             event = 'police:client:deleteObject',
@@ -698,38 +698,51 @@ Config.JobInteractions = {
     ['hotdog'] = {
         {
             id = 'togglesell',
-            title = 'Toggle sell',
+            title = '販売を切り替える',
             icon = 'hotdog',
             type = 'client',
             event = 'qb-hotdogjob:client:ToggleSell',
+            shouldClose = true
+        }
+    },
+    -- [2026-09-06 追加] ニュースレポーター(reporter)用。/newsassignment
+    -- コマンドと同じ処理を、このWorkメニューからも実行できるようにする。
+    -- (処理の実体はqb-newsjob/server/main.luaのRequestNewsAssignment関数)
+    ['reporter'] = {
+        {
+            id = 'newsassignment',
+            title = '取材依頼を受ける',
+            icon = 'newspaper',
+            type = 'server',
+            event = 'qb-newsjob:server:requestAssignment',
             shouldClose = true
         }
     }
 }
 
 Config.TrunkClasses = {
-    [0] = { allowed = true, x = 0.0, y = -1.5, z = 0.0 },   -- Coupes
-    [1] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- Sedans
-    [2] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 },  -- SUVs
-    [3] = { allowed = true, x = 0.0, y = -1.5, z = 0.0 },   -- Coupes
-    [4] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- Muscle
-    [5] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- Sports Classics
-    [6] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- Sports
-    [7] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- Super
-    [8] = { allowed = false, x = 0.0, y = -1.0, z = 0.25 }, -- Motorcycles
-    [9] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 },  -- Off-road
-    [10] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Industrial
-    [11] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Utility
-    [12] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Vans
-    [13] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Cycles
-    [14] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Boats
-    [15] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Helicopters
-    [16] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Planes
-    [17] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Service
-    [18] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Emergency
-    [19] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Military
-    [20] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- Commercial
-    [21] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }  -- Trains
+    [0] = { allowed = true, x = 0.0, y = -1.5, z = 0.0 },   -- クーペ
+    [1] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- セダン
+    [2] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 },  -- SUV
+    [3] = { allowed = true, x = 0.0, y = -1.5, z = 0.0 },   -- クーペ
+    [4] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- マッスルカー
+    [5] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- スポーツクラシック
+    [6] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- スポーツカー
+    [7] = { allowed = true, x = 0.0, y = -2.0, z = 0.0 },   -- スーパーカー
+    [8] = { allowed = false, x = 0.0, y = -1.0, z = 0.25 }, -- オートバイ
+    [9] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 },  -- オフロード
+    [10] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- 工業用車両
+    [11] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- 多目的車両
+    [12] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- バン
+    [13] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- 自転車
+    [14] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- ボート
+    [15] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- ヘリコプター
+    [16] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- 飛行機
+    [17] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- サービス車両
+    [18] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- 緊急車両
+    [19] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- 軍用車両
+    [20] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }, -- 商用車両
+    [21] = { allowed = true, x = 0.0, y = -1.0, z = 0.25 }  -- 列車
 }
 
 Config.ExtrasEnabled = true
@@ -738,101 +751,101 @@ Config.Commands = {
     ['top'] = {
         Func = function() ToggleClothing('Top') end,
         Sprite = 'top',
-        Desc = 'Take your shirt off/on',
+        Desc = 'シャツを脱ぐ/着る',
         Button = 1,
-        Name = 'Torso'
+        Name = '胴体'
     },
     ['gloves'] = {
         Func = function() ToggleClothing('gloves') end,
         Sprite = 'gloves',
-        Desc = 'Take your gloves off/on',
+        Desc = '手袋を脱ぐ/着る',
         Button = 2,
-        Name = 'Gloves'
+        Name = '手袋'
     },
     ['visor'] = {
         Func = function() ToggleProps('visor') end,
         Sprite = 'visor',
-        Desc = 'Toggle hat variation',
+        Desc = '帽子のバリエーションを切り替える',
         Button = 3,
-        Name = 'Visor'
+        Name = 'バイザー'
     },
     ['bag'] = {
         Func = function() ToggleClothing('Bag') end,
         Sprite = 'bag',
-        Desc = 'Opens or closes your bag',
+        Desc = 'バッグを開ける/閉じる',
         Button = 8,
-        Name = 'Bag'
+        Name = 'バッグ'
     },
     ['shoes'] = {
         Func = function() ToggleClothing('Shoes') end,
         Sprite = 'shoes',
-        Desc = 'Take your shoes off/on',
+        Desc = '靴を脱ぐ/履く',
         Button = 5,
-        Name = 'Shoes'
+        Name = '靴'
     },
     ['vest'] = {
         Func = function() ToggleClothing('Vest') end,
         Sprite = 'vest',
-        Desc = 'Take your vest off/on',
+        Desc = 'ベストを脱ぐ/着る',
         Button = 14,
-        Name = 'Vest'
+        Name = 'ベスト'
     },
     ['hair'] = {
         Func = function() ToggleClothing('hair') end,
         Sprite = 'hair',
-        Desc = 'Put your hair up/down/in a bun/ponytail.',
+        Desc = '髪を上げる/下ろす/お団子にする/ポニーテールにする',
         Button = 7,
-        Name = 'Hair'
+        Name = '髪'
     },
     ['hat'] = {
         Func = function() ToggleProps('Hat') end,
         Sprite = 'hat',
-        Desc = 'Take your hat off/on',
+        Desc = '帽子を脱ぐ/被る',
         Button = 4,
-        Name = 'Hat'
+        Name = '帽子'
     },
     ['glasses'] = {
         Func = function() ToggleProps('Glasses') end,
         Sprite = 'glasses',
-        Desc = 'Take your glasses off/on',
+        Desc = 'メガネを外す/かける',
         Button = 9,
-        Name = 'Glasses'
+        Name = 'メガネ'
     },
     ['ear'] = {
         Func = function() ToggleProps('Ear') end,
         Sprite = 'ear',
-        Desc = 'Take your ear accessory off/on',
+        Desc = '耳飾りを外す/つける',
         Button = 10,
-        Name = 'Ear'
+        Name = '耳飾り'
     },
     ['neck'] = {
         Func = function() ToggleClothing('Neck') end,
         Sprite = 'neck',
-        Desc = 'Take your neck accessory off/on',
+        Desc = '首飾りを外す/つける',
         Button = 11,
-        Name = 'Neck'
+        Name = '首飾り'
     },
     ['watch'] = {
         Func = function() ToggleProps('Watch') end,
         Sprite = 'watch',
-        Desc = 'Take your watch off/on',
+        Desc = '時計を外す/つける',
         Button = 12,
-        Name = 'Watch',
+        Name = '時計',
         Rotation = 5.0
     },
     ['bracelet'] = {
         Func = function() ToggleProps('Bracelet') end,
         Sprite = 'bracelet',
-        Desc = 'Take your bracelet off/on',
+        Desc = 'ブレスレットを外す/つける',
         Button = 13,
-        Name = 'Bracelet'
+        Name = 'ブレスレット'
     },
     ['mask'] = {
         Func = function() ToggleClothing('Mask') end,
         Sprite = 'mask',
-        Desc = 'Take your mask off/on',
+        Desc = 'マスクを外す/つける',
         Button = 6,
-        Name = 'Mask'
+        Name = 'マスク'
     }
 }
 
@@ -842,28 +855,28 @@ Config.ExtraCommands = {
     ['pants'] = {
         Func = function() ToggleClothing('Pants', true) end,
         Sprite = 'pants',
-        Desc = 'Take your pants off/on',
-        Name = 'Pants',
+        Desc = 'パンツを脱ぐ/履く',
+        Name = 'パンツ',
         OffsetX = -0.04,
         OffsetY = 0.0
     },
     ['shirt'] = {
         Func = function() ToggleClothing('Shirt', true) end,
         Sprite = 'shirt',
-        Desc = 'Take your shirt off/on',
-        Name = 'shirt',
+        Desc = 'シャツを脱ぐ/着る',
+        Name = 'シャツ',
         OffsetX = 0.04,
         OffsetY = 0.0
     },
     ['reset'] = {
         Func = function()
             if not ResetClothing(true) then
-                Notify('Nothing To Reset', 'error')
+                Notify('リセットするものはありません', 'error')
             end
         end,
         Sprite = 'reset',
-        Desc = 'Revert everything back to normal',
-        Name = 'reset',
+        Desc = '全てを通常の状態に戻す',
+        Name = 'リセット',
         OffsetX = 0.12,
         OffsetY = 0.2,
         Rotate = true
@@ -891,8 +904,8 @@ Config.ExtraCommands = {
                 return false
             end
         end,
-        Desc = 'Take your bag off/on',
-        Name = 'bagoff',
+        Desc = 'バッグを脱ぐ/着る',
+        Name = 'バッグを脱ぐ',
         OffsetX = -0.12,
         OffsetY = 0.2
     }
