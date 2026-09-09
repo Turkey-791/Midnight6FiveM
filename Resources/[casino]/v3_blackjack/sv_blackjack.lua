@@ -160,7 +160,7 @@ end)
 
 for i=0,3,1 do
     Citizen.CreateThread(function()
-        math.randomseed(os.clock()*100000000000)
+        math.randomseed(math.floor(os.clock()*1000000) + os.time() + i)
         while true do  --blackjack game management thread
             math.random() 
             math.random()

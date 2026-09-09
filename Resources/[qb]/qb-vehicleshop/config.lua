@@ -1,20 +1,20 @@
 Config = {}
 Config.UsingTarget = GetConvar('UseTarget', 'false') == 'true'
-Config.Commission = 0.10               -- Percent that goes to sales person from a full car sale 10%
-Config.FinanceCommission = 0.05        -- Percent that goes to sales person from a finance sale 5%
-Config.PaymentWarning = 10             -- time in minutes that player has to make payment before repo
-Config.PaymentInterval = 24            -- time in hours between payment being due
-Config.MinimumDown = 10                -- minimum percentage allowed down
-Config.MaximumPayments = 24            -- maximum payments allowed
-Config.PreventFinanceSelling = false   -- allow/prevent players from using /transfervehicle if financed
-Config.FilterByMake = false            -- adds a make list before selecting category in shops
-Config.SortAlphabetically = true       -- will sort make, category, and vehicle selection menus alphabetically
-Config.HideCategorySelectForOne = true -- will hide the category selection menu if a shop only sells one category of vehicle or a make has only one category
+Config.Commission = 0.10                              -- 車両の完全売却時に営業担当者に支払われる割合 10%
+Config.FinanceCommission = 0.05                       -- 分割払い販売時に営業担当者に支払われる割合 5%
+Config.PaymentWarning = 10                            -- プレイヤーが車両を差し押さえられるまでの支払い猶予時間（分）
+Config.PaymentInterval = 24                           -- 支払期限の間隔（時間）
+Config.MinimumDown = 10                               -- 許可される頭金の最低割合
+Config.MaximumPayments = 24                           -- 許可される最大支払い回数
+Config.PreventFinanceSelling = false                  -- 分割払いの場合にプレイヤーが /transfervehicle を使用できるかどうか
+Config.FilterByMake = false                           -- ショップでカテゴリーを選択する前にメーカーリストを追加する
+Config.SortAlphabetically = true                      -- メーカー、カテゴリー、車両選択メニューをアルファベット順に並べ替える
+Config.HideCategorySelectForOne = true                -- ショップが1つの車両カテゴリーのみを販売する場合、またはメーカーが1つのカテゴリーのみを持つ場合にカテゴリー選択メニューを非表示にする
 Config.Shops = {
     ['pdm'] = {
-        ['Type'] = 'free-use', -- no player interaction is required to purchase a car
+        ['Type'] = 'free-use', -- 車両購入にプレイヤーの操作は不要
         ['Zone'] = {
-            ['Shape'] = {      --polygon that surrounds the shop
+            ['Shape'] = {      -- ショップを取り囲むポリゴン
                 vector2(-56.727394104004, -1086.2325439453),
                 vector2(-60.612808227539, -1096.7795410156),
                 vector2(-58.26834487915, -1100.572265625),
@@ -27,26 +27,27 @@ Config.Shops = {
                 vector2(-33.342102050781, -1101.0377197266),
                 vector2(-31.292987823486, -1095.3717041016)
             },
-            ['minZ'] = 25.0,                                         -- min height of the shop zone
-            ['maxZ'] = 28.0,                                         -- max height of the shop zone
-            ['size'] = 2.75                                          -- size of the vehicles zones
+            ['minZ'] = 25.0,                                         -- ショップゾーンの最低高度
+            ['maxZ'] = 28.0,                                         -- ショップゾーンの最高高度
+            ['size'] = 2.75                                          -- 車両ゾーンのサイズ
         },
-        ['Job'] = 'none',                                            -- Name of job or none
-        ['ShopLabel'] = 'Premium Deluxe Motorsport',                 -- Blip name
-        ['showBlip'] = true,                                         -- true or false
-        ['blipSprite'] = 326,                                        -- Blip sprite
-        ['blipColor'] = 3,                                           -- Blip color
-        ['TestDriveTimeLimit'] = 0.5,                                -- Time in minutes until the vehicle gets deleted
-        ['Location'] = vector3(-45.67, -1098.34, 26.42),             -- Blip Location
-        ['ReturnLocation'] = vector3(-44.74, -1082.58, 26.68),       -- Location to return vehicle, only enables if the vehicleshop has a job owned
-        ['VehicleSpawn'] = vector4(-56.79, -1109.85, 26.43, 71.5),   -- Spawn location when vehicle is bought
-        ['TestDriveSpawn'] = vector4(-56.79, -1109.85, 26.43, 71.5), -- Spawn location for test drive
-        ['FinanceZone'] = vector3(-29.53, -1103.67, 26.42),          -- Where the finance menu is located
+        ['Job'] = 'none',                                            -- ジョブ名、または'none'
+        ['ShopLabel'] = 'プレミアム・デラックス・モータースポーツ',  -- ブリップ名
+        ['showBlip'] = true,                                         -- true または false
+        ['blipSprite'] = 326,                                        -- ブリップのアイコン
+        ['blipColor'] = 3,                                           -- ブリップの色
+        ['TestDriveTimeLimit'] = 0.5,                                -- 車両が削除されるまでの時間（分）
+        ['Location'] = vector3(-45.67, -1098.34, 26.42),             -- ブリップの位置
+        ['ReturnLocation'] = vector3(-44.74, -1082.58, 26.68),       -- 車両を返却する場所（車両ショップがジョブを所有している場合のみ有効）
+        ['VehicleSpawn'] = vector4(-56.79, -1109.85, 26.43, 71.5),   -- 車両購入時のスポーン位置
+        ['TestDriveSpawn'] = vector4(-56.79, -1109.85, 26.43, 71.5), -- 試乗時のスポーン位置
+        ['FinanceZone'] = vector3(-29.53, -1103.67, 26.42),          -- 分割払いメニューがある場所
+        ['UsedCarCorner'] = true,                                    -- 中古車コーナー対象ショップ（2026-09-09追加）
         ['ShowroomVehicles'] = {
             [1] = {
-                coords = vector4(-45.65, -1093.66, 25.44, 69.5), -- where the vehicle will spawn on display
-                defaultVehicle = 'ardent',                       -- Default display vehicle
-                chosenVehicle = 'ardent',                        -- Same as default but is dynamically changed when swapping vehicles
+                coords = vector4(-45.65, -1093.66, 25.44, 69.5), -- 車両が展示されるスポーン位置
+                defaultVehicle = 'ardent',                       -- デフォルトの展示車両
+                chosenVehicle = 'ardent',                        -- デフォルトと同じですが、車両を交換すると動的に変更されます
             },
             [2] = {
                 coords = vector4(-48.27, -1101.86, 25.44, 294.5),
@@ -86,7 +87,7 @@ Config.Shops = {
         },
     },
     ['luxury'] = {
-        ['Type'] = 'managed', -- meaning a real player has to sell the car
+        ['Type'] = 'managed', -- つまり、実際のプレイヤーが車を売却する必要がある
         ['Zone'] = {
             ['Shape'] = {
                 vector2(-1260.6973876953, -349.21334838867),
@@ -101,19 +102,20 @@ Config.Shops = {
             },
             ['minZ'] = 36.646457672119,
             ['maxZ'] = 37.516143798828,
-            ['size'] = 2.75    -- size of the vehicles zones
+            ['size'] = 2.75    -- 車両ゾーンのサイズ
         },
-        ['Job'] = 'cardealer', -- Name of job or none
-        ['ShopLabel'] = 'Luxury Vehicle Shop',
-        ['showBlip'] = true,   -- true or false
-        ['blipSprite'] = 326,  -- Blip sprite
-        ['blipColor'] = 3,     -- Blip color
+        ['Job'] = 'cardealer', -- ジョブ名、または'none'
+        ['ShopLabel'] = '高級車ショップ',
+        ['showBlip'] = true,   -- true または false
+        ['blipSprite'] = 326,  -- ブリップのアイコン
+        ['blipColor'] = 3,     -- ブリップの色
         ['TestDriveTimeLimit'] = 0.5,
         ['Location'] = vector3(-1255.6, -361.16, 36.91),
         ['ReturnLocation'] = vector3(-1231.46, -349.86, 37.33),
         ['VehicleSpawn'] = vector4(-1231.46, -349.86, 37.33, 26.61),
-        ['TestDriveSpawn'] = vector4(-1232.81, -347.99, 37.33, 23.28), -- Spawn location for test drive
+        ['TestDriveSpawn'] = vector4(-1232.81, -347.99, 37.33, 23.28), -- 試乗時のスポーン位置
         ['FinanceZone'] = vector3(-1256.18, -368.23, 36.91),
+        ['UsedCarCorner'] = true, -- 中古車コーナー対象ショップ（2026-09-09追加）
         ['ShowroomVehicles'] = {
             [1] = {
                 coords = vector4(-1265.31, -354.44, 35.91, 205.08),
@@ -146,36 +148,36 @@ Config.Shops = {
                 chosenVehicle = 'hexer'
             },
         }
-    },                         -- Add your next table under this comma
+    },                         -- 次のテーブルをこのコンマの下に追加してください
     ['boats'] = {
-        ['Type'] = 'free-use', -- no player interaction is required to purchase a vehicle
+        ['Type'] = 'free-use', -- 車両購入にプレイヤーの操作は不要
         ['Zone'] = {
-            ['Shape'] = {      --polygon that surrounds the shop
+            ['Shape'] = {      -- ショップを取り囲むポリゴン
                 vector2(-729.39, -1315.84),
                 vector2(-766.81, -1360.11),
                 vector2(-754.21, -1371.49),
                 vector2(-716.94, -1326.88)
             },
-            ['minZ'] = 0.0,                                            -- min height of the shop zone
-            ['maxZ'] = 5.0,                                            -- max height of the shop zone
-            ['size'] = 6.2                                             -- size of the vehicles zones
+            ['minZ'] = 0.0,                                            -- ショップゾーンの最低高度
+            ['maxZ'] = 5.0,                                            -- ショップゾーンの最高高度
+            ['size'] = 6.2                                             -- 車両ゾーンのサイズ
         },
-        ['Job'] = 'none',                                              -- Name of job or none
-        ['ShopLabel'] = 'Marina Shop',                                 -- Blip name
-        ['showBlip'] = true,                                           -- true or false
-        ['blipSprite'] = 410,                                          -- Blip sprite
-        ['blipColor'] = 3,                                             -- Blip color
-        ['TestDriveTimeLimit'] = 1.5,                                  -- Time in minutes until the vehicle gets deleted
-        ['Location'] = vector3(-738.25, -1334.38, 1.6),                -- Blip Location
-        ['ReturnLocation'] = vector3(-714.34, -1343.31, 0.0),          -- Location to return vehicle, only enables if the vehicleshop has a job owned
-        ['VehicleSpawn'] = vector4(-727.87, -1353.1, -0.17, 137.09),   -- Spawn location when vehicle is bought
-        ['TestDriveSpawn'] = vector4(-722.23, -1351.98, 0.14, 135.33), -- Spawn location for test drive
+        ['Job'] = 'none',                                              -- ジョブ名、または'none'
+        ['ShopLabel'] = 'マリーナショップ',                            -- ブリップ名
+        ['showBlip'] = true,                                           -- true または false
+        ['blipSprite'] = 410,                                          -- ブリップのアイコン
+        ['blipColor'] = 3,                                             -- ブリップの色
+        ['TestDriveTimeLimit'] = 1.5,                                  -- 車両が削除されるまでの時間（分）
+        ['Location'] = vector3(-738.25, -1334.38, 1.6),                -- ブリップの位置
+        ['ReturnLocation'] = vector3(-714.34, -1343.31, 0.0),          -- 車両を返却する場所（車両ショップがジョブを所有している場合のみ有効）
+        ['VehicleSpawn'] = vector4(-727.87, -1353.1, -0.17, 137.09),   -- 車両購入時のスポーン位置
+        ['TestDriveSpawn'] = vector4(-722.23, -1351.98, 0.14, 135.33), -- 試乗時のスポーン位置
         ['FinanceZone'] = vector3(-729.86, -1319.13, 1.6),
         ['ShowroomVehicles'] = {
             [1] = {
-                coords = vector4(-727.05, -1326.59, 0.00, 229.5), -- where the vehicle will spawn on display
-                defaultVehicle = 'seashark',                      -- Default display vehicle
-                chosenVehicle = 'seashark'                        -- Same as default but is dynamically changed when swapping vehicles
+                coords = vector4(-727.05, -1326.59, 0.00, 229.5), -- 車両が展示されるスポーン位置
+                defaultVehicle = 'seashark',                      -- デフォルトの展示車両
+                chosenVehicle = 'seashark'                        -- デフォルトと同じですが、車両を交換すると動的に変更されます
             },
             [2] = {
                 coords = vector4(-732.84, -1333.5, -0.50, 229.5),
@@ -195,34 +197,34 @@ Config.Shops = {
         },
     },
     ['air'] = {
-        ['Type'] = 'free-use', -- no player interaction is required to purchase a vehicle
+        ['Type'] = 'free-use', -- 車両購入にプレイヤーの操作は不要
         ['Zone'] = {
-            ['Shape'] = {      --polygon that surrounds the shop
+            ['Shape'] = {      -- ショップを取り囲むポリゴン
                 vector2(-1607.58, -3141.7),
                 vector2(-1672.54, -3103.87),
                 vector2(-1703.49, -3158.02),
                 vector2(-1646.03, -3190.84)
             },
-            ['minZ'] = 12.99,                                            -- min height of the shop zone
-            ['maxZ'] = 16.99,                                            -- max height of the shop zone
-            ['size'] = 7.0,                                              -- size of the vehicles zones
+            ['minZ'] = 12.99,                                            -- ショップゾーンの最低高度
+            ['maxZ'] = 16.99,                                            -- ショップゾーンの最高高度
+            ['size'] = 7.0,                                              -- 車両ゾーンのサイズ
         },
-        ['Job'] = 'none',                                                -- Name of job or none
-        ['ShopLabel'] = 'Air Shop',                                      -- Blip name
-        ['showBlip'] = true,                                             -- true or false
-        ['blipSprite'] = 251,                                            -- Blip sprite
-        ['blipColor'] = 3,                                               -- Blip color
-        ['TestDriveTimeLimit'] = 1.5,                                    -- Time in minutes until the vehicle gets deleted
-        ['Location'] = vector3(-1652.76, -3143.4, 13.99),                -- Blip Location
-        ['ReturnLocation'] = vector3(-1628.44, -3104.7, 13.94),          -- Location to return vehicle, only enables if the vehicleshop has a job owned
-        ['VehicleSpawn'] = vector4(-1617.49, -3086.17, 13.94, 329.2),    -- Spawn location when vehicle is bought
-        ['TestDriveSpawn'] = vector4(-1625.19, -3103.47, 13.94, 330.28), -- Spawn location for test drive
+        ['Job'] = 'none',                                                -- ジョブ名、または'none'
+        ['ShopLabel'] = '飛行機ショップ',                                -- ブリップ名
+        ['showBlip'] = true,                                             -- true または false
+        ['blipSprite'] = 251,                                            -- ブリップのアイコン
+        ['blipColor'] = 3,                                               -- ブリップの色
+        ['TestDriveTimeLimit'] = 1.5,                                    -- 車両が削除されるまでの時間（分）
+        ['Location'] = vector3(-1652.76, -3143.4, 13.99),                -- ブリップの位置
+        ['ReturnLocation'] = vector3(-1628.44, -3104.7, 13.94),          -- 車両を返却する場所（車両ショップがジョブを所有している場合のみ有効）
+        ['VehicleSpawn'] = vector4(-1617.49, -3086.17, 13.94, 329.2),    -- 車両購入時のスポーン位置
+        ['TestDriveSpawn'] = vector4(-1625.19, -3103.47, 13.94, 330.28), -- 試乗時のスポーン位置
         ['FinanceZone'] = vector3(-1619.52, -3152.64, 14.0),
         ['ShowroomVehicles'] = {
             [1] = {
-                coords = vector4(-1651.36, -3162.66, 12.99, 346.89), -- where the vehicle will spawn on display
-                defaultVehicle = 'volatus',                          -- Default display vehicle
-                chosenVehicle = 'volatus'                            -- Same as default but is dynamically changed when swapping vehicles
+                coords = vector4(-1651.36, -3162.66, 12.99, 346.89), -- 車両が展示されるスポーン位置
+                defaultVehicle = 'volatus',                          -- デフォルトの展示車両
+                chosenVehicle = 'volatus'                            -- デフォルトと同じですが、車両を交換すると動的に変更されます
             },
             [2] = {
                 coords = vector4(-1668.53, -3152.56, 12.99, 303.22),
@@ -242,9 +244,9 @@ Config.Shops = {
         },
     },
     ['truck'] = {
-        ['Type'] = 'free-use', -- no player interaction is required to purchase a car
+        ['Type'] = 'free-use', -- 車両購入にプレイヤーの操作は不要
         ['Zone'] = {
-            ['Shape'] = {      --polygon that surrounds the shop
+            ['Shape'] = {      -- ショップを取り囲むポリゴン
                 vector2(856.91046142578, -1181.4660644532),
                 vector2(922.666015625, -1178.8934326172),
                 vector2(921.7074584961, -1153.4362792968),
@@ -256,26 +258,27 @@ Config.Shops = {
                 vector2(872.05163574218, -1139.1412353516),
                 vector2(857.6060180664, -1139.501953125)
             },
-            ['minZ'] = 22.0,                                         -- min height of the shop zone
-            ['maxZ'] = 28.0,                                         -- max height of the shop zone
-            ['size'] = 5.75                                          -- size of the vehicles zones
+            ['minZ'] = 22.0,                                         -- ショップゾーンの最低高度
+            ['maxZ'] = 28.0,                                         -- ショップゾーンの最高高度
+            ['size'] = 5.75                                          -- 車両ゾーンのサイズ
         },
-        ['Job'] = 'none',                                            -- Name of job or none
-        ['ShopLabel'] = 'Truck Motor Shop',                          -- Blip name
-        ['showBlip'] = true,                                         -- true or false
-        ['blipSprite'] = 477,                                        -- Blip sprite
-        ['blipColor'] = 2,                                           -- Blip color
-        ['TestDriveTimeLimit'] = 0.5,                                -- Time in minutes until the vehicle gets deleted
-        ['Location'] = vector3(900.47, -1155.74, 25.16),             -- Blip Location
-        ['ReturnLocation'] = vector3(900.47, -1155.74, 25.16),       -- Location to return vehicle, only enables if the vehicleshop has a job owned
-        ['VehicleSpawn'] = vector4(909.35, -1181.58, 25.55, 177.57), -- Spawn location when vehicle is bought
-        ['TestDriveSpawn'] = vector4(867.65, -1192.4, 25.37, 95.72), -- Spawn location for test drive
+        ['Job'] = 'none',                                            -- ジョブ名、または'none'
+        ['ShopLabel'] = 'トラック・モーターショップ',                -- ブリップ名
+        ['showBlip'] = true,                                         -- true または false
+        ['blipSprite'] = 477,                                        -- ブリップのアイコン
+        ['blipColor'] = 2,                                           -- ブリップの色
+        ['TestDriveTimeLimit'] = 0.5,                                -- 車両が削除されるまでの時間（分）
+        ['Location'] = vector3(900.47, -1155.74, 25.16),             -- ブリップの位置
+        ['ReturnLocation'] = vector3(900.47, -1155.74, 25.16),       -- 車両を返却する場所（車両ショップがジョブを所有している場合のみ有効）
+        ['VehicleSpawn'] = vector4(909.35, -1181.58, 25.55, 177.57), -- 車両購入時のスポーン位置
+        ['TestDriveSpawn'] = vector4(867.65, -1192.4, 25.37, 95.72), -- 試乗時のスポーン位置
         ['FinanceZone'] = vector3(900.46, -1154.86, 25.16),
+        ['UsedCarCorner'] = true, -- 中古車コーナー対象ショップ（2026-09-09追加）
         ['ShowroomVehicles'] = {
             [1] = {
-                coords = vector4(890.84, -1170.92, 25.08, 269.58), -- where the vehicle will spawn on display
-                defaultVehicle = 'hauler',                         -- Default display vehicle
-                chosenVehicle = 'hauler',                          -- Same as default but is dynamically changed when swapping vehicles
+                coords = vector4(890.84, -1170.92, 25.08, 269.58), -- 車両が展示されるスポーン位置
+                defaultVehicle = 'hauler',                         -- デフォルトの展示車両
+                chosenVehicle = 'hauler',                          -- デフォルトと同じですが、車両を交換すると動的に変更されます
             },
             [2] = {
                 coords = vector4(878.45, -1171.04, 25.05, 273.08),
@@ -294,4 +297,128 @@ Config.Shops = {
             },
         },
     },
+    -- ▼2026-09-09追加：新設3ショップ（座標は現地取得の基準点から機械的に算出した仮配置。実機で微調整してください）
+    ['musclecoupe'] = {
+        ['Type'] = 'free-use',
+        ['Zone'] = {
+            ['Shape'] = { -- Big House Storage Inc.（LSIA）を中心にした仮の正方形。要現地調整
+                vector2(-511.37, -2182.63),
+                vector2(-529.74, -2198.08),
+                vector2(-514.29, -2216.45),
+                vector2(-495.92, -2201.00)
+            },
+            ['minZ'] = 3.4,
+            ['maxZ'] = 9.4,
+            ['size'] = 3.0
+        },
+        ['Job'] = 'none',
+        ['ShopLabel'] = 'マッスル・クーペ専門店',
+        ['showBlip'] = true,
+        ['blipSprite'] = 326,
+        ['blipColor'] = 1,
+        ['TestDriveTimeLimit'] = 0.5,
+        ['Location'] = vector3(-512.83, -2199.54, 6.39),
+        ['ReturnLocation'] = vector3(-508.69, -2209.12, 6.39),
+        ['VehicleSpawn'] = vector4(-506.39, -2207.19, 6.39, 319.92),
+        ['TestDriveSpawn'] = vector4(-505.38, -2203.73, 6.39, 319.92),
+        ['FinanceZone'] = vector3(-514.76, -2197.24, 6.39),
+        ['UsedCarCorner'] = true,
+        ['ShowroomVehicles'] = {
+            [1] = { coords = vector4(-521.28, -2198.81, 6.39, 319.92), defaultVehicle = 'voodoo', chosenVehicle = 'voodoo' },
+            [2] = { coords = vector4(-516.69, -2194.95, 6.39, 319.92), defaultVehicle = 'cogcabrio', chosenVehicle = 'cogcabrio' },
+            [3] = { coords = vector4(-512.10, -2191.09, 6.39, 319.92), defaultVehicle = 'sentinel', chosenVehicle = 'sentinel' },
+            [4] = { coords = vector4(-518.71, -2201.87, 6.39, 319.92), defaultVehicle = 'gauntlet3', chosenVehicle = 'gauntlet3' },
+            [5] = { coords = vector4(-514.12, -2198.01, 6.39, 319.92), defaultVehicle = 'clique', chosenVehicle = 'clique' },
+            [6] = { coords = vector4(-509.53, -2194.15, 6.39, 319.92), defaultVehicle = 'kanjosj', chosenVehicle = 'kanjosj' },
+        },
+    },
+    ['offroadsuv'] = {
+        ['Type'] = 'free-use',
+        ['Zone'] = {
+            ['Shape'] = { -- Seaton Sand's Automobile Services（Sandy Shores）を中心にした仮の正方形。要現地調整
+                vector2(1720.82, 3681.24),
+                vector2(1743.43, 3673.19),
+                vector2(1751.48, 3695.80),
+                vector2(1728.87, 3703.85)
+            },
+            ['minZ'] = 31.4,
+            ['maxZ'] = 37.4,
+            ['size'] = 3.0
+        },
+        ['Job'] = 'none',
+        ['ShopLabel'] = 'オフロード・SUV専門店',
+        ['showBlip'] = true,
+        ['blipSprite'] = 225,
+        ['blipColor'] = 25,
+        ['TestDriveTimeLimit'] = 0.5,
+        ['Location'] = vector3(1736.15, 3688.52, 34.42),
+        ['ReturnLocation'] = vector3(1742.33, 3696.93, 34.42),
+        ['VehicleSpawn'] = vector4(1739.51, 3697.94, 34.42, 199.61),
+        ['TestDriveSpawn'] = vector4(1736.01, 3697.06, 34.42, 199.61),
+        ['FinanceZone'] = vector3(1735.14, 3685.69, 34.42),
+        ['UsedCarCorner'] = true,
+        ['ShowroomVehicles'] = {
+            [1] = { coords = vector4(1739.79, 3680.85, 34.42, 199.61), defaultVehicle = 'blazer', chosenVehicle = 'blazer' },
+            [2] = { coords = vector4(1734.14, 3682.87, 34.42, 199.61), defaultVehicle = 'bifta', chosenVehicle = 'bifta' },
+            [3] = { coords = vector4(1728.48, 3684.88, 34.42, 199.61), defaultVehicle = 'baller3', chosenVehicle = 'baller3' },
+            [4] = { coords = vector4(1741.13, 3684.62, 34.42, 199.61), defaultVehicle = 'kamacho', chosenVehicle = 'kamacho' },
+            [5] = { coords = vector4(1735.48, 3686.64, 34.42, 199.61), defaultVehicle = 'trophytruck2', chosenVehicle = 'trophytruck2' },
+            [6] = { coords = vector4(1729.83, 3688.65, 34.42, 199.61), defaultVehicle = 'outlaw', chosenVehicle = 'outlaw' },
+        },
+    },
+    ['motorcycle'] = {
+        ['Type'] = 'free-use',
+        ['Zone'] = {
+            ['Shape'] = { -- Sanders Motorcycles（Mission Row）を中心にした仮の正方形。要現地調整
+                vector2(301.83, -1146.86),
+                vector2(290.04, -1167.77),
+                vector2(310.95, -1179.56),
+                vector2(322.74, -1158.65)
+            },
+            ['minZ'] = 26.3,
+            ['maxZ'] = 32.3,
+            ['size'] = 3.0
+        },
+        ['Job'] = 'none',
+        ['ShopLabel'] = 'サンダース・モーターサイクルズ',
+        ['showBlip'] = true,
+        ['blipSprite'] = 226,
+        ['blipColor'] = 47,
+        ['TestDriveTimeLimit'] = 0.5,
+        ['Location'] = vector3(306.39, -1163.21, 29.29),
+        ['ReturnLocation'] = vector3(313.63, -1170.73, 29.29),
+        ['VehicleSpawn'] = vector4(315.10, -1168.12, 29.29, 299.41),
+        ['TestDriveSpawn'] = vector4(314.83, -1164.53, 29.29, 299.41),
+        ['FinanceZone'] = vector3(303.78, -1161.74, 29.29),
+        -- UsedCarCornerは付けません（バイクは中古車コーナーの対象外）
+        ['ShowroomVehicles'] = {
+            [1] = { coords = vector4(298.22, -1165.49, 29.29, 299.41), defaultVehicle = 'double', chosenVehicle = 'double' },
+            [2] = { coords = vector4(301.16, -1160.26, 29.29, 299.41), defaultVehicle = 'carbonrs', chosenVehicle = 'carbonrs' },
+            [3] = { coords = vector4(304.11, -1155.04, 29.29, 299.41), defaultVehicle = 'hakuchou', chosenVehicle = 'hakuchou' },
+            [4] = { coords = vector4(301.70, -1167.45, 29.29, 299.41), defaultVehicle = 'avarus', chosenVehicle = 'avarus' },
+            [5] = { coords = vector4(304.65, -1162.23, 29.29, 299.41), defaultVehicle = 'diablous', chosenVehicle = 'diablous' },
+            [6] = { coords = vector4(307.59, -1157.00, 29.29, 299.41), defaultVehicle = 'vortex', chosenVehicle = 'vortex' },
+        },
+    },
 }
+
+-- ▼2026-09-09追加：中古車コーナー機能の設定
+Config.UsedCarThreshold = 75000 -- この価格“以下”の車が中古車コーナーの対象プールに入る
+Config.UsedCarClasses = {
+    ['compacts']      = true,
+    ['sedans']        = true,
+    ['coupes']        = true,
+    ['muscle']        = true,
+    ['offroad']       = true,
+    ['suvs']          = true,
+    ['vans']          = true,
+    ['sports']        = true,
+    ['sportsclassics'] = true,
+    ['super']         = true,
+}
+Config.UsedCarPrice = 45000 -- 中古車コーナー経由で購入する時の一律価格
+Config.UsedCarMinHealth = 300.0
+Config.UsedCarMaxHealth = 800.0
+Config.UsedCarRotationInterval = 3600 -- 1時間
+Config.UsedCarStockMin = 5
+Config.UsedCarStockMax = 8

@@ -18,7 +18,8 @@ client_scripts {
     '@PolyZone/EntityZone.lua',
     '@PolyZone/CircleZone.lua',
     '@PolyZone/ComboZone.lua',
-    'client.lua'
+    'client.lua',
+    'client/shop_peds.lua' -- 2026-09-09追加：新設ショップの販売員ペド
 }
 
 server_scripts {

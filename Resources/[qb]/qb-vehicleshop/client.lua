@@ -590,6 +590,17 @@ RegisterNetEvent('qb-vehicleshop:client:vehCategories', function(data)
             }
         }
     end
+    -- ▼2026-09-09追加：中古車コーナー
+    if Config.Shops[insideShop] and Config.Shops[insideShop].UsedCarCorner then
+        categoryMenu[#categoryMenu + 1] = {
+            header = '🚗 中古車コーナー',
+            icon = 'fa-solid fa-car-burst',
+            params = {
+                event = 'qb-vehicleshop:client:openUsedCarCorner',
+            }
+        }
+    end
+    -- ▲2026-09-09追加ここまで
     exports['qb-menu']:openMenu(categoryMenu, Config.SortAlphabetically, true)
 end)
 
@@ -652,6 +663,71 @@ RegisterNetEvent('qb-vehicleshop:client:openVehCats', function(data)
     end
     exports['qb-menu']:openMenu(vehMenu, Config.SortAlphabetically, true)
 end)
+
+-- ▼2026-09-09追加：中古車コーナー
+RegisterNetEvent('qb-vehicleshop:client:openUsedCarCorner', function()
+    QBCore.Functions.TriggerCallback('qb-vehicleshop:server:getUsedCarStock', function(stock)
+        local vehMenu = {
+            {
+                header = Lang:t('menus.goback_header'),
+                icon = 'fa-solid fa-angle-left',
+                params = {
+                    event = 'qb-vehicleshop:client:vehCategories',
+                }
+            }
+        }
+        if #stock == 0 then
+            vehMenu[#vehMenu + 1] = {
+                header = '現在、在庫がありません',
+                icon = 'fa-solid fa-circle-exclamation',
+            }
+        end
+        for _, model in pairs(stock) do
+            local v = sharedVehicles[model]
+            if v then
+                vehMenu[#vehMenu + 1] = {
+                    header = v.name .. '（中古）',
+                    txt = '価格：$' .. comma_value(Config.UsedCarPrice) .. '（状態はランダム）',
+                    icon = 'fa-solid fa-car-side',
+                    params = {
+                        event = 'qb-vehicleshop:client:confirmUsedCarBuy',
+                        args = {
+                            model = model,
+                            name = v.name,
+                        }
+                    }
+                }
+            end
+        end
+        exports['qb-menu']:openMenu(vehMenu, Config.SortAlphabetically, true)
+    end, insideShop)
+end)
+
+RegisterNetEvent('qb-vehicleshop:client:confirmUsedCarBuy', function(data)
+    local confirmMenu = {
+        {
+            header = Lang:t('menus.goback_header'),
+            icon = 'fa-solid fa-angle-left',
+            params = {
+                event = 'qb-vehicleshop:client:openUsedCarCorner',
+            }
+        },
+        {
+            header = data.name .. '（中古）を$' .. comma_value(Config.UsedCarPrice) .. 'で購入しますか？',
+            txt = '状態はランダムです（購入後の返品はできません）',
+            icon = 'fa-solid fa-circle-check',
+            params = {
+                isServer = true,
+                event = 'qb-vehicleshop:server:buyUsedCar',
+                args = {
+                    model = data.model,
+                }
+            }
+        }
+    }
+    exports['qb-menu']:openMenu(confirmMenu, Config.SortAlphabetically, true)
+end)
+-- ▲2026-09-09追加ここまで
 
 RegisterNetEvent('qb-vehicleshop:client:vehMakes', function()
     local makmenu = {}

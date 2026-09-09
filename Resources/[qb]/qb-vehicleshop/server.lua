@@ -43,6 +43,131 @@ local function GetVehicleTypeByModel(model)
     return vehicleType or 'automobile'
 end
 
+-- ============================================================
+-- ▼2026-09-09追加：中古車コーナー機能
+-- ============================================================
+local UsedCarPool = {}   -- UsedCarPool[shopKey] = { model1, model2, ... }（対象になり得る全車種）
+local UsedCarStock = {}  -- UsedCarStock[shopKey] = { model1, model2, ... }（現在ローテーション表示中の車種）
+
+local function IsUsedCarEligible(model)
+    local v = sharedVehicles[model]
+    if not v then return false end
+    if not Config.UsedCarClasses[v.category] then return false end
+    local price = tonumber(v.price)
+    if not price then return false end
+    return price <= Config.UsedCarThreshold
+end
+
+local function VehicleBelongsToShop(model, shopKey)
+    local v = sharedVehicles[model]
+    if not v then return false end
+    if type(v.shop) == 'table' then
+        for _, s in pairs(v.shop) do
+            if s == shopKey then return true end
+        end
+        return false
+    else
+        return v.shop == shopKey
+    end
+end
+
+local function BuildUsedCarPools()
+    UsedCarPool = {}
+    for shopKey, shopData in pairs(Config.Shops) do
+        if shopData.UsedCarCorner then
+            UsedCarPool[shopKey] = {}
+            for model, _ in pairs(sharedVehicles) do
+                if VehicleBelongsToShop(model, shopKey) and IsUsedCarEligible(model) then
+                    UsedCarPool[shopKey][#UsedCarPool[shopKey] + 1] = model
+                end
+            end
+        end
+    end
+end
+
+local function PickRandom(pool, n)
+    if #pool == 0 then return {} end
+    local copy = {}
+    for i = 1, #pool do copy[i] = pool[i] end
+    for i = #copy, 2, -1 do
+        local j = math.random(i)
+        copy[i], copy[j] = copy[j], copy[i]
+    end
+    local picked = {}
+    local count = math.min(n, #copy)
+    for i = 1, count do picked[i] = copy[i] end
+    return picked
+end
+
+local function RotateUsedCarStock()
+    for shopKey, pool in pairs(UsedCarPool) do
+        local n = math.random(Config.UsedCarStockMin, Config.UsedCarStockMax)
+        UsedCarStock[shopKey] = PickRandom(pool, n)
+    end
+end
+
+CreateThread(function()
+    BuildUsedCarPools()
+    RotateUsedCarStock()
+    while true do
+        Wait(Config.UsedCarRotationInterval * 1000)
+        RotateUsedCarStock()
+    end
+end)
+
+QBCore.Functions.CreateCallback('qb-vehicleshop:server:getUsedCarStock', function(source, cb, shopKey)
+    cb(UsedCarStock[shopKey] or {})
+end)
+
+local function GenerateUsedCarMods()
+    local engineHealth = math.random(Config.UsedCarMinHealth * 10, Config.UsedCarMaxHealth * 10) / 10
+    local bodyHealth = math.random(Config.UsedCarMinHealth * 10, Config.UsedCarMaxHealth * 10) / 10
+    return json.encode({
+        engineHealth = engineHealth,
+        bodyHealth = bodyHealth,
+    })
+end
+
+RegisterNetEvent('qb-vehicleshop:server:buyUsedCar', function(data)
+    local src = source
+    local model = data and data.model
+    if not model or not IsUsedCarEligible(model) then
+        TriggerClientEvent('QBCore:Notify', src, '対象外の車両です', 'error')
+        return
+    end
+
+    local pData = exports['qb-core']:GetPlayer(src)
+    local cash = pData.PlayerData.money['cash']
+    local bank = pData.PlayerData.money['bank']
+    local price = Config.UsedCarPrice
+    local plate = GeneratePlate()
+    local mods = GenerateUsedCarMods()
+
+    if cash >= price then
+        pData.Functions.RemoveMoney('cash', price, 'used-car-purchase')
+    elseif bank >= price then
+        pData.Functions.RemoveMoney('bank', price, 'used-car-purchase')
+    else
+        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.notenoughmoney'), 'error')
+        return
+    end
+
+    MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, garage, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', {
+        pData.PlayerData.license,
+        pData.PlayerData.citizenid,
+        model,
+        GetHashKey(model),
+        mods,
+        plate,
+        'pillboxgarage',
+        0
+    })
+
+    TriggerClientEvent('QBCore:Notify', src, Lang:t('success.purchased'), 'success')
+    TriggerClientEvent('qb-vehicleshop:client:buyShowroomVehicle', src, model, plate)
+end)
+-- ▲2026-09-09追加ここまで
+
 QBCore.Functions.CreateCallback('qb-vehicleshop:server:spawnvehicle', function(source, cb, plate, vehicle, coords)
     local vehType = sharedVehicles[vehicle] and sharedVehicles[vehicle].type or GetVehicleTypeByModel(vehicle)
     local veh = CreateVehicleServerSetter(GetHashKey(vehicle), vehType, coords.x, coords.y, coords.z, coords.w)
