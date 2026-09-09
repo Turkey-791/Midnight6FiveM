@@ -43,6 +43,93 @@ local function GetVehicleTypeByModel(model)
     return vehicleType or 'automobile'
 end
 
+QBCore.Functions.CreateCallback('qb-vehicleshop:server:spawnvehicle', function(source, cb, plate, vehicle, coords)
+    local vehType = sharedVehicles[vehicle] and sharedVehicles[vehicle].type or GetVehicleTypeByModel(vehicle)
+    local veh = CreateVehicleServerSetter(GetHashKey(vehicle), vehType, coords.x, coords.y, coords.z, coords.w)
+    local netId = NetworkGetNetworkIdFromEntity(veh)
+    SetVehicleNumberPlateText(veh, plate)
+    local vehProps = {}
+    local result = MySQL.rawExecute.await('SELECT mods FROM player_vehicles WHERE plate = ?', { plate })
+    if result and result[1] then vehProps = json.decode(result[1].mods) end
+    cb(netId, vehProps, plate)
+end)
+
+-- Handlers
+-- Store game time for player when they load
+RegisterNetEvent('qb-vehicleshop:server:addPlayer', function(citizenid)
+    financetimer[citizenid] = os.time()
+end)
+
+-- Deduct stored game time from player on logout
+RegisterNetEvent('qb-vehicleshop:server:removePlayer', function(citizenid)
+    if financetimer[citizenid] then
+        local playTime = financetimer[citizenid]
+        local financetime = MySQL.query.await('SELECT * FROM player_vehicles WHERE citizenid = ?', { citizenid })
+        for _, v in pairs(financetime) do
+            if v.balance >= 1 then
+                local newTime = (v.financetime - ((os.time() - playTime) / 60))
+                if newTime < 0 then newTime = 0 end
+                MySQL.update('UPDATE player_vehicles SET financetime = ? WHERE plate = ?', { math.ceil(newTime), v.plate })
+            end
+        end
+    end
+    financetimer[citizenid] = nil
+end)
+
+-- Deduct stored game time from player on quit because we can't get citizenid
+AddEventHandler('playerDropped', function()
+    local src = source
+    local license
+    for _, v in pairs(GetPlayerIdentifiers(src)) do
+        if string.sub(v, 1, string.len('license:')) == 'license:' then
+            license = v
+        end
+    end
+    if license then
+        local vehicles = MySQL.query.await('SELECT * FROM player_vehicles WHERE license = ?', { license })
+        if vehicles then
+            for _, v in pairs(vehicles) do
+                local playTime = financetimer[v.citizenid]
+                if v.balance >= 1 and playTime then
+                    local newTime = (v.financetime - ((os.time() - playTime) / 60))
+                    if newTime < 0 then newTime = 0 end
+                    MySQL.update('UPDATE player_vehicles SET financetime = ? WHERE plate = ?', { math.ceil(newTime), v.plate })
+                end
+            end
+            if vehicles[1] and financetimer[vehicles[1].citizenid] then financetimer[vehicles[1].citizenid] = nil end
+        end
+    end
+end)
+
+-- Functions
+local function round(x)
+    return x >= 0 and math.floor(x + 0.5) or math.ceil(x - 0.5)
+end
+
+local function calculateFinance(vehiclePrice, downPayment, paymentamount)
+    local balance = vehiclePrice - downPayment
+    local vehPaymentAmount = balance / paymentamount
+    return round(balance), round(vehPaymentAmount)
+end
+
+local function calculateNewFinance(paymentAmount, vehData)
+    local newBalance = tonumber(vehData.balance - paymentAmount)
+    local minusPayment = vehData.paymentsLeft - 1
+    local newPaymentsLeft = newBalance / minusPayment
+    local newPayment = newBalance / newPaymentsLeft
+    return round(newBalance), round(newPayment), newPaymentsLeft
+end
+
+local function GeneratePlate()
+    local plate = RandomInt(1) .. RandomStr(2) .. RandomInt(3) .. RandomStr(2)
+    local result = MySQL.scalar.await('SELECT plate FROM player_vehicles WHERE plate = ?', { plate })
+    if result then
+        return GeneratePlate()
+    else
+        return plate:upper()
+    end
+end
+
 -- ============================================================
 -- ▼2026-09-09追加：中古車コーナー機能
 -- ============================================================
@@ -167,93 +254,6 @@ RegisterNetEvent('qb-vehicleshop:server:buyUsedCar', function(data)
     TriggerClientEvent('qb-vehicleshop:client:buyShowroomVehicle', src, model, plate)
 end)
 -- ▲2026-09-09追加ここまで
-
-QBCore.Functions.CreateCallback('qb-vehicleshop:server:spawnvehicle', function(source, cb, plate, vehicle, coords)
-    local vehType = sharedVehicles[vehicle] and sharedVehicles[vehicle].type or GetVehicleTypeByModel(vehicle)
-    local veh = CreateVehicleServerSetter(GetHashKey(vehicle), vehType, coords.x, coords.y, coords.z, coords.w)
-    local netId = NetworkGetNetworkIdFromEntity(veh)
-    SetVehicleNumberPlateText(veh, plate)
-    local vehProps = {}
-    local result = MySQL.rawExecute.await('SELECT mods FROM player_vehicles WHERE plate = ?', { plate })
-    if result and result[1] then vehProps = json.decode(result[1].mods) end
-    cb(netId, vehProps, plate)
-end)
-
--- Handlers
--- Store game time for player when they load
-RegisterNetEvent('qb-vehicleshop:server:addPlayer', function(citizenid)
-    financetimer[citizenid] = os.time()
-end)
-
--- Deduct stored game time from player on logout
-RegisterNetEvent('qb-vehicleshop:server:removePlayer', function(citizenid)
-    if financetimer[citizenid] then
-        local playTime = financetimer[citizenid]
-        local financetime = MySQL.query.await('SELECT * FROM player_vehicles WHERE citizenid = ?', { citizenid })
-        for _, v in pairs(financetime) do
-            if v.balance >= 1 then
-                local newTime = (v.financetime - ((os.time() - playTime) / 60))
-                if newTime < 0 then newTime = 0 end
-                MySQL.update('UPDATE player_vehicles SET financetime = ? WHERE plate = ?', { math.ceil(newTime), v.plate })
-            end
-        end
-    end
-    financetimer[citizenid] = nil
-end)
-
--- Deduct stored game time from player on quit because we can't get citizenid
-AddEventHandler('playerDropped', function()
-    local src = source
-    local license
-    for _, v in pairs(GetPlayerIdentifiers(src)) do
-        if string.sub(v, 1, string.len('license:')) == 'license:' then
-            license = v
-        end
-    end
-    if license then
-        local vehicles = MySQL.query.await('SELECT * FROM player_vehicles WHERE license = ?', { license })
-        if vehicles then
-            for _, v in pairs(vehicles) do
-                local playTime = financetimer[v.citizenid]
-                if v.balance >= 1 and playTime then
-                    local newTime = (v.financetime - ((os.time() - playTime) / 60))
-                    if newTime < 0 then newTime = 0 end
-                    MySQL.update('UPDATE player_vehicles SET financetime = ? WHERE plate = ?', { math.ceil(newTime), v.plate })
-                end
-            end
-            if vehicles[1] and financetimer[vehicles[1].citizenid] then financetimer[vehicles[1].citizenid] = nil end
-        end
-    end
-end)
-
--- Functions
-local function round(x)
-    return x >= 0 and math.floor(x + 0.5) or math.ceil(x - 0.5)
-end
-
-local function calculateFinance(vehiclePrice, downPayment, paymentamount)
-    local balance = vehiclePrice - downPayment
-    local vehPaymentAmount = balance / paymentamount
-    return round(balance), round(vehPaymentAmount)
-end
-
-local function calculateNewFinance(paymentAmount, vehData)
-    local newBalance = tonumber(vehData.balance - paymentAmount)
-    local minusPayment = vehData.paymentsLeft - 1
-    local newPaymentsLeft = newBalance / minusPayment
-    local newPayment = newBalance / newPaymentsLeft
-    return round(newBalance), round(newPayment), newPaymentsLeft
-end
-
-local function GeneratePlate()
-    local plate = RandomInt(1) .. RandomStr(2) .. RandomInt(3) .. RandomStr(2)
-    local result = MySQL.scalar.await('SELECT plate FROM player_vehicles WHERE plate = ?', { plate })
-    if result then
-        return GeneratePlate()
-    else
-        return plate:upper()
-    end
-end
 
 local function comma_value(amount)
     local formatted = amount
