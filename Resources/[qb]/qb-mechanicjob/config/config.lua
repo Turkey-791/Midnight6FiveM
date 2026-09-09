@@ -16,6 +16,14 @@ Config.WearablePartsDamage = math.random(1, 2) -- how much wearable parts are da
 Config.DamageThreshold = 25                    -- how worn a part needs to be or below to apply an effect if enabled
 Config.WarningThreshold = 50                   -- how worn a part needs to be to show a warning color in toolbox if enabled
 
+-- [バランス調整 2026-09-09] 車両価格に応じた耐久ボーナス
+-- 高額車(高級車/スーパーカー)ほど、距離ダメージと摩耗パーツの消耗が緩やかになる。
+-- Used Car想定の基準価格($45,000)以下の車には影響しない。
+Config.UseDurabilityTiers = true       -- 価格帯による耐久ボーナスを有効にするか
+Config.DurabilityBasePrice = 45000     -- この価格以下はボーナス無し(倍率1.0、Used Car基準)
+Config.DurabilityLuxuryPrice = 500000  -- この価格以上で最大ボーナスに達する
+Config.DurabilityMaxReduction = 0.5    -- 最大でダメージを50%軽減(中等プリセット)
+
 Config.MinimalMetersForDamage = {              -- unused if Config.UseDistanceDamage is false
     { min = 5000,  max = 10000, damage = 10 },
     { min = 15000, max = 20000, damage = 20 },

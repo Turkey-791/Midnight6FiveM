@@ -4,16 +4,25 @@ local OutsideVehicles = {}
 
 -- Handler
 
-AddEventHandler('onResourceStart', function(resource)
-    if resource == GetCurrentResourceName() then
-        Wait(100)
-        if Config['AutoRespawn'] then
-            MySQL.update('UPDATE player_vehicles SET state = 1 WHERE state = 0', {})
-        else
-            MySQL.update('UPDATE player_vehicles SET depotprice = 500 WHERE state = 0', {})
-        end
-    end
-end)
+-- 2026-09-09 Phase G-2: 再起動時の一括処理を ao_vehiclelifecycle に移管したため無効化。
+-- 従来はここで state=0 の全車両を無条件・無料で state=1 に戻していた(Config.AutoRespawn=true)。
+-- そのため「再起動を待てばデポ代を踏み倒せる」抜け道になっていた。
+-- 現在は ao_vehiclelifecycle/server/main.lua の handleRestart() が、
+--   ・停止直前にオーナー本人が搭乗していた車 → 無料で state=1(従来どおりの救済)
+--   ・それ以外                              → デポ送り(state=0 + depotprice)
+-- を判定して処理する。元に戻す場合はこのコメントを外し、ao_vehiclelifecycle 側の
+-- Config.HandleRestart を false にすること(両方が動くと二重処理になる)。
+--
+-- AddEventHandler('onResourceStart', function(resource)
+--     if resource == GetCurrentResourceName() then
+--         Wait(100)
+--         if Config['AutoRespawn'] then
+--             MySQL.update('UPDATE player_vehicles SET state = 1 WHERE state = 0', {})
+--         else
+--             MySQL.update('UPDATE player_vehicles SET depotprice = 500 WHERE state = 0', {})
+--         end
+--     end
+-- end)
 
 -- Functions
 

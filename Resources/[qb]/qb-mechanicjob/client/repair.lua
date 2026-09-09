@@ -30,6 +30,7 @@ local function RepairPart(vehicle, plate, component)
             TriggerServerEvent('qb-mechanicjob:server:removeItem', item, amount)
         end
         TriggerServerEvent('qb-mechanicjob:server:repairVehicleComponent', plate, component)
+        TriggerEvent('qb-mechanicjob:client:syncRepairedComponent', plate, component)
     end, function()
         ToggleHood(vehicle)
     end)

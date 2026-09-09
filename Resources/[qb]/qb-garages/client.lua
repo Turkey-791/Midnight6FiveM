@@ -284,7 +284,14 @@ end)
 
 RegisterNUICallback('takeOutDepo', function(data, cb)
     local depotPrice = data.depotPrice
-    if depotPrice ~= 0 then
+    -- 2026-09-09 Phase G-2: 引き取り時に「修理込み」を選べるようにするため、
+    -- ao_vehiclelifecycle のメニューへ委譲する。
+    -- 一般プレイヤーは advancedrepairkit を購入できない(販売5店舗すべてに requiredJob あり)ため、
+    -- エンジンが死んだ車をデポから出しても動かせず詰むのを避けるための措置。
+    -- ao_vehiclelifecycle が停止している場合は、従来どおりの動作にフォールバックする。
+    if depotPrice ~= 0 and GetResourceState('ao_vehiclelifecycle') == 'started' then
+        TriggerEvent('ao_vehiclelifecycle:client:depotOptions', data)
+    elseif depotPrice ~= 0 then
         TriggerServerEvent('qb-garages:server:PayDepotPrice', data)
     else
         TriggerEvent('qb-garages:client:takeOutGarage', data)

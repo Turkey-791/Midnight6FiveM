@@ -590,6 +590,26 @@ QBCore.Functions.CreateCallback('qb-phone:server:GetGarageVehicles', function(so
             if v.garage ~= nil and Config.Garages[v.garage] ~= nil then
                 v.garage = Config.Garages[v.garage].label
             end
+
+            -- 2026-09-09 Phase G-2: 従来は player_vehicles.state の生の数値(0/1/2)を
+            -- そのまま返しており、Garageアプリには「0」「1」「2」としか出ていなかった。
+            -- 読める日本語ラベルにし、デポ送りになった車が判別できるようにする。
+            local stateNum   = tonumber(v.state) or 0
+            local depotPrice = tonumber(v.depotprice) or 0
+            if stateNum == 1 then
+                v.state = 'ガレージ格納中'
+            elseif stateNum == 2 then
+                v.state = '差し押さえ'
+            elseif depotPrice > 0 then
+                v.state = ('デポ(引き取り $%s)'):format(depotPrice)
+            else
+                v.state = '出庫中'
+            end
+
+            -- 大破した車は engine が負値になるため、表示用に 0〜1000 へ丸める
+            v.engine = math.max(0, math.min(1000, tonumber(v.engine) or 0))
+            v.body   = math.max(0, math.min(1000, tonumber(v.body) or 0))
+            v.fuel   = math.max(0, math.min(100, tonumber(v.fuel) or 0))
         end
     end
 
