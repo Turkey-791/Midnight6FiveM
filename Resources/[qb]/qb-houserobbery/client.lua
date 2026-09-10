@@ -14,7 +14,12 @@ local CurrentCops = 0
 
 local function DrawText3Ds(x, y, z, text)
     SetTextScale(0.35, 0.35)
-    SetTextFont(4)
+    -- [JP] qb_locale が en 以外のときは日本語対応フォント(1)を使う。en のときは従来通り font 4。
+    if GetConvar('qb_locale', 'en') == 'en' then
+        SetTextFont(4)
+    else
+        SetTextFont(1)
+    end
     SetTextProportional(1)
     SetTextColour(255, 255, 255, 215)
     BeginTextCommandDisplayText('STRING')

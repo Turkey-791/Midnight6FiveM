@@ -1092,6 +1092,8 @@ RegisterNetEvent('qb-admin:client:copyToClipboard', function(dataType)
 end)
 
 local function Draw2DText(content, font, colour, scale, x, y)
+    -- [JP] font 4 指定かつ qb_locale が en 以外なら日本語対応フォント(1)に差し替える。
+    if font == 4 and GetConvar('qb_locale', 'en') ~= 'en' then font = 1 end
     SetTextFont(font)
     SetTextScale(scale, scale)
     SetTextColour(colour[1], colour[2], colour[3], 255)

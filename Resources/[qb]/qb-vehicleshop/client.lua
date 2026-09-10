@@ -105,6 +105,8 @@ local returnTestDrive = {
 
 -- Functions
 local function drawTxt(text, font, x, y, scale, r, g, b, a)
+    -- [JP] font 4 指定かつ qb_locale が en 以外なら日本語対応フォント(1)に差し替える。
+    if font == 4 and GetConvar('qb_locale', 'en') ~= 'en' then font = 1 end
     SetTextFont(font)
     SetTextScale(scale, scale)
     SetTextColour(r, g, b, a)
