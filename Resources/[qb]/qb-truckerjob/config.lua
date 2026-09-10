@@ -8,7 +8,7 @@ Config.TruckerJobDestroyedFine = 2500 -- 2026-09-06 新設: ジョブトラッ�
 -- 銀行口座はQBCore側の設定(qb-core/config.lua Money.MinusLimit、既定-5000)によりマイナスになり得る。
 Config.TruckerJobFixedLocation = false
 Config.TruckerJobMaxDrops = 20 -- amount of locations before being forced to return to station to reload
-Config.TruckerJobDropPrice = 500
+Config.TruckerJobDropPrice = 950 -- 2026-09-09 経済設計: 基準時給$3,000/hに合わせて再設定(税引後ネット想定)
 Config.TruckerJobBonus = 20 -- this is a percentage to calculate bonus over 5 deliveries.
 Config.TruckerJobPaymentTax = 15
 

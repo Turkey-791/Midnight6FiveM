@@ -69,7 +69,11 @@ AddEventHandler('qb-lumberjack:server:sellwood', function()
         
 		
 		if Item.amount > 0 then
-            local reward = math.random(400, 450)
+            -- 2026-09-09 経済設計: $400〜450から$300〜320へ引き下げ。木こりは移動距離が
+            -- 長い(伐採地点-加工地点-売却NPCが離れている)ため高めの単価を許容しつつ、まとめ売り
+            -- (スタッシュ/車両を使って複数個を1往復で売る)の効率を考慮し、まとめ売り時の
+            -- 理論時給が青天井にならないよう抑えた水準にしている。
+            local reward = math.random(300, 320)
 
             if diedBeforeSale[source] then
                 reward = math.floor(reward / 2)

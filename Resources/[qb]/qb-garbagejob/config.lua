@@ -15,7 +15,9 @@ Config.CryptoStickChance = 75
 Config.MinStops = 5
 
 -- Upper worth per bag
-Config.BagUpperWorth = 100
+-- 2026-09-09 経済設計: $50〜100から固定$50に変更(基準時給$3,000/hの標準枠。アイテム拾得の
+-- 可能性も加味した上での金額)
+Config.BagUpperWorth = 50
 
 -- Lower worth per bag
 Config.BagLowerWorth = 50
