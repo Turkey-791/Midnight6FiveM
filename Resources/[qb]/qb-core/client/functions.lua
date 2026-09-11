@@ -213,7 +213,59 @@ function QBCore.Functions.Notify(text, texttype, length, icon)
     SendNUIMessage(message)
 end
 
+-- ============================================================================
+-- 2026-09-11 Midnight6: プログレスバーを ox_lib へ委譲する。
+--
+-- USE_OX_PROGRESS を false に戻すと、元の progressbar リソース経由に戻る(1行)。
+--
+-- ★コールバックはイベントで渡せない
+--   TriggerEvent は引数を msgpack で直列化するため、onFinish / onCancel の
+--   クロージャをそのまま別リソースへ渡す設計は取らない。
+--   ここでトークン(連番)とコールバックを保持し、完了通知を受けて呼び出す。
+--
+-- ★ox_lib の呼び出し本体は [midnight6-custom]/ao_uibridge にある
+--   (qb-core は [ox] より先に起動するため @ox_lib を直接読めない)。
+--
+-- 元の実装は _backup/oxlib-uibridge-20260911/functions.lua.orig にある。
+-- ============================================================================
+local USE_OX_PROGRESS = true
+local oxProgressCbs, oxProgressSeq = {}, 0
+
+AddEventHandler('ao_uibridge:progressDone', function(token, completed)
+    local cbs = oxProgressCbs[token]
+    if not cbs then return end
+    oxProgressCbs[token] = nil
+
+    -- completed == true  … 完走      → onFinish
+    -- completed == false … キャンセル → onCancel
+    -- completed == nil   … そもそも開始されなかった(実行中/死亡など)
+    --                      → 元の progressbar も何も呼ばないので何もしない
+    if completed == true then
+        if cbs.onFinish then cbs.onFinish() end
+    elseif completed == false then
+        if cbs.onCancel then cbs.onCancel() end
+    end
+end)
+
 function QBCore.Functions.Progressbar(name, label, duration, useWhileDead, canCancel, disableControls, animation, prop, propTwo, onFinish, onCancel)
+    if USE_OX_PROGRESS then
+        oxProgressSeq = oxProgressSeq + 1
+        local token = oxProgressSeq
+        oxProgressCbs[token] = { onFinish = onFinish, onCancel = onCancel }
+
+        TriggerEvent('ao_uibridge:progress', token, {
+            label = label,
+            duration = duration,
+            useWhileDead = useWhileDead,
+            canCancel = canCancel,
+            controlDisables = disableControls,
+            animation = animation,
+            prop = prop,
+            propTwo = propTwo,
+        })
+        return
+    end
+
     if GetResourceState('progressbar') ~= 'started' then error('progressbar needs to be started in order for QBCore.Functions.Progressbar to work') end
     exports['progressbar']:Progress({
         name = name:lower(),
