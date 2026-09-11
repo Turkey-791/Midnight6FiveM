@@ -102,7 +102,7 @@ RegisterNetEvent('qb-gangmenu:client:OpenMenu', function()
         header = Lang:t('bodygang.exit'),
         icon = 'fa-solid fa-angle-left',
         params = {
-            event = 'qb-menu:closeMenu',
+            event = 'qb-menu:client:closeMenu',
         }
     }
 

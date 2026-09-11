@@ -97,7 +97,7 @@ RegisterNetEvent('qb-bossmenu:client:OpenMenu', function()
         header = Lang:t('body.exit'),
         icon = 'fa-solid fa-angle-left',
         params = {
-            event = 'qb-menu:closeMenu',
+            event = 'qb-menu:client:closeMenu',
         }
     }
 

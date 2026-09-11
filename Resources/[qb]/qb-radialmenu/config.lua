@@ -104,69 +104,6 @@ Config.MenuItems = {
         icon = 'rectangle-list',
         items = {
             {
-                id = 'house',
-                title = '家とのインタラクション',
-                icon = 'house',
-                items = {
-                    {
-                        id = 'givehousekey',
-                        title = '家の鍵を渡す',
-                        icon = 'key',
-                        type = 'client',
-                        event = 'qb-houses:client:giveHouseKey',
-                        shouldClose = true
-                    }, {
-                    id = 'removehousekey',
-                    title = '家の鍵を回収する',
-                    icon = 'key',
-                    type = 'client',
-                    event = 'qb-houses:client:removeHouseKey',
-                    shouldClose = true
-                }, {
-                    id = 'togglelock',
-                    title = 'ドアロックを切り替える',
-                    icon = 'door-closed',
-                    type = 'client',
-                    event = 'qb-houses:client:toggleDoorlock',
-                    shouldClose = true
-                }, {
-                    id = 'decoratehouse',
-                    title = '家を装飾する',
-                    icon = 'box',
-                    type = 'client',
-                    event = 'qb-houses:client:decorate',
-                    shouldClose = true
-                }, {
-                    id = 'houseLocations',
-                    title = 'インタラクション場所',
-                    icon = 'house',
-                    items = {
-                        {
-                            id = 'setstash',
-                            title = 'スタッシュを設定',
-                            icon = 'box-open',
-                            type = 'client',
-                            event = 'qb-houses:client:setLocation',
-                            shouldClose = true
-                        }, {
-                        id = 'setoutift',
-                        title = 'ワードローブを設定',
-                        icon = 'shirt',
-                        type = 'client',
-                        event = 'qb-houses:client:setLocation',
-                        shouldClose = true
-                    }, {
-                        id = 'setlogout',
-                        title = 'ログアウト場所を設定',
-                        icon = 'door-open',
-                        type = 'client',
-                        event = 'qb-houses:client:setLocation',
-                        shouldClose = true
-                    }
-                    }
-                }
-                }
-            }, {
             id = 'clothesmenu',
             title = '服装',
             icon = 'shirt',

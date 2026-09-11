@@ -45,7 +45,7 @@ RegisterNetEvent('ao_vehiclelifecycle:client:depotOptions', function(data)
         },
         {
             header = 'キャンセル',
-            params = { event = 'qb-menu:closeMenu' },
+            params = { event = 'qb-menu:client:closeMenu' },
         },
     })
 end)
