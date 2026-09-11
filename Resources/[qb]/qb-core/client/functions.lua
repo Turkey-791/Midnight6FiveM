@@ -169,7 +169,30 @@ end
 
 -- NUI Calls
 
+-- ============================================================================
+-- 2026-09-11 Midnight6: 通知を ox_lib へ委譲する。
+--
+-- USE_OX_NOTIFY を false に戻すと、元の qb-core 独自NUI の通知に戻る(1行)。
+--
+-- ★ox_lib の呼び出し本体は [midnight6-custom]/ao_uibridge にある。
+--   ox_lib/init.lua は「ox_lib が起動済みでなければ error」で始まり、
+--   server.cfg は ensure qb-core(73行) → ensure [ox](74行) の順であるため、
+--   このファイルに @ox_lib/init.lua を読み込ませると qb-core が落ちる。
+--   そのため ox_lib 依存は別リソースに出し、ここからはイベントで委譲する。
+--
+-- このひとつの関数が、client 側 約520箇所と
+-- server 側 約496箇所(TriggerClientEvent('QBCore:Notify') 経由)の
+-- すべての通知の出口になっている。
+--
+-- 元の実装は _backup/oxlib-uibridge-20260911/functions.lua.orig にある。
+-- ============================================================================
+local USE_OX_NOTIFY = true
+
 function QBCore.Functions.Notify(text, texttype, length, icon)
+    if USE_OX_NOTIFY then
+        return TriggerEvent('ao_uibridge:notify', text, texttype, length, icon)
+    end
+
     local message = {
         action = 'notify',
         type = texttype or 'primary',

@@ -223,7 +223,8 @@ local function showHeader(data)
     end
 
     headerActive = true
-    lib.showTextUI(('[E] %s'):format(label))
+    -- 2026-09-11: qb-core の DrawText(既定 'left')と表示位置を揃える
+    lib.showTextUI(('[E] %s'):format(label), { position = 'left-center' })
     startHeaderThread()
 end
 
