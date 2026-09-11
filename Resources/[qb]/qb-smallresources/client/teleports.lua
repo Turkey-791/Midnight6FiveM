@@ -48,6 +48,11 @@ CreateThread(function()
                     end
                 else
                     ran = false
+                    -- 2026-09-10 Midnight6: 元のコードは退出時に closeMenu() を呼んで
+                    -- いなかったため、テレポート台から離れてもヘッダーが画面に残っていた。
+                    -- ox_lib の [E] 方式では「離れても E が効く」状態になるため、
+                    -- 退出時に必ず閉じる。
+                    exports['qb-menu']:closeMenu()
                 end
             end)
         end

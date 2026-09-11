@@ -519,13 +519,6 @@ Config.JobInteractions = {
         event = 'qb-tunerchip:client:TuneStatus',
         shouldClose = true
     }, {
-        id = 'resethouse',
-        title = '家のロックをリセット',
-        icon = 'key',
-        type = 'client',
-        event = 'qb-houses:client:ResetHouse',
-        shouldClose = true
-    }, {
         id = 'takedriverlicense',
         title = '運転免許を取り消す',
         icon = 'id-card',
