@@ -111,6 +111,8 @@ function InitializeCharacter(gender, onSubmit, onCancel)
     SetInitialClothes(Config.InitialPlayerClothes[gender])
     local config = getNewCharacterConfig()
     TriggerServerEvent("illenium-appearance:server:ChangeRoutingBucket")
+    -- [Midnight6/ao_clothing] 新規キャラ作成は _starter(初期衣装)の品揃えに限定する
+    pcall(function() exports["ao_clothing"]:SetCurrentStore("_starter") end)
     client.startPlayerCustomization(function(appearance)
         if (appearance) then
             TriggerServerEvent("illenium-appearance:server:saveAppearance", appearance)
@@ -121,6 +123,8 @@ function InitializeCharacter(gender, onSubmit, onCancel)
             onCancel()
         end
         Framework.CachePed()
+        -- [Midnight6/ao_clothing] 作成が終わったら店舗フィルタを解除する
+        pcall(function() exports["ao_clothing"]:ClearCurrentStore() end)
         TriggerServerEvent("illenium-appearance:server:ResetRoutingBucket")
     end, config)
 end
