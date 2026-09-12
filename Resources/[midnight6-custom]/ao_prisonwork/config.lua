@@ -29,6 +29,11 @@ Config.Debug = false
 -- 実機で一度確認したら false に戻してよい。
 Config.MarkCommand = true
 
+-- 作業地点のワールドマーカーを出す距離(m)。
+-- ブリップだけだと建物内や他のブリップと重なったときに分からないため、
+-- 地面にマーカーを描いている。
+Config.MarkerDistance = 40.0
+
 -- クラフト台の座標(確認用にここにも持たせている)。
 -- 実体は ox_inventory/data/crafting.lua の prison_bench 側。
 Config.CraftingBench = vec3(1669.21, 2566.56, 45.56)
@@ -57,6 +62,7 @@ Config.Jobs = {
         textui   = '[E] 清掃する',
         blipName = '刑務作業: 清掃',
         blipColour = 2,
+        markerColour = { 120, 255, 140 },
         duration = { 5000, 8000 },
         reduce   = { chance = 60, min = 1, max = 1 },
         pay      = 0,
@@ -79,6 +85,7 @@ Config.Jobs = {
         textui   = '[E] 配食の下ごしらえをする',
         blipName = '刑務作業: 調理',
         blipColour = 5,
+        markerColour = { 255, 220, 120 },
         duration = { 8000, 12000 },
         reduce   = { chance = 55, min = 1, max = 2 },
         pay      = 0,
@@ -99,6 +106,7 @@ Config.Jobs = {
         textui   = '[E] 配線を直す',
         blipName = '刑務作業: 電気工事',
         blipColour = 3,
+        markerColour = { 120, 190, 255 },
         duration = { 10000, 16000 },
         reduce   = { chance = 50, min = 2, max = 3 },
         pay      = 0,

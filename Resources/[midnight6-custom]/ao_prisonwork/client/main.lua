@@ -224,6 +224,54 @@ local function StopWork()
     jobState = {}
 end
 
+-- ───────────────────────────────────────────────────────────
+-- 作業地点のワールドマーカー
+-- ───────────────────────────────────────────────────────────
+-- ブリップだけだと、建物の中や他のブリップ(独房・受付)と重なったときに
+-- どこへ行けばいいのか分からない。実際に地面へマーカーを出す。
+--
+-- 文字は SetTextFont(1) を使う。font 4 では日本語が豆腐(□□□□)になることが
+-- 2026-09-09 の実機確認で確定しているため([[midnight6-jp-tofu-audit]])。
+
+CreateThread(function()
+    while true do
+        local sleep = 500
+        if running then
+            local pcoords = GetEntityCoords(cache.ped)
+            for i, job in ipairs(Config.Jobs) do
+                local state = jobState[i]
+                if state and not state.busy then
+                    local c = job.locations[state.locIndex]
+                    if c then
+                        local dist = #(pcoords - c)
+                        if dist < Config.MarkerDistance then
+                            sleep = 0
+                            local col = job.markerColour or { 120, 180, 255 }
+                            DrawMarker(1, c.x, c.y, c.z - 0.95, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.7, 0.7, 0.5, col[1], col[2], col[3], 110,
+                                false, false, 2, false, nil, nil, false)
+                            if dist < 15.0 then
+                                local onScreen, sx, sy = World3dToScreen2d(c.x, c.y, c.z + 0.8)
+                                if onScreen then
+                                    SetTextScale(0.32, 0.32)
+                                    SetTextFont(1)
+                                    SetTextCentre(true)
+                                    SetTextColour(255, 255, 255, 215)
+                                    SetTextOutline()
+                                    BeginTextCommandDisplayText('STRING')
+                                    AddTextComponentSubstringPlayerName(job.label)
+                                    EndTextCommandDisplayText(sx, sy)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        Wait(sleep)
+    end
+end)
+
 -- 収監状態の監視。
 -- qb-prison の退出経路が Leave / UnjailPerson / 脱獄 / ログアウトと複数あるため、
 -- 個別のイベントを拾うのではなく状態をポーリングしている(2秒間隔)。
