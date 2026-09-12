@@ -27,10 +27,12 @@ Config.Binoculars = {
     storeBinocularsKey = 177 -- backspace by default
 }
 
+-- 2026-09-12 AO依頼(AI警察導入): GTA標準のWantedと警察出動を停止。
+-- rde_aipd_m6 が独自のWanted/AI警察を持つため、標準側を有効にすると二重に出動する。
 Config.AIResponse = {
-    wantedLevels = true, -- if true, you will recieve wanted levels
+    wantedLevels = false, -- if true, you will recieve wanted levels
     dispatchServices = {  -- AI dispatch services
-        [1] = true,       -- Police Vehicles
+        [1] = false,      -- Police Vehicles
         [2] = false,      -- Police Helicopters
         [3] = false,      -- Fire Department Vehicles
         [4] = false,      -- Swat Vehicles

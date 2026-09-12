@@ -29,9 +29,10 @@ CreateThread(function() -- all these should only need to be called once
     end
     SetAudioFlag('PoliceScannerDisabled', true)
     SetGarbageTrucks(false)
-    SetCreateRandomCops(true)
-    SetCreateRandomCopsNotOnScenarios(true)
-    SetCreateRandomCopsOnScenarios(true)
+    -- 2026-09-12 AO依頼(AI警察導入): 標準のランダム警官を停止(rde_aipd_m6 が警官を出す)
+    SetCreateRandomCops(false)
+    SetCreateRandomCopsNotOnScenarios(false)
+    SetCreateRandomCopsOnScenarios(false)
     DistantCopCarSirens(false)
     RemoveVehiclesFromGeneratorsInArea(335.2616 - 300.0, -1432.455 - 300.0, 46.51 - 300.0, 335.2616 + 300.0, -1432.455 + 300.0, 46.51 + 300.0) -- central los santos medical center
     RemoveVehiclesFromGeneratorsInArea(441.8465 - 500.0, -987.99 - 500.0, 30.68 - 500.0, 441.8465 + 500.0, -987.99 + 500.0, 30.68 + 500.0)     -- police station mission row
