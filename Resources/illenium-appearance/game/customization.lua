@@ -158,7 +158,7 @@ end
 
 -- [Midnight6/ao_clothing] ここから: 店舗別カタログのブラックリストを合成する
 -- ao_clothing が停止していても pcall で握りつぶし、illenium 本来の挙動に戻るだけにする
-local function mergeStoreBlacklist(blacklistSettings, kind, gender, slotId, maxDrawable)
+local function mergeStoreBlacklist(blacklistSettings, kind, gender, slotId, maxDrawable, currentDrawable)
     local ok, storeList = pcall(function()
         if kind == "components" then
             return exports["ao_clothing"]:GetComponentBlacklist(gender, slotId, maxDrawable)
@@ -179,6 +179,16 @@ local function mergeStoreBlacklist(blacklistSettings, kind, gender, slotId, maxD
             blacklistSettings.drawables[#blacklistSettings.drawables + 1] = d
         end
     end
+    -- そのスロットの全 drawable が禁止になると、NUI のスピナーが次の候補を探し続けて
+    -- 止まらなくなる(クライアントが固まる)。専門店(マスク店など)では実際に起こりうる。
+    -- 最低1つ ―― いま着ているもの ―― は必ず選べるように残す。
+    if #blacklistSettings.drawables > maxDrawable then
+        for i = #blacklistSettings.drawables, 1, -1 do
+            if blacklistSettings.drawables[i] == currentDrawable then
+                table.remove(blacklistSettings.drawables, i)
+            end
+        end
+    end
     return blacklistSettings
 end
 -- [Midnight6/ao_clothing] ここまで
@@ -196,7 +206,7 @@ local function getComponentSettings(ped, componentId)
         blacklistSettings = filterBlacklistSettings(componentBlacklistMap(gender, componentId), drawableId)
         -- [Midnight6/ao_clothing] 店舗別の品揃えを合成
         blacklistSettings = mergeStoreBlacklist(blacklistSettings, "components", gender, componentId,
-            GetNumberOfPedDrawableVariations(ped, componentId) - 1)
+            GetNumberOfPedDrawableVariations(ped, componentId) - 1, drawableId)
     end
 
     return {
@@ -227,7 +237,7 @@ local function getPropSettings(ped, propId)
         blacklistSettings = filterBlacklistSettings(propBlacklistMap(gender, propId), drawableId)
         -- [Midnight6/ao_clothing] 店舗別の品揃えを合成
         blacklistSettings = mergeStoreBlacklist(blacklistSettings, "props", gender, propId,
-            GetNumberOfPedPropDrawableVariations(ped, propId) - 1)
+            GetNumberOfPedPropDrawableVariations(ped, propId) - 1, drawableId)
     end
 
     local settings = {

@@ -85,6 +85,7 @@ end
 --- いまいる店で許可されていない drawable を列挙して返す。
 --  カタログに載っていないスロット(髪・顔・アーマー)や店外では空を返す = 制限なし。
 local function blacklistFor(kind, gender, slotId, maxDrawable)
+    if not Ready then build() end          -- 起動順の都合で未構築なら、その場で作る
     if not Ready or not CurrentProfile then return { drawables = {}, textures = {} } end
 
     local byGender = Allowed[CurrentProfile]
@@ -106,6 +107,7 @@ end
 --- 入店時に呼ぶ。illenium の Config.Stores のインデックス(数値)か、
 --  プロファイルID(文字列。'_starter' / 'casino' など)を渡す。
 exports('SetCurrentStore', function(ref)
+    if not Ready then build() end
     if type(ref) == 'number' then
         CurrentProfile = Config.IlleniumStoreMap[ref]
     elseif type(ref) == 'string' and Config.StoreProfiles[ref] then
@@ -153,6 +155,29 @@ local function countItems()
     end
     return n
 end
+
+--- 動作確認用コマンド。いまいる店と、スロットごとに何点選べるかを F8 コンソールに出す。
+RegisterCommand('ao_clothing_status', function()
+    if not Ready then build() end
+    if not Ready then
+        print('^1[ao_clothing] カタログが読み込めていません^0')
+        return
+    end
+    local pid = CurrentProfile
+    print(('[ao_clothing] 現在の店舗: %s'):format(
+        pid and (pid .. ' / ' .. (Config.StoreProfiles[pid].label or '')) or '(店外 = 制限なし)'))
+    if not pid then return end
+    local g = IsPedMale(PlayerPedId()) and 'male' or 'female'
+    local NAMES = { [11] = 'トップス', [3] = '腕', [8] = 'インナー', [4] = 'パンツ',
+                    [6] = '靴', [1] = 'マスク', [7] = 'アクセ', [5] = 'バッグ', [10] = 'デカール' }
+    for _, cid in ipairs({ 11, 3, 8, 4, 6, 1, 7, 5, 10 }) do
+        local set = Allowed[pid] and Allowed[pid][g] and Allowed[pid][g].components[cid]
+        local n = 0
+        if set then for _ in pairs(set) do n = n + 1 end end
+        print(('  component %-3d %-9s %s'):format(cid, NAMES[cid] or '?',
+            set and (n .. ' 点') or 'フィルタなし(全部選べる)'))
+    end
+end, false)
 
 AddEventHandler('onClientResourceStart', function(res)
     if res ~= GetCurrentResourceName() then return end
