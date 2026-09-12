@@ -26,6 +26,21 @@ Config.Debug = false
 Config.UnfilteredComponents = { [3] = true }
 Config.UnfilteredProps      = {}
 
+-- カタログに載っていない drawable の扱い
+--
+-- サーバーは build 3095 (The Chop Shop / 2023年12月) だが、分類に使った無料データセットは
+-- 2022年末までしかカバーしていない。そのため 2023年の2つのDLCで追加された服は
+-- カタログに存在せず、既定では「どの店にも並ばない」= 全店で非売品になる。
+-- (男性の主要スロットだけで約140点)
+--
+-- ここに挙げた店舗プロファイルでは、そうした未分類IDも購入できるようにする。
+-- 2026-09-12 に AO が「一般店に未分類として出す」と判断した。
+-- 名前もコレクションも分からないため専門店には振り分けられない。一般店止まりが妥当。
+Config.UnknownDrawableStores = {
+    general_low = true,   -- #4  一般衣料品店(安) Binco
+    general_mid = true,   -- #15 一般衣料品店(中) Sub Urban
+}
+
 Config.StoreProfiles = {
 
     -- ===== 新規キャラクター作成(仮想店舗) =====

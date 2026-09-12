@@ -8,6 +8,7 @@
 -- 実際に店舗差別化が効き始めるのは Phase 4(illenium 側へのパッチ)から。
 
 local Allowed        = {}    -- [profileId][gender][kind][slotId] = { [drawable] = true }
+local CatalogMax     = {}    -- [gender][kind][slotId] = カタログが知っている最大 drawable
 local CurrentProfile = nil   -- いまいる店のプロファイルID。nil = 店外 = 制限なし
 local Ready          = false
 
@@ -36,6 +37,25 @@ local function build()
     if type(Config) ~= 'table' or type(Config.StoreProfiles) ~= 'table' then
         print('^1[ao_clothing] config.lua が読み込まれていません。フィルタは無効のままです^0')
         return
+    end
+
+    -- カタログが知っている範囲を先に記録する。
+    -- これより大きい drawable は「最新DLCで増えた未分類ID」とみなす。
+    CatalogMax = {}
+    for _, gender in ipairs(GENDERS) do
+        local src = Catalog[gender]
+        if src then
+            CatalogMax[gender] = { components = {}, props = {} }
+            for _, kind in ipairs(KINDS) do
+                for slotId, items in pairs(src[kind] or {}) do
+                    local hi = -1
+                    for drawable in pairs(items) do
+                        if drawable > hi then hi = drawable end
+                    end
+                    CatalogMax[gender][kind][slotId] = hi
+                end
+            end
+        end
     end
 
     for pid, profile in pairs(Config.StoreProfiles) do
@@ -95,9 +115,16 @@ local function blacklistFor(kind, gender, slotId, maxDrawable)
     local set = byKind[kind] and byKind[kind][slotId]
     if not set then return { drawables = {}, textures = {} } end
 
+    -- カタログの範囲外(最新DLCで増えたID)を、指定した店舗では許可する
+    local known = (CatalogMax[gender] and CatalogMax[gender][kind]
+                   and CatalogMax[gender][kind][slotId]) or -1
+    local allowUnknown = Config.UnknownDrawableStores[CurrentProfile] == true
+
     local out = {}
     for d = 0, (maxDrawable or -1) do
-        if not set[d] then out[#out + 1] = d end
+        if not set[d] and not (allowUnknown and d > known) then
+            out[#out + 1] = d
+        end
     end
     return { drawables = out, textures = {} }
 end
@@ -167,6 +194,8 @@ RegisterCommand('ao_clothing_status', function()
     print(('[ao_clothing] 現在の店舗: %s'):format(
         pid and (pid .. ' / ' .. (Config.StoreProfiles[pid].label or '')) or '(店外 = 制限なし)'))
     if not pid then return end
+    print(('  未分類ID(最新DLC): %s'):format(
+        Config.UnknownDrawableStores[pid] and '購入できる' or '購入できない'))
     local g = IsPedMale(PlayerPedId()) and 'male' or 'female'
     local NAMES = { [11] = 'トップス', [3] = '腕', [8] = 'インナー', [4] = 'パンツ',
                     [6] = '靴', [1] = 'マスク', [7] = 'アクセ', [5] = 'バッグ', [10] = 'デカール' }
