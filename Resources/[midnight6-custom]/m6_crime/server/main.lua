@@ -336,6 +336,66 @@ AddEventHandler('playerJoining', function()
 end)
 
 -- ════════════════════════════════════════════════════════════════
+-- 所持品の取りこぼし回収(qb-prison の穴をふさぐ)
+--   qb-prison は収監時に所持品を metadata['jailitems'] へ退避してインベントリを空にし、
+--   出所ボタン(面会所NPC)を通ったときだけ返却する。
+--   刑期が切れた状態でログアウト/再ログインすると、返却処理を通らずアイテムが消えたままになる。
+--   ここで「収監されていないのに jailitems が残っている」状態を検出して返す。
+-- ════════════════════════════════════════════════════════════════
+
+local function RestoreJailItems(src, reason)
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return false end
+    local md = Player.PlayerData.metadata or {}
+    local items = md['jailitems']
+    if not items or type(items) ~= 'table' or next(items) == nil then return false end
+    if (md['injail'] or 0) > 0 then return false end   -- まだ服役中なら返さない
+
+    local count = 0
+    for _, v in pairs(items) do
+        if v and v.name and v.amount then
+            local ok = pcall(function()
+                exports['qb-inventory']:AddItem(src, v.name, v.amount, false, v.info, 'm6_crime:restoreJailItems')
+            end)
+            if ok then count = count + 1 end
+        end
+    end
+    Player.Functions.SetMetaData('jailitems', {})
+    TriggerClientEvent('QBCore:Notify', src, ('留置されていた所持品 %d 種類を返却しました'):format(count), 'success', 7000)
+    print(('^2[m6_crime]^7 所持品を返却: src=%d 種類=%d 理由=%s'):format(src, count, tostring(reason)))
+    return true
+end
+
+exports('RestoreJailItems', RestoreJailItems)
+
+AddEventHandler('QBCore:Server:PlayerLoaded', function(Player)
+    if not Player or not Player.PlayerData then return end
+    local src = Player.PlayerData.source
+    SetTimeout(8000, function()
+        if GetPlayerName(src) then RestoreJailItems(src, 'login') end
+    end)
+end)
+
+-- 出所処理のあとにも一応確認する
+AddEventHandler('m6_crime:server:released', function(src)
+    SetTimeout(3000, function()
+        if GetPlayerName(src) then RestoreJailItems(src, 'released') end
+    end)
+end)
+
+lib.addCommand('m6restoreitems', {
+    help = '留置されたままの所持品を返却する',
+    params = { { name = 'target', type = 'playerId' } },
+    restricted = 'group.admin'
+}, function(source, args)
+    local ok = RestoreJailItems(args.target, 'admin')
+    lib.notify(source, {
+        type = ok and 'success' or 'error',
+        description = ok and '返却しました' or '返却対象がありません(収監中、またはjailitemsが空)'
+    })
+end)
+
+-- ════════════════════════════════════════════════════════════════
 -- 参照用 export(将来の捜査・前科システム向け)
 -- ════════════════════════════════════════════════════════════════
 

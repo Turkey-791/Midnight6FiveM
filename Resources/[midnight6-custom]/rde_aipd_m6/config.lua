@@ -42,6 +42,38 @@ Config.M6 = {
     -- コマンド名の接頭辞(qb-policejob の jail/unjail と衝突するため)
     commandPrefix = 'aipd',
 
+    -- 降伏したときに、警官がこの距離まで近づいたら逮捕する
+    -- (元は arrestDistance 1.0〜2.5m しかなく、遠くの警官は撃ち続けていた)
+    surrenderArrestDistance = 3.5,
+
+    -- 手配レベルごとの刑期(qb-prison の単位 = 1 で約60秒)
+    -- 例: 5 = 約5分。ここが実際の服役時間になるので、運用しながら調整する
+    jailUnitsByLevel = {
+        [1] = 5,
+        [2] = 10,
+        [3] = 15,
+        [4] = 25,
+        [5] = 40,
+    },
+
+    -- 刑務所にいる間は手配を付けない(刑務官を殴ってもAI警察は出動しない)
+    noWantedWhileJailed = true,
+
+    -- 警察職のプレイヤーには手配を付けない。
+    -- これが false だと、警官が犯人に発砲しただけで自分が手配され、
+    -- AI警察に追われる(元のRDEにはこの除外が無かった)。
+    -- countOnlyOnDuty = true のときは「勤務中の警官」だけが対象。
+    policeExemptFromWanted = true,
+
+    -- 目撃者の通報しやすさ(エリア別)。Midnight6 は人口密度が低いので既定より高め
+    phoneChanceByArea = {
+        CITY_CENTER = 0.85,
+        URBAN       = 0.75,
+        SUBURBAN    = 0.60,
+        RURAL       = 0.45,
+        WILDERNESS  = 0.25,
+    },
+
     -- 薬物所持の判定に使うアイテム名(部分一致)。Midnight6 の品目に合わせて調整する
     drugKeywords = {
         'weed', 'cocaine', 'coke_', 'heroin', 'meth', 'oxy',
@@ -423,7 +455,7 @@ Config.CrimeTypes = {
 
 Config.WitnessSystem = {
     enabled      = true,
-    baseDistance = 45.0,
+    baseDistance = 80.0,   -- [Midnight6移植] 45 → 80(人通りが少ないため捜索範囲を広げる)
     checkInterval = 1000,
     reportDelay  = 5000,
     cooldown     = 300000,
@@ -444,7 +476,7 @@ Config.WitnessSystem = {
 
     -- FOV 240° = NPC ist nur direkt hinter sich blind (120° Blindspot).
     -- War 180° (zu strikt: alle flüchtenden NPCs mit Rücken zum Crime = rejected).
-    fieldOfView = 240.0,
+    fieldOfView = 260.0,   -- [Midnight6移植] 240 → 260
 
     -- Proximity-Grace: 8m — innerhalb dieser Distanz FOV+LOS ignoriert.
     -- War 5m (zu klein: kaum jemand nah genug).
@@ -452,8 +484,8 @@ Config.WitnessSystem = {
 
     -- Nur noch 1 Re-Scan nach 4000ms statt 2 @ 2500ms.
     -- Nicht jedes Crime wird bemerkt — das ist realistisch.
-    delayedRescans        = 1,
-    delayedRescanInterval = 4000,
+    delayedRescans        = 2,   -- [Midnight6移植] 1 → 2(最初に誰もいなくても数秒後に再確認)
+    delayedRescanInterval = 3000,-- [Midnight6移植] 4000 → 3000
 
     -- ── NEU: Panik-Phase ─────────────────────────────────────────────────────
     -- Zeuge zögert erst, bevor er das Handy rausholt.
@@ -469,7 +501,7 @@ Config.WitnessSystem = {
 
     -- ── NEU: Tageszeit-Modifikator ────────────────────────────────────────────
     -- Nachts sind weniger Menschen draußen → weniger Zeugen.
-    nightTimeModifier = 0.60,
+    nightTimeModifier = 0.80,  -- [Midnight6移植] 0.60 → 0.80(夜でも通報が成立しやすく)
     nightHoursStart   = 22,
     nightHoursEnd     = 6,
 

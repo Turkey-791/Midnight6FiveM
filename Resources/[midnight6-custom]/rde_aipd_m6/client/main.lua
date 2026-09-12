@@ -480,6 +480,24 @@ local function TeleportUnit(unit)
     end
 end
 
+-- [Midnight6移植] 降伏対応: そのユニットの射撃をやめさせる
+function M6StopShooting(unit)
+    if not unit or not DoesEntityExist(unit.ped) then return end
+    ClearPedTasks(unit.ped)
+    SetPedCombatAttributes(unit.ped, 46, false)  -- always fight
+    SetPedCombatAttributes(unit.ped, 52, false)  -- always shoot
+    SetPedCombatAttributes(unit.ped, 2,  false)  -- driveby
+    SetPedCombatAttributes(unit.ped, 5,  true)   -- can use vehicles
+end
+
+-- [Midnight6移植] 降伏解除時に戦闘設定を戻す
+function M6ResumeShooting(unit)
+    if not unit or not DoesEntityExist(unit.ped) then return end
+    SetPedCombatAttributes(unit.ped, 46, true)
+    SetPedCombatAttributes(unit.ped, 52, true)
+    SetPedCombatAttributes(unit.ped, 2,  true)
+end
+
 -- ── TRY TACKLE — v2.0: Physics-based (Forward Vector + Sprint + Force) ───────
 -- Portiert vom Player-Reference-Tackle. Cop sprintet → ForwardVector RagdollWithFall.
 local function TryTackle(unit)
@@ -653,11 +671,41 @@ function Police.UpdateBehavior(unit)
         WantedSystem.decayActive   = false
     end
 
-    -- ── ARREST ZONE ───────────────────────────────────────────────
-    if distance < (unit.config.arrestDistance or 2.5) and WantedSystem.isSurrendered then
-        if unit.state ~= 'arresting' then
-            unit.state = 'arresting'
-            CreateThread(function() Police.AttemptArrest(unit.ped) end)
+    -- ── [Midnight6移植] 降伏対応 ──────────────────────────────────
+    -- 元コードは「arrestDistance(1.0〜2.5m)以内 かつ 降伏中」のときしか逮捕に入らず、
+    -- 遠くの警官は戦闘状態のまま撃ち続けるため、降伏してもほぼ射殺されていた。
+    -- 降伏中は射撃をやめさせ、歩いて近づかせ、規定距離で逮捕する。
+    if WantedSystem.isSurrendered then
+        local arrestDist = math.max(
+            unit.config.arrestDistance or 2.5,
+            (Config.M6 and Config.M6.surrenderArrestDistance) or 3.5
+        )
+
+        if distance < arrestDist then
+            if unit.state ~= 'arresting' then
+                unit.state = 'arresting'
+                CreateThread(function() Police.AttemptArrest(unit.ped) end)
+            end
+            return true
+        end
+
+        if unit.state ~= 'approach_surrender' then
+            unit.state = 'approach_surrender'
+            M6StopShooting(unit)
+        end
+
+        if pedInVeh then
+            local copVeh = GetVehiclePedIsIn(unit.ped, false)
+            if distance < 30.0 then
+                TaskLeaveVehicle(unit.ped, copVeh, 256)
+            else
+                TaskVehicleDriveToCoord(unit.ped, copVeh,
+                    cache.coords.x, cache.coords.y, cache.coords.z,
+                    25.0, 0, GetEntityModel(copVeh), 262656, 5.0, true)
+            end
+        else
+            TaskGoToEntity(unit.ped, cache.ped, -1, math.max(1.0, arrestDist - 0.5), 2.0, 0, 0)
+            SetPedMoveRateOverride(unit.ped, 1.2)
         end
         return true
     end
@@ -1280,8 +1328,20 @@ function WantedSystem.ToggleSurrender()
     if WantedSystem.isSurrendered then
         WantedSystem.isSurrendered = false
         ClearPedTasks(cache.ped)
+        -- [Midnight6移植] 降伏をやめたら警官の戦闘設定を戻す
+        for _, unit in ipairs(WantedSystem.pursuingUnits) do
+            M6ResumeShooting(unit)
+            if unit then unit.state = 'pursuing' end
+        end
     else
         WantedSystem.isSurrendered = true
+        -- [Midnight6移植] 武器をしまい、その場の警官全員に射撃をやめさせる
+        SetCurrentPedWeapon(cache.ped, joaat('WEAPON_UNARMED'), true)
+        for _, unit in ipairs(WantedSystem.pursuingUnits) do
+            M6StopShooting(unit)
+            if unit then unit.state = 'approach_surrender' end
+        end
+        Notify({ type = 'inform', description = L('surrendering') or '降伏中', duration = 4000 })
         if LoadAnimDict(Config.Animations.surrender.dict) then
             TaskPlayAnim(cache.ped,
                 Config.Animations.surrender.dict,
@@ -1602,6 +1662,16 @@ if Config.SurrenderKey then
     RegisterCommand('-surrender', function() end, false)
     RegisterKeyMapping('+surrender', 'Surrender to Police', 'keyboard', Config.SurrenderKey)
 end
+
+-- [Midnight6移植] キーバインドが他リソースと競合しても使えるように、コマンドでも降伏できる
+RegisterCommand('surrender', function()
+    if WantedSystem.isArrested then return end
+    if WantedSystem.level <= 0 then
+        Notify({ type = 'error', description = '手配されていません', duration = 3000 })
+        return
+    end
+    WantedSystem.ToggleSurrender()
+end, false)
 
 -- ════════════════════════════════════════════════════════════════
 -- INITIALIZATION

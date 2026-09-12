@@ -101,3 +101,39 @@ if Config.Connectors.genericPoliceAlert then
         })
     end)
 end
+
+-- ════════════════════════════════════════════════════════════════
+-- プレイヤー警察の拘束・逮捕に AI 警察を追従させる
+--   ・手錠をかけられた犯人に AI 警察が撃ち続けるのを防ぐ
+--   ・qb-policejob 経由の収監も事件台帳に記録する
+-- ════════════════════════════════════════════════════════════════
+
+-- 手錠(qb-policejob/server/main.lua 177: source = 拘束された本人)
+RegisterNetEvent('police:server:SetHandcuffStatus', function(isHandcuffed)
+    local src = source
+    if not isHandcuffed then return end
+    -- 手配を解除すると、RDE 側の状態同期でAI警官が撤収する
+    local ok, err = pcall(function()
+        exports[Config.AiPoliceResource]:SetWantedLevel(src, 0, 'Cuffed by police')
+    end)
+    if ok then
+        Debug(('手錠: src=%d の手配を解除しAI警察を撤収'):format(src))
+    else
+        print(('^1[m6_crime]^7 手錠時の手配解除に失敗: %s'):format(tostring(err)))
+    end
+end)
+
+-- qb-policejob の収監(server/interactions.lua 128: source = 警官, playerId = 収監される側)
+RegisterNetEvent('police:server:JailPlayer', function(playerId, time)
+    local officer = source
+    local targetId = tonumber(playerId)
+    if not targetId then return end
+    if not IsPolicePlayer(officer) then return end   -- 警官以外からの発火は無視
+
+    pcall(function()
+        exports[Config.AiPoliceResource]:SetWantedLevel(targetId, 0, 'Arrested by player police')
+    end)
+    -- RDE を通らない収監なので、ここで台帳へ通知する
+    TriggerEvent('m6_crime:server:arrested', targetId, tonumber(time) or 0, 'player_police_qb')
+    Debug(('プレイヤー警察による収監: target=%d time=%s'):format(targetId, tostring(time)))
+end)

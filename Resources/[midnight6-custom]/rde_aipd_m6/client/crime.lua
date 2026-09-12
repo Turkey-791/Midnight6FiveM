@@ -31,6 +31,9 @@ local function L(key, ...)
     return s
 end
 
+-- [Midnight6移植] 収監中判定に使う
+local QBCore = exports['qb-core']:GetCoreObject()
+
 local cache = {ped = 0, coords = vector3(0, 0, 0), vehicle = 0, inVehicle = false}
 
 local crimeState = {
@@ -51,12 +54,13 @@ local crimeState = {
 }
 
 -- Telefon-Wahrscheinlichkeit je nach Gebiet — v2.0: deutlich realistischer
-local PhoneChanceByArea = {
-    CITY_CENTER = 0.60,  -- war 0.90 — nicht jeder greift sofort zum Handy
-    URBAN       = 0.50,  -- war 0.85 — 50% ist realistisch
-    SUBURBAN    = 0.35,  -- war 0.70
-    RURAL       = 0.20,  -- war 0.45
-    WILDERNESS  = 0.06,  -- war 0.15 — in der Wildnis fast niemand
+-- [Midnight6移植] 通報しやすさは config 側で調整できるようにした
+local PhoneChanceByArea = (Config.M6 and Config.M6.phoneChanceByArea) or {
+    CITY_CENTER = 0.60,
+    URBAN       = 0.50,
+    SUBURBAN    = 0.35,
+    RURAL       = 0.20,
+    WILDERNESS  = 0.06,
 }
 
 local CallDuration = {min = 5000, max = 9000}  -- war 3000-6000: mehr Eingreif-Fenster
@@ -721,6 +725,28 @@ function LogCrime(crimeType, coords, force, victimPed)
     if not crimeState.systemInitialized then
         Debug('System noch nicht initialisiert')
         return false
+    end
+
+    -- [Midnight6移植] 収監中・警察勤務中は犯罪を検知しない
+    do
+        local pd = QBCore and QBCore.Functions and QBCore.Functions.GetPlayerData()
+        if pd then
+            if Config.M6 and Config.M6.noWantedWhileJailed
+                and pd.metadata and (pd.metadata['injail'] or 0) > 0 then
+                Debug('収監中のため犯罪検知をスキップ: ' .. tostring(crimeType))
+                return false
+            end
+            if Config.M6 and Config.M6.policeExemptFromWanted and pd.job then
+                local isCop = false
+                for _, jobName in ipairs(Config.PoliceJobs or {}) do
+                    if pd.job.name == jobName or pd.job.type == jobName then isCop = true break end
+                end
+                if isCop and ((not Config.M6.countOnlyOnDuty) or pd.job.onduty) then
+                    Debug('警察職のため犯罪検知をスキップ: ' .. tostring(crimeType))
+                    return false
+                end
+            end
+        end
     end
 
     -- ✅ FIX #28: Nur blocken wenn Admin TATSÄCHLICH exempt ist (Config-Setting respektieren!)

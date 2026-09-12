@@ -84,6 +84,10 @@ function IsAdmin(source)
 end
 
 function IsExemptFromWanted(source)
+    -- [Midnight6移植] 勤務中の警察職は手配されない(犯人に発砲した警官が追われるのを防ぐ)
+    if Config.M6 and Config.M6.policeExemptFromWanted and IsPolice(source) then
+        return true
+    end
     return Config.AdminSettings.exemptFromWanted and IsAdmin(source)
 end
 function IsExemptFromArrest(source)
@@ -208,9 +212,30 @@ end
 -- WANTED LEVEL
 -- ════════════════════════════════════════════════════════════════
 
+-- [Midnight6移植] 収監中かどうか(qb-prison の injail メタデータ)
+function M6IsJailed(source)
+    local player = GetQbPlayer(source)
+    if not player then return false end
+    local md = player.PlayerData.metadata
+    return md and (md['injail'] or 0) > 0
+end
+
+-- [Midnight6移植] 手配レベルごとの刑期(qb-prison の単位。1 ≒ 60秒)
+function M6JailUnitsForLevel(level)
+    local tbl = Config.M6 and Config.M6.jailUnitsByLevel
+    if tbl and tbl[level] then return tbl[level] end
+    local secs = (Config.WantedLevels[level] and Config.WantedLevels[level].time) or 60
+    return math.max(Config.M6 and Config.M6.jailMinUnits or 1, math.ceil(secs / 60))
+end
+
 function SetWantedLevel(source, level, reason)
     if not source or source == 0 then return end
     if IsExemptFromWanted(source) then return end
+    -- [Midnight6移植] 収監中は手配を付けない
+    if level > 0 and Config.M6 and Config.M6.noWantedWhileJailed and M6IsJailed(source) then
+        Debug(('SetWantedLevel skipped: player %d is in jail'):format(source))
+        return
+    end
 
     level = math.max(0, math.min(5, level))
     local state    = GetPlayerState(source)
@@ -553,8 +578,9 @@ lib.callback.register('police:arrestPlayer', function(source, jailTime, cell)
     -- [Midnight6移植] 刑期はクライアントの申告を採用せず、必ずサーバー側で算出する。
     -- (元のコードは client が渡した jailTime を 30 秒以上なら無条件で採用していた)
     local lvl = state.level > 0 and state.level or (state.savedWantedLevel or 1)
-    local serverJailTime = (Config.WantedLevels[lvl] and Config.WantedLevels[lvl].time) or 60
-    serverJailTime = math.floor(serverJailTime * (Config.Prison.jailTimeMultiplier or 1.0))
+    -- [Midnight6移植] 刑期は手配レベル別の設定(分相当)から算出する
+    local units = M6JailUnitsForLevel(lvl)
+    local serverJailTime = math.floor(units * 60 * (Config.Prison.jailTimeMultiplier or 1.0))
 
     state.isArrested = true
     JailPlayer(source, serverJailTime, cell, 'ai_police')
@@ -599,7 +625,7 @@ RegisterNetEvent('police:m6Captured', function()
     state.isArrested = true
     state.savedWantedLevel = lvl
 
-    local baseTime = (Config.WantedLevels[lvl] and Config.WantedLevels[lvl].time) or 60
+    local baseTime = M6JailUnitsForLevel(lvl) * 60
     local jailTime = math.floor(baseTime
         * (Config.Prison.jailTimeMultiplier or 1.0)
         * (Config.M6.capture.jailTimeFactor or 1.0))
@@ -679,7 +705,7 @@ RegisterNetEvent('police:arrest', function(targetId)
     end
     local state = GetPlayerState(targetId)
     if state.level > 0 then
-        local t = math.floor((Config.WantedLevels[state.level].time or 60) * Config.Prison.jailTimeMultiplier)
+        local t = math.floor(M6JailUnitsForLevel(state.level) * 60 * (Config.Prison.jailTimeMultiplier or 1.0))
         JailPlayer(targetId, t, nil, 'player_police')
     end
 end)
