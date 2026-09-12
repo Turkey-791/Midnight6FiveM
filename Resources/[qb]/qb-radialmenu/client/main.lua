@@ -241,13 +241,22 @@ end
 -- Command
 
 RegisterCommand('radialmenu', function()
+    -- 2026-09-12 UI統一(最終切替): UIは ao_radial(ox_lib)へ移管したためここで打ち切る。
+    -- ★ RegisterKeyMapping を外しただけでは不十分。FiveM はキー割り当てを
+    --   クライアント側に保存するため、既にF1を割り当てているプレイヤーは
+    --   このコマンドを呼び続ける。実際にUIを止めているのはこの早期リターン。
+    if Config.DisableUI then return end
     if ((IsDowned() and IsPoliceOrEMS()) or not IsDowned()) and not PlayerData.metadata['ishandcuffed'] and not IsPauseMenuActive() and not inRadialMenu then
         setRadialState(true, true)
         SetCursorLocation(0.5, 0.5)
     end
 end)
 
-RegisterKeyMapping('radialmenu', Lang:t('general.command_description'), 'keyboard', Config.Keybind)
+-- 2026-09-12 UI統一(最終切替): 新規プレイヤーのキー割り当て一覧にこの項目を出さない。
+-- 既存プレイヤーの保存済み割り当ては消えないが、上の早期リターンで無効化される。
+if not Config.DisableUI then
+    RegisterKeyMapping('radialmenu', Lang:t('general.command_description'), 'keyboard', Config.Keybind)
+end
 
 -- Events
 

@@ -327,10 +327,27 @@ function lib.disableRadial(state)
     end
 end
 
+-- ============================================================================
+-- ★ Midnight6 による上流ファイルの改変 (2026-09-12)
+--
+-- 変更点は2行だけ。
+--   1) defaultKey を 'z' → 'F1'    … qb-radialmenu と同じキーに揃える
+--   2) onReleased のコメントを解除 … 「押している間だけ開く(長押し)」方式にする
+--      qb-radialmenu が Config.Toggle = false の長押し方式だったため、
+--      操作感を変えないようこちらも長押しへ揃える。
+--
+-- ★ 注意1: defaultKey は「まだ ox_lib-radial を割り当てたことがないクライアント」に
+--   しか効かない。FiveM はキー割り当てをコマンド名ごとにクライアント側へ保存するため、
+--   既にプレイしているプレイヤーの割り当ては変わらない。各自が設定→キー割り当てで変更する。
+--
+-- ★ 注意2: ここは ox_lib 本体のファイルなので、ox_lib を更新すると失われる。
+--   更新時はこの2行を再適用すること。
+--   原本: resources/_backup/audit-fixes-20260912/final-switchover/ox_lib/radial.lua.orig
+-- ============================================================================
 lib.addKeybind({
     name = 'ox_lib-radial',
     description = locale('open_radial_menu'),
-    defaultKey = 'z',
+    defaultKey = 'F1', -- Midnight6 2026-09-12: 'z' から変更
     onPressed = function()
         if isDisabled then return end
 
@@ -362,7 +379,7 @@ lib.addKeybind({
             Wait(0)
         end
     end,
-    -- onReleased = lib.hideRadial,
+    onReleased = lib.hideRadial, -- Midnight6 2026-09-12: コメント解除(長押し方式)
 })
 
 AddEventHandler('onClientResourceStop', function(resource)

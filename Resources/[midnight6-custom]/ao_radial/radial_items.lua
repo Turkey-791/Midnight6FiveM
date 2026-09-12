@@ -42,26 +42,40 @@ AoRadialData = {
             { id = 'togglehotdogsell', label = 'ホットドッグ販売', icon = 'hotdog', event = 'qb-hotdogjob:client:ToggleSell', etype = 'client' },
             { id = 'interactions', label = 'インタラクション', icon = 'triangle-exclamation', menu = 'ao_interactions' }
         },
-        ['ao_meer'] = {
+        -- ★手編集あり(2026-09-12): 下の ao_clothes_* と ao_clothesmenu は自動生成ではない。
+        -- ox_lib のラジアルは1メニュー6項目までしか表示せず、7個以上だと6枠目が
+        -- 「…」(次ページ)に変わるため、実項目は1ページ5個しか出ない。
+        -- 元の構成は 服装(8項目) / その他(9項目) だったので、服装の2ページ目に
+        -- 入った「その他」ごと帽子などが見えなくなっていた(AO報告 2026-09-12)。
+        -- 全メニューを6項目以下に収まるよう3分類へ再編した(案A)。
+        -- 項目のid・イベント名は16件すべて元のまま。ハンドラは data.id を見るため変更不可。
+        -- 再生成するときはこの3メニューを手で維持すること。
+        ['ao_clothes_head'] = {
+            { id = 'Hair', label = '髪', icon = 'user', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
             { id = 'Hat', label = '帽子', icon = 'hat-cowboy-side', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
             { id = 'Glasses', label = 'メガネ', icon = 'glasses', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
             { id = 'Visor', label = 'バイザー', icon = 'hat-cowboy-side', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
-            { id = 'Mask', label = 'マスク', icon = 'masks-theater', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
-            { id = 'Vest', label = 'ベスト', icon = 'vest', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
-            { id = 'Bag', label = 'バッグ', icon = 'bag-shopping', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
-            { id = 'Bracelet', label = 'ブレスレット', icon = 'user', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
-            { id = 'Watch', label = '時計', icon = 'stopwatch', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
-            { id = 'Gloves', label = '手袋', icon = 'mitten', event = 'qb-radialmenu:ToggleClothing', etype = 'client' }
+            { id = 'Mask', label = 'マスク', icon = 'masks-theater', event = 'qb-radialmenu:ToggleClothing', etype = 'client' }
         },
-        ['ao_clothesmenu'] = {
-            { id = 'Hair', label = '髪', icon = 'user', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
-            { id = 'Ear', label = '耳飾り', icon = 'ear-deaf', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
-            { id = 'Neck', label = '首飾り', icon = 'user-tie', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
+        ['ao_clothes_wear'] = {
             { id = 'Top', label = 'トップス', icon = 'shirt', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
             { id = 'Shirt', label = 'シャツ', icon = 'shirt', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
+            { id = 'Vest', label = 'ベスト', icon = 'vest', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
             { id = 'Pants', label = 'パンツ', icon = 'user', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
             { id = 'Shoes', label = '靴', icon = 'shoe-prints', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
-            { id = 'meer', label = 'その他', icon = 'plus', menu = 'ao_meer' }
+            { id = 'Gloves', label = '手袋', icon = 'mitten', event = 'qb-radialmenu:ToggleClothing', etype = 'client' }
+        },
+        ['ao_clothes_acc'] = {
+            { id = 'Ear', label = '耳飾り', icon = 'ear-deaf', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
+            { id = 'Neck', label = '首飾り', icon = 'user-tie', event = 'qb-radialmenu:ToggleClothing', etype = 'client' },
+            { id = 'Bracelet', label = 'ブレスレット', icon = 'user', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
+            { id = 'Watch', label = '時計', icon = 'stopwatch', event = 'qb-radialmenu:ToggleProps', etype = 'client' },
+            { id = 'Bag', label = 'バッグ', icon = 'bag-shopping', event = 'qb-radialmenu:ToggleClothing', etype = 'client' }
+        },
+        ['ao_clothesmenu'] = {
+            { id = 'clothes_head', label = '頭・顔', icon = 'user', menu = 'ao_clothes_head' },
+            { id = 'clothes_wear', label = '衣類', icon = 'shirt', menu = 'ao_clothes_wear' },
+            { id = 'clothes_acc', label = '装飾品', icon = 'gem', menu = 'ao_clothes_acc' }
         },
         ['ao_general'] = {
             { id = 'clothesmenu', label = '服装', icon = 'shirt', menu = 'ao_clothesmenu' }

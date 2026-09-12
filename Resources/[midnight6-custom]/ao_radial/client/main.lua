@@ -17,6 +17,14 @@
 -- 【項目定義】
 --   radial_items.lua は qb-radialmenu/config.lua からの自動生成物。
 --   イベント名76件・39種が元と完全一致、keepOpen 29件も一致することを確認済み。
+--   ただし 2026-09-12 に服装メニュー(ao_clothes_head / ao_clothes_wear /
+--   ao_clothes_acc / ao_clothesmenu)だけは手で再編しており自動生成ではない。
+--   理由は radial_items.lua 内のコメントを参照。再生成時は手で維持すること。
+--
+-- 【ox_lib ラジアルの表示上限】
+--   1メニューにつき6項目までしか出ない(web/build の Ce = 6)。7個以上あると
+--   6枠目が「…」(次ページ)に置き換わるため、実項目は1ページ5個になる。
+--   メニューを増やすときは6項目以下に収めること。右クリックで1ページ戻る。
 -- ============================================================================
 
 local QBCore = exports['qb-core']:GetCoreObject({ 'Functions' })
@@ -149,8 +157,30 @@ end
 local function buildVehicleMenu(vehicle)
     local items = {
         { id = 'vehicledoors', label = '車両ドア', icon = 'car-side', menu = 'ao_vehicledoors' },
-        { id = 'vehicleextras', label = '車両エクストラ', icon = 'star', menu = 'ao_vehicleextras' },
     }
+
+    -- [2026-09-12 AO依頼] エクストラは、その車に実在するものだけを出す。
+    -- 元の qb-radialmenu は extra1〜13 の固定リストを車種に関係なく常に並べており、
+    -- エクストラを持たない一般車では全13項目が
+    -- 「エクストラNは存在しません」を返すだけの死に項目だった。
+    -- 加えて ox_lib のラジアルは1メニュー6項目までしか表示しない(7個以上は
+    -- 6枠目が「…」になりページ送り)ため、13個の固定リストは3ページに割れていた。
+    -- 判定は実処理側(qb-radialmenu/client/main.lua の setExtra)と同じ DoesExtraExist を使う。
+    local extraDefs = Data.menus['ao_vehicleextras']
+    if extraDefs then
+        local extras = {}
+        for i = 1, #extraDefs do
+            local def = extraDefs[i]
+            local n = tonumber((def.id:gsub('extra', '')))
+            if n and DoesExtraExist(vehicle, n) then
+                extras[#extras + 1] = def
+            end
+        end
+        if #extras > 0 then
+            lib.registerRadial({ id = 'ao_vehicleextras', items = buildItems(extras) })
+            items[#items + 1] = { id = 'vehicleextras', label = '車両エクストラ', icon = 'star', menu = 'ao_vehicleextras' }
+        end
+    end
 
     -- 座席は車種ごとに数が違うため、乗車のたびに作り直す
     local seats = {}
