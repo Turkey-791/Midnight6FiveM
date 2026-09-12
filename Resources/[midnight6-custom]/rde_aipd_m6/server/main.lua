@@ -535,26 +535,50 @@ end
 -- POLICE NOTIFICATIONS
 -- ════════════════════════════════════════════════════════════════
 
+-- [Midnight6修正 2026-09-12]
+--   元コードは police:crimeAlert を送っていたが、このイベントの受け手は
+--   このリソースにも他のリソースにも存在しない(完全に死んでいた)。
+--   実際に届いていたのは qb-phone の通報一覧だけで、
+--   ブリップも通知音も出ないため、警官側からは「何も来ていない」状態だった。
+--   qb-policejob の police:client:policeAlert(通知+音+点滅ブリップ)も送る。
+--   これは m6_crime の AlertPolice と同じ経路で、コンビニ強盗などはすでに
+--   こちらを通っていた。RDE が検知する犯罪(発砲・殺人・暴行)だけが漏れていた。
 function NotifyPolice(crimeType, coords, data)
     local cfg = Config.CrimeTypes[crimeType]
     if not cfg then return end
+
+    local pa    = (Config.M6 and Config.M6.policeAlert) or {}
+    -- cfg.policeAlert = true は「重要度が高い犯罪」の印。到達率の出し分けに使う
+    local chance = cfg.policeAlert and (pa.chanceMajor or 1.0) or (pa.chanceMinor or 0.75)
+
+    local label = cfg.description or crimeType
+    if pa.useJapaneseLabels ~= false and Config.M6 and Config.M6.crimeLabels then
+        label = Config.M6.crimeLabels[crimeType] or label
+    end
+
     for _, pid in ipairs(GetPlayers()) do
         local id = tonumber(pid)
         if id and IsPolice(id) then
-            local chance = cfg.policeAlert and 0.9 or 0.6
             if math.random() < chance then
+                -- 互換用に残す(受け手は無い。外部リソースが拾えるように)
                 TriggerClientEvent('police:crimeAlert', id, {
                     type = crimeType, coords = coords, data = data,
                     time = os.time(), severity = cfg.severity or 'medium',
-                    description = cfg.description or crimeType
+                    description = label
                 })
-                -- [Midnight6移植] qb-phone の通報一覧にも載せる
                 if coords then
-                    TriggerClientEvent('qb-phone:client:addPoliceAlert', id, {
-                        title  = cfg.description or crimeType,
-                        coords = { x = coords.x, y = coords.y, z = coords.z },
-                        description = (cfg.description or crimeType)
-                    })
+                    -- qb-phone の通報一覧
+                    if pa.phone ~= false then
+                        TriggerClientEvent('qb-phone:client:addPoliceAlert', id, {
+                            title  = label,
+                            coords = { x = coords.x, y = coords.y, z = coords.z },
+                            description = label
+                        })
+                    end
+                    -- 通知 + 音 + 点滅ブリップ(qb-policejob/client/main.lua 173)
+                    if pa.blip ~= false then
+                        TriggerClientEvent('police:client:policeAlert', id, coords, label)
+                    end
                 end
             end
         end

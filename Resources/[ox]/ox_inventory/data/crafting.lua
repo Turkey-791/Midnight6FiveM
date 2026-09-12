@@ -172,4 +172,63 @@ return {
 			},
 		},
 	},
+	-- ════════════════════════════════════════════════════════════════════
+	-- prison_bench — 刑務所内クラフト (2026-09-12 追加 / ao_prisonwork と対)
+	--
+	-- 材料は ao_prisonwork の刑務作業でドロップする4種
+	-- (metalscrap / rubber / steel / plastic) に限定してある。
+	-- 「刑務作業 → 素材 → 脱獄用アイテム」を1本の線にするのが狙い。
+	--
+	-- ox-crafting-ext(XP/スキルチェック拡張)は自分の Requirements 表に
+	-- 無いレシピには干渉しない(server.lua の `if not req then return true end`)。
+	-- そのため ox-crafting-ext 側の変更は不要。
+	--
+	-- ⚠ points / zones の座標は rs-prison の Config.CraftingLocation から
+	--    持ってきたもので、実機での確認が取れていない。
+	--    ao_prisonwork の /prisonwork_marks で確認したうえで確定させること。
+	--    blip は意図的に付けていない(刑務所の中なのでマップに出す必要がない)。
+	-- ════════════════════════════════════════════════════════════════════
+	{
+		name = 'prison_bench',
+		items = {
+			{
+				name = 'lockpick',
+				ingredients = { metalscrap = 15 },
+				duration = 4000,
+				count = 1,
+			},
+			{
+				name = 'trojan_usb',
+				ingredients = { steel = 10, plastic = 15 },
+				duration = 5000,
+				count = 1,
+			},
+			{
+				name = 'advancedlockpick',
+				ingredients = { lockpick = 1, metalscrap = 10, plastic = 15 },
+				duration = 6000,
+				count = 1,
+			},
+			-- 自作ナイフ。rs-prison は 'weapon_shiv' を使っていたが、GTA V にも
+			-- ox_inventory にもその武器は存在しない。既に登録済みの
+			-- WEAPON_SWITCHBLADE を流用しているので、新規アイテム追加は不要。
+			{
+				name = 'WEAPON_SWITCHBLADE',
+				ingredients = { steel = 20, rubber = 20 },
+				duration = 8000,
+				count = 1,
+			},
+		},
+		points = {
+			vec3(1669.21, 2566.56, 45.56),
+		},
+		zones = {
+			{
+				coords = vec3(1669.21, 2566.56, 45.56),
+				size = vec3(2.0, 2.0, 1.5),
+				distance = 1.5,
+				rotation = 270.0,
+			},
+		},
+	},
 }

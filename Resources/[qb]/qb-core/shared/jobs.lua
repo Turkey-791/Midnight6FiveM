@@ -22,31 +22,40 @@ QBCore.Shared.Jobs = {
 	hotdog = { label = 'ホットドッグ', defaultDuty = true, offDutyPay = false, grades = { ['0'] = { name = '販売員', payment = 0 } } },
 
 	-- 警察
+	-- 2026-09-12 経済設計: 合法ジョブの基準時給を $3,000/h → $7,500/h に移行したことに合わせて
+	-- 警察・救急の基本給を引き上げる。paycheck は10分ごとに支給される
+	-- (QBCore.Config.Money.PayCheckTimeOut = 10)ので、payment × 6 が時給。
+	--   改定前 333/500/667/833/1000 = $2,000〜6,000/h ($3,000/h基準に合わせた値)
+	--   改定後 800/900/1000/1100/1200 = $4,800〜7,200/h
+	-- 合法ジョブ($7,500/h)より意図的に低く置いている。警察・救急を$7,500/h以上にすると、
+	-- 失敗リスクも逮捕リスクも没収リスクも無い職が最高収入になり、12人サーバーでは
+	-- 全員が警察志望になる。不足分は今後実装する検挙報酬・治療報酬で埋める設計。
 	police = {
 		label = '法執行機関',
 		type = 'leo',
 		defaultDuty = true,
 		offDutyPay = false,
 		grades = {
-			['0'] = { name = '研修生', payment = 333 },
-			['1'] = { name = '巡査', payment = 500 },
-			['2'] = { name = '巡査部長', payment = 667 },
-			['3'] = { name = '警部補', payment = 833 },
-			['4'] = { name = '署長', isboss = true, payment = 1000 },
+			['0'] = { name = '研修生', payment = 800 },
+			['1'] = { name = '巡査', payment = 900 },
+			['2'] = { name = '巡査部長', payment = 1000 },
+			['3'] = { name = '警部補', payment = 1100 },
+			['4'] = { name = '署長', isboss = true, payment = 1200 },
 		},
 	},
 	-- 救急隊
+	-- 2026-09-12 経済設計: 警察と同一水準。理由も同じ(上の police のコメント参照)。
 	ambulance = {
 		label = '緊急医療サービス',
 		type = 'ems',
 		defaultDuty = true,
 		offDutyPay = false,
 		grades = {
-			['0'] = { name = '研修生', payment = 333 },
-			['1'] = { name = '救急隊員', payment = 500 },
-			['2'] = { name = '医師', payment = 667 },
-			['3'] = { name = '外科医', payment = 833 },
-			['4'] = { name = 'チーフ', isboss = true, payment = 1000 },
+			['0'] = { name = '研修生', payment = 800 },
+			['1'] = { name = '救急隊員', payment = 900 },
+			['2'] = { name = '医師', payment = 1000 },
+			['3'] = { name = '外科医', payment = 1100 },
+			['4'] = { name = 'チーフ', isboss = true, payment = 1200 },
 		},
 	},
 	-- 不動産

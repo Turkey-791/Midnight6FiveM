@@ -10,62 +10,6 @@ local ClosestVehicle = 1
 local zones = {}
 local insideShop, tempShop = nil, nil
 
--- ▼2026-09-12追加：ショールーム車両の接地補正（浮き対策）
--- リソース起動時点ではプレイヤーが各ショップから遠く、地形コリジョンが未ロードのため
--- CreateVehicle 直後の SetVehicleOnGroundProperly() が空振りする。その直後に
--- FreezeEntityPosition() で固定するため、config.lua の Z 値のまま空中で凍結されてしまう。
--- 対策：生成した車両をキューに入れ、「プレイヤーが近づいてコリジョンが読み込まれた時点」で
--- 一度だけ解凍 → 接地 → 再凍結する。config の Z 値が多少ずれていても地面に吸着する。
-local groundSnapQueue = {}
-local groundSnapRunning = false
-local GROUND_SNAP_DISTANCE = 100.0 -- この距離まで近づいたら接地を試みる（コリジョンが読み込まれる距離）
-local GROUND_SNAP_MAX_TRIES = 60   -- 試行上限（無限リトライ防止）
-
-local function startGroundSnapThread()
-    if groundSnapRunning then return end
-    groundSnapRunning = true
-    CreateThread(function()
-        while true do
-            local waitTime = 1000
-            if #groundSnapQueue > 0 then
-                local pcoords = GetEntityCoords(PlayerPedId())
-                for i = #groundSnapQueue, 1, -1 do
-                    local item = groundSnapQueue[i]
-                    if not DoesEntityExist(item.veh) then
-                        table.remove(groundSnapQueue, i)
-                    elseif #(pcoords - vector3(item.coords.x, item.coords.y, item.coords.z)) < GROUND_SNAP_DISTANCE then
-                        waitTime = 250
-                        local done = false
-                        RequestCollisionAtCoord(item.coords.x, item.coords.y, item.coords.z)
-                        if HasCollisionLoadedAroundEntity(item.veh) then
-                            -- コリジョンが読み込まれている時だけ試行回数を数える
-                            -- （読み込み待ちで試行上限に達して取りこぼすのを防ぐ）
-                            item.tries = item.tries + 1
-                            -- 毎回 config 座標に戻してから接地させる（試行を冪等にする）
-                            FreezeEntityPosition(item.veh, false)
-                            SetEntityCoordsNoOffset(item.veh, item.coords.x, item.coords.y, item.coords.z, false, false, false)
-                            local snapped = SetVehicleOnGroundProperly(item.veh)
-                            SetEntityHeading(item.veh, item.coords.w)
-                            FreezeEntityPosition(item.veh, true)
-                            done = snapped
-                        end
-                        if done or item.tries >= GROUND_SNAP_MAX_TRIES then
-                            table.remove(groundSnapQueue, i)
-                        end
-                    end
-                end
-            end
-            Wait(waitTime)
-        end
-    end)
-end
-
-local function queueGroundSnap(veh, coords)
-    if not DoesEntityExist(veh) then return end
-    groundSnapQueue[#groundSnapQueue + 1] = { veh = veh, coords = coords, tries = 0 }
-    startGroundSnapThread()
-end
-
 -- Handlers
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     PlayerData = QBCore.Functions.GetPlayerData()
@@ -505,7 +449,6 @@ function Init()
                 SetEntityHeading(veh, Config.Shops[k]['ShowroomVehicles'][i].coords.w)
                 FreezeEntityPosition(veh, true)
                 SetVehicleNumberPlateText(veh, 'BUY ME')
-                queueGroundSnap(veh, Config.Shops[k]['ShowroomVehicles'][i].coords) -- 2026-09-12追加：接地補正キューへ登録
                 if Config.UsingTarget then createVehZones(k, veh) end
             end
             if not Config.UsingTarget then createVehZones(k) end
@@ -907,7 +850,6 @@ RegisterNetEvent('qb-vehicleshop:client:swapVehicle', function(data)
         SetVehicleDoorsLocked(veh, 3)
         FreezeEntityPosition(veh, true)
         SetVehicleNumberPlateText(veh, 'BUY ME')
-        queueGroundSnap(veh, Config.Shops[shopName]['ShowroomVehicles'][data.ClosestVehicle].coords) -- 2026-09-12追加：接地補正キューへ登録
         if Config.UsingTarget then createVehZones(shopName, veh) end
     end
 end)

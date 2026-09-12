@@ -18,7 +18,11 @@ end
 RegisterNetEvent('qb-busjob:server:NpcPay', function()
     local src = source
     local Player = exports['qb-core']:GetPlayer(src)
-    local Payment = math.random(145, 155)
+    -- 2026-09-10 経済設計: 基準時給$7,500/hへの移行に伴い$145〜155から倍増。
+    -- 停留所5箇所の固定巡回、区間距離1,011/1,051/155/493/568m(平均656m)、バス平均45km/h。
+    -- 1乗客 = 走行1.2分 + NPCの乗降1.2分 = 約2.4分 → 25.2人/h。
+    -- 旧$150では実効約$3,780/h。$300にして約$7,560/hとなり新基準に一致する。
+    local Payment = math.random(290, 310)
     if Player.PlayerData.job.name == 'bus' then
         if NearBus(src) then
             Player.AddMoney('cash', Payment, 'Bus job')

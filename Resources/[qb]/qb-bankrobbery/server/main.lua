@@ -1,6 +1,54 @@
 local QBCore = exports['qb-core']:GetCoreObject({ 'Functions' })
 local sharedItems = exports['qb-core']:GetShared('Items')
 local robberyBusy = false
+
+-- 2026-09-10 報酬消失バグの修正
+--
+-- 【問題】このファイルの AddItem 呼び出し14箇所は、いずれも戻り値を見ていなかった。
+-- qb-inventory は ox_inventory へのシムで、その AddItem は先頭で CanCarryItem を呼び、
+-- 持てない場合は「これ以上は重くて持てません。」と通知して false を返す。
+-- このときアイテムは一切生成されない。
+--
+-- さらに CanCarryItem はスタック全体を一括で判定するため、
+-- 金塊が12本出て2本しか持てない状況では「2本もらえる」のではなく「0本」になる。
+-- ロッカーは別イベント(setLockerState)で既に isOpened = true にされているので
+-- 再度ドリルすることもできず、報酬は完全に消滅していた。
+--
+-- Pacific の場合、装備込み(drill 8kg + thermite + 武器 + 弾)で運べるのは金塊2本。
+-- 出現数は tier3 で1〜7本、tier2 で1〜18本、tier1 で1〜25本だったため、
+-- 約79%の確率で0本になっていた。金庫5個を全て開けても期待値は約1.5本しかなかった。
+--
+-- 【修正】持てる分だけインベントリに入れ、残りは足元にドロップする。
+-- 仲間が拾って運べるので「運び屋」のRPが成立し、拾い遅れれば警察に押収されるという
+-- リスクも生まれる。ドロップはサーバー再起動で消える点だけ注意。
+local function GiveOrDrop(src, itemName, amount, info)
+    amount = tonumber(amount) or 1
+    if amount < 1 then return end
+
+    local metadata = (info and info ~= false) and info or nil
+
+    -- 持てる最大数を求める(スタック一括判定のため、上から減らして探す)
+    local carry = 0
+    for n = amount, 1, -1 do
+        if exports.ox_inventory:CanCarryItem(src, itemName, n, metadata) then
+            carry = n
+            break
+        end
+    end
+
+    if carry > 0 then
+        exports['qb-inventory']:AddItem(src, itemName, carry, false, info, 'qb-bankrobbery:server:recieveItem')
+        TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems[itemName], 'add')
+    end
+
+    local rest = amount - carry
+    if rest > 0 then
+        local label = (sharedItems[itemName] and sharedItems[itemName].label) or itemName
+        exports.ox_inventory:CustomDrop('Loot', { { itemName, rest, metadata } }, GetEntityCoords(GetPlayerPed(src)))
+        TriggerClientEvent('QBCore:Notify', src,
+            ('持ちきれない %s %d個を足元に置いた'):format(label, rest), 'primary')
+    end
+end
 local timeOut = false
 
 -- Functions
@@ -176,22 +224,23 @@ RegisterNetEvent('qb-bankrobbery:server:recieveItem', function(type, bankId, loc
                 if Config.RewardTypes[itemType].type == 'item' then
                     local item = Config.LockerRewards['tier' .. tier][math.random(#Config.LockerRewards['tier' .. tier])]
                     local itemAmount = math.random(item.minAmount, item.maxAmount)
-                    exports['qb-inventory']:AddItem(src, item.item, itemAmount, false, false, 'qb-bankrobbery:server:recieveItem')
-                    TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems[item.item], 'add')
+                    GiveOrDrop(src, item.item, itemAmount, false)
                 elseif Config.RewardTypes[itemType].type == 'money' then
+                    -- 2026-09-10 経済設計: $2,300〜3,200 → $5,700〜7,900
+                    -- Fleeca は2人想定。1人あたりの取り分を約$50,000(合法6.7時間分)に合わせた。
+                    -- 総額 約$100,400 = 現金$51,680 + goldchain20本$32,000
+                    --                  + rolex→diamond12個$13,200 + goldbar1本$3,500
+                    -- (現金は洗浄手数料20%を引いた後の手取りで計算している)
                     local info = {
-                        worth = math.random(2300, 3200)
+                        worth = math.random(5700, 7900)
                     }
-                    exports['qb-inventory']:AddItem(src, 'markedbills', math.random(2, 3), false, info, 'qb-bankrobbery:server:recieveItem')
-                    TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['markedbills'], 'add')
+                    GiveOrDrop(src, 'markedbills', math.random(2, 3), info)
                 end
             else
-                exports['qb-inventory']:AddItem(src, 'security_card_01', 1, false, false, 'qb-bankrobbery:server:recieveItem')
-                TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['security_card_01'], 'add')
+                GiveOrDrop(src, 'security_card_01', 1, false)
             end
         else
-            exports['qb-inventory']:AddItem(src, 'weapon_stungun', 1, false, false, 'qb-bankrobbery:server:recieveItem')
-            TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['weapon_stungun'], 'add')
+            GiveOrDrop(src, 'weapon_stungun', 1, false)
         end
     elseif type == 'paleto' then
         if #(GetEntityCoords(GetPlayerPed(source)) - Config.BigBanks['paleto']['lockers'][lockerId]['coords']) > 2.5 then
@@ -208,23 +257,27 @@ RegisterNetEvent('qb-bankrobbery:server:recieveItem', function(type, bankId, loc
                 if Config.RewardTypes[itemType].type == 'item' then
                     local item = Config.LockerRewardsPaleto['tier' .. tier][math.random(#Config.LockerRewardsPaleto['tier' .. tier])]
                     local itemAmount = math.random(item.minAmount, item.maxAmount)
-                    exports['qb-inventory']:AddItem(src, item.item, itemAmount, false, false, 'qb-bankrobbery:server:recieveItem')
-                    TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems[item.item], 'add')
+                    GiveOrDrop(src, item.item, itemAmount, false)
                 elseif Config.RewardTypes[itemType].type == 'money' then
+                    -- 2026-09-10 経済設計: $4,000〜6,000 → $10,500〜16,000
+                    -- Paleto は3人想定。1人あたりの取り分を約$55,000(合法7.3時間分)に合わせた。
+                    -- 総額 約$164,900 = 現金$100,700 + goldchain15本$24,000
+                    --                  + rolex→diamond27個$29,700 + goldbar3本$10,500
                     local info = {
-                        worth = math.random(4000, 6000)
+                        worth = math.random(10500, 16000)
                     }
-                    exports['qb-inventory']:AddItem(src, 'markedbills', math.random(1, 4), false, info, 'qb-bankrobbery:server:recieveItem')
-                    TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['markedbills'], 'add')
+                    GiveOrDrop(src, 'markedbills', math.random(1, 4), info)
                 end
             else
-                exports['qb-inventory']:AddItem(src, 'security_card_02', 1, false, false, 'qb-bankrobbery:server:recieveItem')
-                TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['security_card_02'], 'add')
+                GiveOrDrop(src, 'security_card_02', 1, false)
             end
         else
-            exports['qb-inventory']:AddItem(src, 'weapon_vintagepistol', 1, false, false, 'qb-bankrobbery:server:recieveItem')
-            TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['weapon_vintagepistol'], 'add')
+            GiveOrDrop(src, 'weapon_vintagepistol', 1, false)
         end
+    -- 2026-09-10 経済設計: Pacific の markedbills worth ($19,000〜21,000) は据え置き。
+    -- Pacific の総額は goldbar(7kg、装備込みだと1往復2本)の本数で決まる設計にしてあるため、
+    -- 現金側を触ると「運び出す手間」と収益の対応が崩れる。
+    -- 4人×2往復=16本で約$256,000、完全制圧34本で約$319,000。
     elseif type == 'pacific' then
         if #(GetEntityCoords(GetPlayerPed(source)) - Config.BigBanks['pacific']['lockers'][lockerId]['coords']) > 2.5 then
             return error(Lang:t('error.event_trigger_wrong', { event = 'qb-bankrobbery:server:receiveItem', extraInfo = ' (pacific) ', source = source }))
@@ -241,38 +294,38 @@ RegisterNetEvent('qb-bankrobbery:server:recieveItem', function(type, bankId, loc
                 if Config.RewardTypes[itemType].type == 'item' then
                     local item = Config.LockerRewardsPacific['tier' .. tier][math.random(#Config.LockerRewardsPacific['tier' .. tier])]
                     local maxAmount
-                    if tier == 3 then maxAmount = 7 elseif tier == 2 then maxAmount = 18 else maxAmount = 25 end
-                    local itemAmount = math.random(maxAmount)
-                    exports['qb-inventory']:AddItem(src, item.item, itemAmount, false, false, 'qb-bankrobbery:server:recieveItem')
-                    TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems[item.item], 'add')
+                    -- 2026-09-10 経済設計: 出現数を 1〜7 / 1〜18 / 1〜25本 から絞った。
+                    -- 装備込みで運べるのは金塊2本なので、旧設定では約79%が0本になっていた。
+                    -- 金庫5個で合計 約18本(=125kg)。4人で2〜3往復して運び出す想定。
+                    local minAmount
+                    if tier == 3 then minAmount, maxAmount = 2, 4
+                    elseif tier == 2 then minAmount, maxAmount = 3, 5
+                    else minAmount, maxAmount = 4, 6 end
+                    local itemAmount = math.random(minAmount, maxAmount)
+                    GiveOrDrop(src, item.item, itemAmount, false)
                 elseif Config.RewardTypes[itemType].type == 'money' then
                     local info = {
                         worth = math.random(19000, 21000)
                     }
-                    exports['qb-inventory']:AddItem(src, 'markedbills', math.random(1, 4), false, info, 'qb-bankrobbery:server:recieveItem')
-                    TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['markedbills'], 'add')
+                    GiveOrDrop(src, 'markedbills', math.random(1, 4), info)
                 end
             else
                 local info = {
                     worth = math.random(19000, 21000)
                 }
-                exports['qb-inventory']:AddItem(src, 'markedbills', math.random(1, 4), false, info, 'qb-bankrobbery:server:recieveItem')
-                TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['markedbills'], 'add')
+                GiveOrDrop(src, 'markedbills', math.random(1, 4), info)
                 info = {
                     crypto = math.random(1, 3)
                 }
-                exports['qb-inventory']:AddItem(src, 'cryptostick', 1, false, info, 'qb-bankrobbery:server:recieveItem')
-                TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['cryptostick'], 'add')
+                GiveOrDrop(src, 'cryptostick', 1, info)
             end
         else
             local chance = math.random(1, 2)
             local odd = math.random(1, 2)
             if chance == odd then
-                exports['qb-inventory']:AddItem(src, 'weapon_microsmg', 1, false, false, 'qb-bankrobbery:server:recieveItem')
-                TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['weapon_microsmg'], 'add')
+                GiveOrDrop(src, 'weapon_microsmg', 1, false)
             else
-                exports['qb-inventory']:AddItem(src, 'weapon_minismg', 1, false, false, 'qb-bankrobbery:server:recieveItem')
-                TriggerClientEvent('qb-inventory:client:ItemBox', src, sharedItems['weapon_minismg'], 'add')
+                GiveOrDrop(src, 'weapon_minismg', 1, false)
             end
         end
     end

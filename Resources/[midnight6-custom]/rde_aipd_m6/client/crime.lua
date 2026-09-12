@@ -224,9 +224,12 @@ local function WitnessCanCall(witnessPed)
     if IsPedInMeleeCombat(witnessPed) then return false end
     -- Schwer verletzt: unter ~20% Basis-HP (NPC-HP ~100-200; 50 = sicher tot/sterbend)
     if GetEntityHealth(witnessPed) < 50 then return false end
-    -- Sehr schnelles Fahrzeug: >80 km/h = zu abgelenkt/gefährlich
+    -- Sehr schnelles Fahrzeug: zu abgelenkt/gefährlich
+    -- [Midnight6調整] 80km/h は市街地を普通に走っている車もほぼ除外してしまう。
+    -- 発砲後はNPCがその道を避けるため、通りがかりの車が唯一の目撃者になることが多い。
+    local speedLimit = (Config.M6 and Config.M6.witness and Config.M6.witness.vehicleSpeedLimit) or 80.0
     local veh = GetVehiclePedIsIn(witnessPed, false)
-    if veh ~= 0 and GetEntitySpeed(veh) * 3.6 > 80.0 then return false end
+    if veh ~= 0 and GetEntitySpeed(veh) * 3.6 > speedLimit then return false end
     return true
 end
 
@@ -315,9 +318,17 @@ local function GetNearbyWitnesses(coords, radius, excludePed, crimeType)
     local phoneChance  = baseChance * timeModifier
 
     if IsCombatSuppressed() then
-        local mult = cfg.combatSuppressionMultiplier or 0.20
-        phoneChance = phoneChance * mult
-        Debug(('⚔ Combat Suppression — Phone Chance × %.2f'):format(mult))
+        -- [Midnight6追加] 発砲・殺人そのものには戦闘中の減衰を掛けない。
+        -- 銃で人を撃ち殺すと必ず直前に発砲フラグが立つため、これが無いと
+        -- 殺人の通報率が 1/5 になってしまう(Config.M6.noCombatSuppressionFor)。
+        local exempt = Config.M6 and Config.M6.noCombatSuppressionFor
+        if crimeType and exempt and exempt[crimeType] then
+            Debug(('⚔ Combat Suppression は %s には適用しない'):format(crimeType))
+        else
+            local mult = cfg.combatSuppressionMultiplier or 0.20
+            phoneChance = phoneChance * mult
+            Debug(('⚔ Combat Suppression — Phone Chance × %.2f'):format(mult))
+        end
     end
 
     local result = {npcs = {}, players = {}}
@@ -418,33 +429,60 @@ end
 -- BEWUSST EINFACH gehalten: StartShapeTestRay ist asynchron und liefert im
 -- selben Frame kein zuverlässiges Ergebnis → kein Raycast hier.
 -- Die phone-Wahrscheinlichkeit (area-basiert) ist die einzige Hürde.
-local function FindBestCaller(witnesses, crimeCoords)
-    -- Bevorzuge den nächsten NPC mit Telefon der noch lebt
-    local bestNPC, bestDist = nil, math.huge
+-- [Midnight6修正 2026-09-12]
+--   元は「犯行現場から一番近いNPC」を必ず通報者に選んでいた。
+--   ところが通報は「プレイヤーが8m以内に近づくと中止」される仕組みで、
+--   しかも8m以内のNPCは視野・遮蔽を問わず目撃者になる設定(proximityGrace)。
+--   つまり「最も目撃者になりやすいNPC」が「必ず萎縮して通報をやめるNPC」だった。
+--   現場に立っているだけで、ほぼすべての通報が中止されていた。
+--
+--   対策: プレイヤーから離れている候補を優先する。いなければ従来どおり最寄り。
+--   excluded: すでに通報に失敗した相手(再挑戦で同じ相手を選ばないため)
+local function GetIntimidationDistance()
+    local m6 = Config.M6 and Config.M6.intimidation
+    if m6 and m6.distance then return m6.distance end
+    return (Config.WitnessSystem and Config.WitnessSystem.intimidationDistance) or 8.0
+end
+
+local function FindBestCaller(witnesses, crimeCoords, excluded)
+    excluded = excluded or {}
+    local intimidateDist = GetIntimidationDistance()
+
+    local safeBest, safeDist = nil, math.huge   -- プレイヤーから離れている候補
+    local anyBest,  anyDist  = nil, math.huge   -- 距離を問わない候補
+
     for _, w in ipairs(witnesses.npcs) do
         if w.hasPhone
             and DoesEntityExist(w.ped)
             and not IsPedDeadOrDying(w.ped, true)
+            and not excluded[w.ped]
         then
-            if w.distance < bestDist then
-                bestNPC  = w
-                bestDist = w.distance
+            if w.distance < anyDist then
+                anyBest, anyDist = w, w.distance
+            end
+            local fromPlayer = #(GetEntityCoords(w.ped) - cache.coords)
+            if fromPlayer > intimidateDist and w.distance < safeDist then
+                safeBest, safeDist = w, w.distance
             end
         end
     end
 
+    local bestNPC = safeBest or anyBest
     if bestNPC then
-        Debug(('FindBestCaller: NPC-Zeuge gewählt | %.1fm | hasPhone=true'):format(bestDist))
+        Debug(('FindBestCaller: NPC-Zeuge gewählt | %.1fm | %s'):format(
+            bestNPC.distance or 0, safeBest and 'プレイヤーから離れている' or '最寄り(近接のみ)'))
         return bestNPC
     end
 
     -- Spieler-Zeuge als Fallback
     for _, w in ipairs(witnesses.players) do
-        Debug('FindBestCaller: Spieler-Zeuge als Fallback gewählt')
-        return w
+        if not excluded[w.player] then
+            Debug('FindBestCaller: Spieler-Zeuge als Fallback gewählt')
+            return w
+        end
     end
 
-    Debug(('FindBestCaller: kein Zeuge – %d NPCs geprüft (ohne Telefon oder tot)'):format(#witnesses.npcs))
+    Debug(('FindBestCaller: kein Zeuge – %d NPCs geprüft (ohne Telefon・死亡・除外済み)'):format(#witnesses.npcs))
     return nil
 end
 
@@ -519,10 +557,30 @@ end
 --
 -- ════════════════════════════════════════════════════════════════════════════════
 
-local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel, witnessCount)
+-- [Midnight6修正 2026-09-12]
+--   witnesses / excluded / attempt を受け取れるようにした。
+--   通報が中止されたときに、別の目撃者が代わりに通報できる。
+--   元は1人失敗したら即「目撃者なし」で終わっていた。
+local Execute911CallSequence
+
+-- 「威圧」の判定。元は距離だけで、そばを歩いただけで通報が止まっていた。
+-- 実際に武器を向けている・撃っている・殴り合っているときだけ威圧とみなす。
+local function PlayerIsThreatening()
+    local ped = cache.ped
+    if not ped or ped == 0 then return false end
+    if IsPedShooting(ped) then return true end
+    if IsPedInMeleeCombat(ped) then return true end
+    if IsPlayerFreeAiming(PlayerId()) and IsPedArmed(ped, 7) then return true end
+    if IsPlayerTargettingAnything(PlayerId()) and IsPedArmed(ped, 7) then return true end
+    return false
+end
+
+function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel, witnessCount, witnesses, excluded, attempt)
     local cfg             = Config.WitnessSystem or {}
     local isPlayerWitness = caller.player ~= nil
     local callerPed       = (not isPlayerWitness) and caller.ped or nil
+    excluded              = excluded or {}
+    attempt               = attempt or 1
     local callDuration    = caller.callDuration or math.random(
         cfg.callDurationMin or CallDuration.min,
         cfg.callDurationMax or CallDuration.max
@@ -549,9 +607,14 @@ local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel
     end
 
     -- Helper: Spieler nähert sich bedrohlich?
+    -- [Midnight6修正] 距離だけでなく「実際に威圧しているか」も条件にする。
+    -- Config.M6.intimidation.requireThreat = false で元の挙動(距離だけ)に戻せる。
     local function PlayerIntimidating()
         if not callerPed or not DoesEntityExist(callerPed) then return false end
-        return #(GetEntityCoords(callerPed) - cache.coords) < intimidateDist
+        if #(GetEntityCoords(callerPed) - cache.coords) >= intimidateDist then return false end
+        local m6 = Config.M6 and Config.M6.intimidation
+        if m6 and m6.requireThreat == false then return true end
+        return PlayerIsThreatening()
     end
 
     -- Helper: Zeuge unterbrochen — aufräumen + Server informieren
@@ -567,6 +630,26 @@ local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel
             visuals.callerPed = nil
         end
         TeardownWitnessVisuals(visuals)
+
+        -- [Midnight6追加] 別の目撃者に引き継ぐ。
+        -- 1人黙らせただけで事件がなかったことになるのはおかしい。
+        local m6   = (Config.M6 and Config.M6.intimidation) or {}
+        local maxA = m6.maxCallers or 3
+        if witnesses and attempt < maxA then
+            if callerPed then excluded[callerPed] = true end
+            if caller.player then excluded[caller.player] = true end
+            local nextCaller = FindBestCaller(witnesses, crimeCoords, excluded)
+            if nextCaller then
+                Debug(('通報中止(%s) → 別の目撃者が通報を試みる (%d人目)'):format(reason, attempt + 1))
+                if reason == 'intimidated' then
+                    lib.notify({ type='inform', description=L('witness_intimidated'), duration=2500, icon='eye-off' })
+                end
+                Execute911CallSequence(nextCaller, crimeType, crimeCoords, crimeLevel,
+                    witnessCount, witnesses, excluded, attempt + 1)
+                return
+            end
+        end
+
         TriggerServerEvent('police:crimeDetectedNoWitness', crimeType, crimeCoords)
         if reason == 'intimidated' then
             lib.notify({ type='success', description=L('witness_intimidated'), duration=3000, icon='eye-off' })
@@ -579,8 +662,12 @@ local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel
         -- ✅ FIX #45: Caller gegen Engine-Despawn pinnen
         if callerPed and DoesEntityExist(callerPed) then
             SetEntityAsMissionEntity(callerPed, true, true)
-            SetBlockingOfNonTemporaryEvents(callerPed, true)
-            SetPedKeepTask(callerPed, true)
+            -- [Midnight6修正] 車内の目撃者は運転タスクを保ったままにする。
+            -- ここでタスクを固定すると、その場に停車したり挙動が壊れる。
+            if not IsPedInAnyVehicle(callerPed, false) then
+                SetBlockingOfNonTemporaryEvents(callerPed, true)
+                SetPedKeepTask(callerPed, true)
+            end
         end
 
         -- ──────── 1. REAKTIONSPHASE — Zeuge schaut Spieler an ─────────────────
@@ -602,7 +689,9 @@ local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel
         local panicMax      = cfg.panicDelay and cfg.panicDelay.max or 3500
         local panicDuration = math.random(panicMin, panicMax)
 
-        if callerPed and DoesEntityExist(callerPed) then
+        -- [Midnight6修正] 車内の目撃者は後ずさりさせない。
+        -- TaskGoToCoordAnyMeans を車内のNPCに出すと降車してしまう。
+        if callerPed and DoesEntityExist(callerPed) and not IsPedInAnyVehicle(callerPed, false) then
             -- Leicht vom Spieler zurückweichen
             local witnessPos = GetEntityCoords(callerPed)
             local toPlayer   = cache.coords - witnessPos
@@ -633,7 +722,10 @@ local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel
         end
 
         -- ──────── 3. HANDY-PROP SPAWNEN ────────────────────────────────────────
-        if callerPed and cfg.visiblePhoneCall ~= false then
+        -- [Midnight6修正] 車内の目撃者にはプロップもアニメも付けない。
+        -- 運転中に TaskPlayAnim を出すと運転タスクが壊れる。
+        local callerInVehicle = callerPed and IsPedInAnyVehicle(callerPed, false) or false
+        if callerPed and not callerInVehicle and cfg.visiblePhoneCall ~= false then
             local phoneModel = joaat(cfg.phonePropModel or 'prop_npc_phone_02')
             RequestModel(phoneModel)
             local timeout = 0
@@ -680,7 +772,7 @@ local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel
         lib.notify({ type='warning', description=L('witness_dialing'), duration=2500, icon='phone' })
 
         -- ──────── 5. DIAL-ANIM ────────────────────────────────────────────────
-        if callerPed and DoesEntityExist(callerPed) then
+        if callerPed and not callerInVehicle and DoesEntityExist(callerPed) then
             local dialDict = 'cellphone@'
             RequestAnimDict(dialDict)
             local timeout = 0
@@ -697,7 +789,7 @@ local function Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel
         if PlayerIntimidating() then HandleInterruption('intimidated'); return end
 
         -- ──────── 6. TALK-ANIM ────────────────────────────────────────────────
-        if callerPed and DoesEntityExist(callerPed) then
+        if callerPed and not callerInVehicle and DoesEntityExist(callerPed) then
             local talkDict = 'cellphone@'
             if HasAnimDictLoaded(talkDict) then
                 TaskPlayAnim(callerPed, talkDict, 'cellphone_call_listen_base', 8.0, -8.0, -1, 49, 0, false, false, false)
@@ -894,7 +986,7 @@ function LogCrime(crimeType, coords, force, victimPed)
                             description = L('witness_spotted_you', crimeConfig.description or crimeType),
                             duration    = 3000,
                         })
-                        Execute911CallSequence(c2, crimeType, crimeCoords, crimeLevel, tw)
+                        Execute911CallSequence(c2, crimeType, crimeCoords, crimeLevel, tw, w2)
                         return
                     end
                     Debug(('%s: Re-Scan #%d/%d auch leer'):format(crimeType, attempt, rescans))
@@ -933,7 +1025,7 @@ function LogCrime(crimeType, coords, force, victimPed)
         duration    = 3000,
     })
 
-    Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel, totalWitnesses)
+    Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel, totalWitnesses, witnesses)
     return true
 end
 
@@ -1593,6 +1685,50 @@ RegisterCommand('aipdwitness', function(_, args)
     local msg = FormatScan(crimeState.lastScan)
     print('^3[AIPD|診断]^7 ' .. msg)
     lib.notify({ type = 'inform', duration = 12000, description = msg })
+end, false)
+
+-- 検知が働かないときに、どこで止まっているかを一度に確認する
+RegisterCommand('aipdcheck', function()
+    local pd  = QBCore and QBCore.Functions and QBCore.Functions.GetPlayerData() or {}
+    local job = pd.job or {}
+    local meta = pd.metadata or {}
+
+    local isCop = false
+    for _, jobName in ipairs(Config.PoliceJobs or {}) do
+        if job.name == jobName or job.type == jobName then isCop = true break end
+    end
+    local copBlocked = isCop and Config.M6 and Config.M6.policeExemptFromWanted
+        and ((not Config.M6.countOnlyOnDuty) or job.onduty)
+    local jailBlocked = Config.M6 and Config.M6.noWantedWhileJailed and (meta['injail'] or 0) > 0
+    local adminBlocked = crimeState.isAdmin and Config.AdminSettings
+        and Config.AdminSettings.exemptFromWanted
+
+    local factor = 1.0
+    pcall(function() factor = exports['m6_crime']:GetPoliceFactor() end)
+
+    local units = (WantedSystem and WantedSystem.pursuingUnits and #WantedSystem.pursuingUnits) or 0
+
+    local lines = {
+        ('初期化=%s  管理者=%s'):format(tostring(crimeState.systemInitialized), tostring(crimeState.isAdmin)),
+        ('職業=%s(勤務中=%s)  収監=%s'):format(tostring(job.name), tostring(job.onduty), tostring(meta['injail'] or 0)),
+        ('検知ブロック: 警察職=%s / 収監中=%s / 管理者免除=%s'):format(
+            tostring(copBlocked or false), tostring(jailBlocked or false), tostring(adminBlocked or false)),
+        ('エリア=%s  通報率の基準=%.0f%%  時間帯係数=%.2f'):format(
+            tostring(crimeState.currentArea),
+            (PhoneChanceByArea[crimeState.currentArea] or 0.5) * 100,
+            GetTimeOfDayModifier()),
+        ('手配レベル=%d  減衰中=%s  AI台数=%d  出動倍率=%.2f'):format(
+            GetWantedLevel(), tostring(crimeState.decayActive), units, factor),
+        ('直前のスキャン: %s'):format(FormatScan(crimeState.lastScan)),
+    }
+
+    print('^3[AIPD|診断]^7 ===== aipdcheck =====')
+    for _, l in ipairs(lines) do print('^3[AIPD|診断]^7 ' .. l) end
+
+    lib.notify({
+        type = 'inform', duration = 20000,
+        description = table.concat(lines, '\n')
+    })
 end, false)
 
 RegisterCommand('aipdlastscan', function()

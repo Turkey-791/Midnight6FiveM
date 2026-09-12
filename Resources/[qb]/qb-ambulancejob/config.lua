@@ -5,7 +5,10 @@ Config.DocCooldown = 1                                       -- Cooldown between
 Config.WipeInventoryOnRespawn = true                         -- Enable or disable removing all the players items when they respawn at the hospital
 Config.RespawnAtNearestHospital = true                       -- Enable or disable respawning at the closest hospital
 Config.Helicopter = 'polmav'                                 -- Helicopter model that players with the ambulance job can use
-Config.BillCost = 2000                                       -- Price that players are charged for using the hospital check-in system
+-- 2026-09-10 経済設計: 収入基準を$3,000/hから$7,500/hへ引き上げたため、固定額のシンクを
+-- 2.5倍にして相対的な重さを維持する。ここを据え置くと支出が実質2.5分の1になりインフレする。
+-- (車両価格に連動するシンク、たとえばデポ引き取り料の%指定は自動追従するので変更不要)
+Config.BillCost = 5000                                       -- Price that players are charged for using the hospital check-in system
 Config.DeathTime = 210                                       -- How long the timer is for players to bleed out completely and respawn at the hospital
 Config.ReviveInterval = 240                                  -- How long the timer is for players to revive a player in laststand
 Config.MinimumRevive = 210                                   -- How long the timer is for players to revive a player in laststand

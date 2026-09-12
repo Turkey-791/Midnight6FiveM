@@ -7,6 +7,10 @@ Config.ArmoryWhitelist = {}
 Config.WhitelistedVehicles = {}
 Config.PoliceHelicopter = 'POLMAV'
 Config.FuelResource = 'LegacyFuel' -- supports any that has a GetFuel() and SetFuel() export
+-- 2026-09-10 経済設計: 収入基準を$3,000/hから$7,500/hへ引き上げたため、固定額のシンクを
+-- 2.5倍にして相対的な重さを維持する。ここを据え置くと支出が実質2.5分の1になりインフレする。
+-- (車両価格に連動するシンク、たとえばデポ引き取り料の%指定は自動追従するので変更不要)
+Config.FullImpoundReturnFee = 7500 -- 2026-09-03 BUG-05修正: 完全差し押さえ(state=2)車両を所有者が引き取る際の返還手数料(罰金とは別概念)。時間条件・警察オンライン条件なし。
 
 Config.AmmoLabels = {
     AMMO_PISTOL = '9x19mmパラベラム弾',

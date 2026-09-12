@@ -20,15 +20,20 @@ local Sales, Stock, salesLoc = {}, {}, Config.SellPed
 
 
 if Config.SellMaterials then
+    -- 2026-09-10 経済設計: 全素材$2固定は基準時給$7,500/hに対して実効$500〜1,000/h程度で、
+    -- 事実上機能していないジョブだった。$15に引き上げ。
+    -- ※素材の入手レート(1時間あたり何個拾えるか)はコードから読めないため、
+    --   $15 は「$2では明らかに壊れている」ことだけを根拠にした暫定値である。
+    --   実効時給が基準から外れる場合はここの数値のみを変更すればよい。
     Sales = { -- key is item, value is price
-        metalscrap = 2,
-        plastic = 2,
-        copper = 2,
-        rubber = 2,
-        iron = 2,
-        aluminum = 2,
-        steel = 2,
-        glass = 2,
+        metalscrap = 15,
+        plastic = 15,
+        copper = 15,
+        rubber = 15,
+        iron = 15,
+        aluminum = 15,
+        steel = 15,
+        glass = 15,
     }
 end
 if Config.LimitedMaterials then

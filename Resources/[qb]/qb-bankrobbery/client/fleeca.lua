@@ -130,13 +130,39 @@ function openLocker(bankId, lockerId) -- Globally Used
             AttachEntityToEntity(DrillObject, ped, GetPedBoneIndex(ped, 57005), 0.14, 0, -0.01, 90.0, -90.0, 180.0, true, true, false, true, 1, true)
             IsDrilling = true
 
-            -- 2026-09-05 追加: ドリル使用中の火花エフェクト(見た目のみ、判定には影響しない)
-            RequestNamedPtfxAsset('scr_ornate_bank')
-            while not HasNamedPtfxAssetLoaded('scr_ornate_bank') do
+            -- 2026-09-05 追加 / 2026-09-12 修正: ドリル使用中の火花エフェクト(見た目のみ、判定には影響しない)
+            --
+            -- 【修正した問題1】ドリル動作のまま操作不能になる
+            --   下の待機ループにタイムアウトが無く、パーティクルアセットのロードが完了しないと
+            --   永久に抜けられなかった。この時点で直前の TaskPlayAnim が duration = -1(無限)で
+            --   ドリルアニメを再生済み、かつ Progressbar はこのループの「後」に開始されるため、
+            --   「ドリル動作のまま、プログレスバーも出ず、移動もできない」状態になる。
+            --   IsDrilling も true のままなので復帰できない。
+            --
+            -- 【修正した問題2】火花が出ない
+            --   アセットとエフェクト名が噛み合っていなかった。
+            --   UseParticleFxAssetNextCall('scr_ornate_bank') の直後に
+            --   StartParticleFxLoopedOnEntity('scr_env_grind_sparks', ...) を呼んでいたが、
+            --   scr_env_grind_sparks は 'core' アセット側のエフェクトであり scr_ornate_bank には
+            --   含まれない。アセットが一致しないとパーティクルは生成されない。
+            --
+            -- 【方針】エフェクトは見た目だけのものなので、失敗しても絶対に進行を止めない。
+            --   ・待機は最大2秒で打ち切る
+            --   ・ロードできなければエフェクトを諦めて、ドリル自体は続行する
+            --   ・'core' は常時ロード済みのアセットなので実際にはほぼ待たない
+            --   ・ハンドルが 0(生成失敗)なら nil にする。Luaでは 0 も真なので
+            --     `if drillPtfx then` が素通りしてしまうため。
+            local drillPtfx
+            RequestNamedPtfxAsset('core')
+            local ptfxTimeout = GetGameTimer() + 2000
+            while not HasNamedPtfxAssetLoaded('core') and GetGameTimer() < ptfxTimeout do
                 Wait(0)
             end
-            UseParticleFxAssetNextCall('scr_ornate_bank')
-            local drillPtfx = StartParticleFxLoopedOnEntity('scr_env_grind_sparks', DrillObject, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, false, false, false)
+            if HasNamedPtfxAssetLoaded('core') then
+                UseParticleFxAssetNextCall('core')
+                drillPtfx = StartParticleFxLoopedOnEntity('scr_env_grind_sparks', DrillObject, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, false, false, false)
+                if drillPtfx == 0 then drillPtfx = nil end
+            end
             QBCore.Functions.Progressbar('open_locker_drill', Lang:t('general.breaking_open_safe'), math.random(18000, 30000), false, true, {
                 disableMovement = true,
                 disableCarMovement = true,
@@ -182,13 +208,39 @@ function openLocker(bankId, lockerId) -- Globally Used
             AttachEntityToEntity(DrillObject, ped, GetPedBoneIndex(ped, 57005), 0.14, 0, -0.01, 90.0, -90.0, 180.0, true, true, false, true, 1, true)
             IsDrilling = true
 
-            -- 2026-09-05 追加: ドリル使用中の火花エフェクト(見た目のみ、判定には影響しない)
-            RequestNamedPtfxAsset('scr_ornate_bank')
-            while not HasNamedPtfxAssetLoaded('scr_ornate_bank') do
+            -- 2026-09-05 追加 / 2026-09-12 修正: ドリル使用中の火花エフェクト(見た目のみ、判定には影響しない)
+            --
+            -- 【修正した問題1】ドリル動作のまま操作不能になる
+            --   下の待機ループにタイムアウトが無く、パーティクルアセットのロードが完了しないと
+            --   永久に抜けられなかった。この時点で直前の TaskPlayAnim が duration = -1(無限)で
+            --   ドリルアニメを再生済み、かつ Progressbar はこのループの「後」に開始されるため、
+            --   「ドリル動作のまま、プログレスバーも出ず、移動もできない」状態になる。
+            --   IsDrilling も true のままなので復帰できない。
+            --
+            -- 【修正した問題2】火花が出ない
+            --   アセットとエフェクト名が噛み合っていなかった。
+            --   UseParticleFxAssetNextCall('scr_ornate_bank') の直後に
+            --   StartParticleFxLoopedOnEntity('scr_env_grind_sparks', ...) を呼んでいたが、
+            --   scr_env_grind_sparks は 'core' アセット側のエフェクトであり scr_ornate_bank には
+            --   含まれない。アセットが一致しないとパーティクルは生成されない。
+            --
+            -- 【方針】エフェクトは見た目だけのものなので、失敗しても絶対に進行を止めない。
+            --   ・待機は最大2秒で打ち切る
+            --   ・ロードできなければエフェクトを諦めて、ドリル自体は続行する
+            --   ・'core' は常時ロード済みのアセットなので実際にはほぼ待たない
+            --   ・ハンドルが 0(生成失敗)なら nil にする。Luaでは 0 も真なので
+            --     `if drillPtfx then` が素通りしてしまうため。
+            local drillPtfx
+            RequestNamedPtfxAsset('core')
+            local ptfxTimeout = GetGameTimer() + 2000
+            while not HasNamedPtfxAssetLoaded('core') and GetGameTimer() < ptfxTimeout do
                 Wait(0)
             end
-            UseParticleFxAssetNextCall('scr_ornate_bank')
-            local drillPtfx = StartParticleFxLoopedOnEntity('scr_env_grind_sparks', DrillObject, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, false, false, false)
+            if HasNamedPtfxAssetLoaded('core') then
+                UseParticleFxAssetNextCall('core')
+                drillPtfx = StartParticleFxLoopedOnEntity('scr_env_grind_sparks', DrillObject, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, false, false, false)
+                if drillPtfx == 0 then drillPtfx = nil end
+            end
             QBCore.Functions.Progressbar('open_locker_drill', Lang:t('general.breaking_open_safe'), math.random(18000, 30000), false, true, {
                 disableMovement = true,
                 disableCarMovement = true,

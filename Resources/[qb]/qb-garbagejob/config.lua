@@ -3,7 +3,10 @@ Config = {}
 Config.UseTarget = GetConvar('UseTarget', 'false') == 'true'
 Config.Jobname = 'garbage'
 -- Price taken and given back when delivered a truck
-Config.TruckPrice = 250
+-- 2026-09-10 経済設計: 収入基準を$3,000/hから$7,500/hへ引き上げたため、固定額のシンクを
+-- 2.5倍にして相対的な重さを維持する。ここを据え置くと支出が実質2.5分の1になりインフレする。
+-- (車両価格に連動するシンク、たとえばデポ引き取り料の%指定は自動追従するので変更不要)
+Config.TruckPrice = 625
 
 -- Want to give out a cryptostick per stop?
 Config.GiveCryptoStick = true
@@ -15,12 +18,14 @@ Config.CryptoStickChance = 75
 Config.MinStops = 5
 
 -- Upper worth per bag
--- 2026-09-09 経済設計: $50〜100から固定$50に変更(基準時給$3,000/hの標準枠。アイテム拾得の
--- 可能性も加味した上での金額)
-Config.BagUpperWorth = 50
+-- 2026-09-10 経済設計: 基準時給を$3,000/hから$7,500/h(中古車$45,000=6時間)へ変更。
+-- 収集地点25箇所、最近傍平均250m。1 stop = 走行0.4分 + 袋平均3.5個の回収 + 乗降 = 約2.4分
+-- → 24.9 stop/h × 袋3.5個 = 約87袋/h。旧$50では実効約$4,370/hだった。
+-- $85 にすると 約$7,400/h となり新基準にほぼ一致する。
+Config.BagUpperWorth = 85
 
 -- Lower worth per bag
-Config.BagLowerWorth = 50
+Config.BagLowerWorth = 85
 
 -- Minimum bags per stop
 Config.MinBagsPerStop = 2

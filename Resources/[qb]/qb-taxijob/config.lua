@@ -17,7 +17,10 @@ Config = {
     },
 
     Meter = {
-        ['defaultPrice'] = 125.0, -- price per mile
+        -- 2026-09-10 経済設計: $125.0 → $420.0
+        -- タクシーは乗客との会話というRP的見返りがあるため社交型として目標$5,000/h。
+        -- 旧単価では実効$1,500〜2,000/h程度だった。
+        ['defaultPrice'] = 420.0, -- price per mile
         ['startingPrice'] = 0     -- static starting price
     },
 

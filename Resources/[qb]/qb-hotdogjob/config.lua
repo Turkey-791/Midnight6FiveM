@@ -2,7 +2,10 @@ Config = Config or {}
 Config.UseTarget = GetConvar('UseTarget', 'false') == 'true'
 -- Config --
 
-Config.StandDeposit = 250
+-- 2026-09-10 経済設計: 収入基準を$3,000/hから$7,500/hへ引き上げたため、固定額のシンクを
+-- 2.5倍にして相対的な重さを維持する。ここを据え置くと支出が実質2.5分の1になりインフレする。
+-- (車両価格に連動するシンク、たとえばデポ引き取り料の%指定は自動追従するので変更不要)
+Config.StandDeposit = 625
 
 Config.MyLevel = 1
 Config.MaxReputation = 200
@@ -16,6 +19,12 @@ Config.Locations = {
     },
 }
 
+-- 2026-09-10 経済設計: 基準時給$7,500/hへの移行に伴い、全価格を一律10倍にした。
+-- ホットドッグは客との対面販売というRP的見返りがあるため社交型として目標$5,000/h。
+-- 旧価格($4〜15/個)では実効$500〜1,500/h程度で、明らかに未調整のまま残っていた。
+-- ※NPC客の来店レートがコードから読めないため、倍率10倍は「旧価格では明らかに低すぎる」
+--   ことだけを根拠にした暫定値である。在庫上限60個を売り切って約$6,000になる計算。
+--   実効時給が基準から外れる場合はこのブロックの数値のみを変更すればよい。
 Config.Stock = {
     ['exotic'] = {
         Current = 0,
@@ -28,20 +37,20 @@ Config.Stock = {
         Label = Lang:t('info.label_a'),
         Price = {
             [1] = {
-                min = 8,
-                max = 12,
+                min = 80,
+                max = 120,
             },
             [2] = {
-                min = 9,
-                max = 13,
+                min = 90,
+                max = 130,
             },
             [3] = {
-                min = 10,
-                max = 14,
+                min = 100,
+                max = 140,
             },
             [4] = {
-                min = 11,
-                max = 15,
+                min = 110,
+                max = 150,
             },
         }
     },
@@ -56,20 +65,20 @@ Config.Stock = {
         Label = Lang:t('info.label_b'),
         Price = {
             [1] = {
-                min = 6,
-                max = 9,
+                min = 60,
+                max = 90,
             },
             [2] = {
-                min = 7,
-                max = 10,
+                min = 70,
+                max = 100,
             },
             [3] = {
-                min = 8,
-                max = 11,
+                min = 80,
+                max = 110,
             },
             [4] = {
-                min = 9,
-                max = 12,
+                min = 90,
+                max = 120,
             },
         }
     },
@@ -84,20 +93,20 @@ Config.Stock = {
         Label = Lang:t('info.label_c'),
         Price = {
             [1] = {
-                min = 4,
-                max = 6,
+                min = 40,
+                max = 60,
             },
             [2] = {
-                min = 5,
-                max = 7,
+                min = 50,
+                max = 70,
             },
             [3] = {
-                min = 6,
-                max = 9,
+                min = 60,
+                max = 90,
             },
             [4] = {
-                min = 7,
-                max = 9,
+                min = 70,
+                max = 90,
             },
         }
     },

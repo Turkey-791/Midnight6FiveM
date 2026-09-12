@@ -114,9 +114,88 @@ Config.M6 = {
 
     -- 「音で気づく」犯罪。銃声などは見ていなくても気づくので、
     -- この距離内のNPCは視野・遮蔽の判定を飛ばして目撃者候補にする。
+    -- ────────────────────────────────────────────────────────────
+    -- 通報者への「威圧」
+    --
+    --   元の仕組み: 通報中のNPCに8m以内まで近づくと通報が中止される。
+    --   ところが8m以内のNPCは視野・遮蔽を問わず目撃者になる設定(proximityGrace 8m)
+    --   で、しかも通報者は「現場から一番近いNPC」が選ばれていた。
+    --   つまり最も目撃者になりやすいNPCが必ず萎縮する相手で、
+    --   現場に立っているだけでほぼすべての通報が中止されていた。
+    --   通報にかかる時間は8〜15秒あり、その間ずっと判定され続ける。
+    --
+    --   対策:
+    --     ・通報者は「プレイヤーから離れている目撃者」を優先して選ぶ
+    --     ・武器を向けている/撃っている/殴り合っているときだけ威圧とみなす
+    --     ・1人が黙っても、別の目撃者が通報を引き継ぐ
+    -- ────────────────────────────────────────────────────────────
+    -- 目撃者の細かい条件
+    witness = {
+        -- 走行中の車に乗っているNPCを目撃者から外す速度(km/h)。
+        -- 元は80で、市街地を普通に走っている車もほぼ除外されていた。
+        -- 発砲後はNPCがその道を避けるため、通りがかりの車が唯一の目撃者になりやすい。
+        vehicleSpeedLimit = 130.0,
+    },
+
+    -- プレイヤー警察への通報の届き方
+    --   元コードは police:crimeAlert しか送っておらず、このイベントの受け手は
+    --   どのリソースにも存在しなかった(完全に死んでいた)。
+    --   実際に届いていたのは qb-phone の通報一覧だけで、ブリップも音も出ず、
+    --   警官側からは「何も来ていない」ように見えていた。
+    policeAlert = {
+        chanceMajor = 1.0,   -- 重要な犯罪(殺人・発砲・強盗など)が各警官に届く確率
+        chanceMinor = 0.75,  -- それ以外(暴行・車両盗難など)
+        phone       = true,  -- qb-phone の通報一覧に載せる
+        blip        = true,  -- 通知+音+点滅ブリップ(qb-policejob)
+        -- 通知を日本語にする。ただし qb-policejob はブリップ名にも同じ文字列を使い、
+        -- ブリップ名はネイティブ描画なので地図の凡例では豆腐文字になる。
+        -- 画面通知は正しく出る。英語のままにしたい場合は false。
+        useJapaneseLabels = true,
+    },
+
+    -- 通報・ブリップに使う日本語表記(RDEが検知する犯罪用)
+    crimeLabels = {
+        MURDER           = '殺人',
+        MURDER_COP       = '警官殺害',
+        ASSAULT          = '暴行',
+        ASSAULT_COP      = '警官への暴行',
+        SHOOTING         = '発砲',
+        BRANDISHING      = '銃器の誇示',
+        VEHICLE_THEFT    = '車両盗難',
+        RECKLESS_DRIVING = '危険運転',
+        HIT_AND_RUN      = 'ひき逃げ',
+        SPEEDING         = '速度超過',
+        ROBBERY          = '強盗',
+        BURGLARY         = '空き巣',
+        TRESPASSING      = '不法侵入',
+        DRUG_POSSESSION  = '薬物所持',
+        DRUG_DEALING     = '薬物取引',
+        VANDALISM        = '器物損壊',
+    },
+
+    intimidation = {
+        distance      = 8.0,   -- 威圧が成立する距離
+        requireThreat = true,  -- false にすると元の「近づくだけで中止」に戻る
+        maxCallers    = 3,     -- 1件の事件で通報を試みる最大人数
+    },
+
+    -- 戦闘中の通報率低下(combatSuppression ×0.20)を適用しない犯罪。
+    --
+    --   元の仕組みは「撃ち合いの最中はNPCが隠れるので通報が減る」というものだが、
+    --   発砲・殺人は「その撃ち合い自体」が犯罪なので、これに掛けると
+    --   自分の発砲が自分の通報率を1/5にしてしまう。
+    --   実際、銃で人を撃ち殺すと必ず直前に発砲フラグが立つため、
+    --   殺人の通報率が 0.75 → 0.15 まで落ちていた。
+    noCombatSuppressionFor = {
+        SHOOTING    = true,
+        MURDER      = true,
+        MURDER_COP  = true,
+        ASSAULT_COP = true,
+    },
+
     hearing = {
         enabled = true,
-        radius  = 70.0,
+        radius  = 100.0,   -- [調整] 70 → 100。銃声はもっと遠くまで届く
         crimes  = {
             SHOOTING    = true,
             MURDER      = true,
@@ -446,6 +525,13 @@ Config.SurrenderTime = 3000
 -- CRIME TYPES - COMPREHENSIVE
 -- ============================================================================
 
+-- [Midnight6メモ] この表で実際に効くのは level / cooldown / severity / description。
+--   ・witnessChance と policeAlert はクライアント側から参照されていない(実質未使用)。
+--     通報されるかどうかは Config.WitnessSystem と Config.M6.phoneChanceByArea /
+--     hearing で決まる。ここの数値を変えても通報率は変わらない。
+--   ・severity は目撃者を探す半径の倍率になる
+--     (critical = baseDistance×1.8 / high = ×1.4 / それ以外 = ×1.0)。
+--   ・level は加算式: 同じレベルの犯罪を重ねると +1 される。
 Config.CrimeTypes = {
     MURDER = {
         level = 3,
@@ -616,8 +702,11 @@ Config.WitnessSystem = {
 
     -- Nur noch 1 Re-Scan nach 4000ms statt 2 @ 2500ms.
     -- Nicht jedes Crime wird bemerkt — das ist realistisch.
-    delayedRescans        = 2,   -- [Midnight6移植] 1 → 2(最初に誰もいなくても数秒後に再確認)
-    delayedRescanInterval = 3000,-- [Midnight6移植] 4000 → 3000
+    -- [Midnight6調整] 2 @3000ms → 4 @4000ms(犯行後 約16秒まで見張る)
+    --   発砲するとNPCがその道を避けるため、直後は誰もいなくなる。
+    --   通りがかりの車が唯一の目撃者になることが多いので、窓を長めに取る。
+    delayedRescans        = 4,
+    delayedRescanInterval = 4000,
 
     -- ── NEU: Panik-Phase ─────────────────────────────────────────────────────
     -- Zeuge zögert erst, bevor er das Handy rausholt.
@@ -691,7 +780,13 @@ Config.CrimeRealism = {
     -- SHOOTING wird NUR getriggert wenn ein Entity getroffen wurde
     -- ODER der Spieler in eine Zielperson hineinzielt (free-aim auf entity).
     -- Bloßes Abfeuern in die Luft ohne Ziel = kein Crime mehr.
-    shootingRequiresTarget = true,
+    --
+    -- [Midnight6調整 2026-09-12] true → false
+    --   true だと「誰も狙っていない発砲」は犯罪として登録すらされないため、
+    --   街中で撃っても何も起きなかった。false にすると発砲自体が犯罪になる。
+    --   ただし通報されるかどうかは目撃・聴取判定が決めるので、
+    --   人のいない郊外で撃っても何も起きない(Config.M6.hearing.radius = 100m)。
+    shootingRequiresTarget = false,
 
     -- SPEEDING wird NUR getriggert wenn ein Cop tatsächlich Sichtlinie hat.
     -- Verhindert "ich raste durch die Wüste, plötzlich gesucht".

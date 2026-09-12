@@ -2,13 +2,23 @@ Config = {}
 
 Config.UseTarget = GetConvar('UseTarget', 'false') == 'true'
 
-Config.TruckerJobTruckDeposit = 5000 -- 2026-09-06 ご要望により保証金を引き上げ(旧: 125)
-Config.TruckerJobDestroyedFine = 2500 -- 2026-09-06 新設: ジョブトラックが修理不能なレベルで大破・爆発した場合に
+-- 2026-09-10 経済設計: 収入基準を$3,000/hから$7,500/hへ引き上げたため、固定額のシンクを
+-- 2.5倍にして相対的な重さを維持する。ここを据え置くと支出が実質2.5分の1になりインフレする。
+-- (車両価格に連動するシンク、たとえばデポ引き取り料の%指定は自動追従するので変更不要)
+Config.TruckerJobTruckDeposit = 12500 -- 2026-09-06 ご要望により保証金を引き上げ(旧: 125)
+Config.TruckerJobDestroyedFine = 6250 -- 2026-09-06 新設: ジョブトラックが修理不能なレベルで大破・爆発した場合に
 -- 銀行口座から追加で徴収する罰金。保証金(上記)は別途没収されたままになり返金されない。
 -- 銀行口座はQBCore側の設定(qb-core/config.lua Money.MinusLimit、既定-5000)によりマイナスになり得る。
 Config.TruckerJobFixedLocation = false
 Config.TruckerJobMaxDrops = 20 -- amount of locations before being forced to return to station to reload
-Config.TruckerJobDropPrice = 950 -- 2026-09-09 経済設計: 基準時給$3,000/hに合わせて再設定(税引後ネット想定)
+-- 2026-09-10 経済設計: 基準時給を$3,000/hから$7,500/h(中古車$45,000=6時間)へ変更。
+-- トラッカーは全合法ジョブ中で唯一の「引き下げ」。実効時給を算出したところ突出していた。
+--   配送先45箇所のランダム2点間平均直線距離 3,590m、道路係数1.35、トラック平均55km/h
+--   → 1配送 = 走行5.3分 + 荷降ろし1分 = 6.3分 → 9.5件/h
+--   支払いは (950×件数)+(200×件数ボーナス) を税15%引きで一括精算 = 実質$977.5/件
+--   → 実効 約$9,330/h (旧基準$3,000/hの3.1倍だった)
+-- $765 に下げても新基準$7,500/h をほぼ維持する。ボーナス($200/件)は据え置き。
+Config.TruckerJobDropPrice = 765
 Config.TruckerJobBonus = 20 -- this is a percentage to calculate bonus over 5 deliveries.
 Config.TruckerJobPaymentTax = 15
 
