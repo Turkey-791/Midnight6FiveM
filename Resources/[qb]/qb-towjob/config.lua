@@ -2,7 +2,10 @@ Config = {}
 
 Config.UseTarget = GetConvar('UseTarget', 'false') == 'true'
 
-Config.BailPrice = 250
+-- 2026-09-10 経済設計: 収入基準を$3,000/hから$7,500/hへ引き上げたため、固定額のシンクを
+-- 2.5倍にして相対的な重さを維持する。ここを据え置くと支出が実質2.5分の1になりインフレする。
+-- (車両価格に連動するシンク、たとえばデポ引き取り料の%指定は自動追従するので変更不要)
+Config.BailPrice = 625
 
 Config.Vehicles = {
     ["flatbed"] = "Flatbed",
@@ -10,15 +13,15 @@ Config.Vehicles = {
 
 Config.Locations = {
     ["main"] = {
-        label = "Towing HQ",
+        label = "牽引本部",
         coords = vector4(471.39, -1311.03, 29.21, 114.5),
     },
     ["vehicle"] = {
-        label = "Flatbed",
+        label = "フラットベッド",
         coords = vector4(489.65, -1331.82, 29.33, 306.5),
     },
     ["dropoff"] = {
-        label = "Vehicle Drop Off Location",
+        label = "車両の降車場所",
         coords = vector3(491.00, -1314.69, 29.25)
     },
     ["towspots"] = {

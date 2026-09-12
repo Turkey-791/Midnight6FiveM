@@ -1,137 +1,130 @@
 local QBCore = exports['qb-core']:GetCoreObject()
+local PaymentTax = 15
 local Bail = {}
+-- Money Authority fix (2026-08-28): サーバー側で実際の納車完了数を追跡するためのテーブル(citizenid単位)
+local TowDropoffCount = {}
 
-RegisterNetEvent('qb-trucker:server:DoBail', function(bool, vehInfo)
+RegisterNetEvent('qb-tow:server:DoBail', function(bool, vehInfo)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
     if bool then
-        -- 2026-09-05 Trucker二重貸出し修正: 既に保証金支払い済み(Bail保持中)の状態で
-        -- 新規貸出しリクエストが来た場合は拒否する。これにより、ゾーンの多重登録など
-        -- 何らかの理由でこのイベントが連続発火しても、保証金の二重請求や
-        -- 既存トラックの意図しない差し替えが発生しなくなる。保証金の金額・報酬計算式など
-        -- 既存の値は一切変更していない。
-        if Bail[Player.PlayerData.citizenid] then
-            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.vehicle_already_out'), 'error')
-            return
-        end
-        if Player.PlayerData.money.cash >= Config.TruckerJobTruckDeposit then
-            Bail[Player.PlayerData.citizenid] = { deposit = Config.TruckerJobTruckDeposit, plate = nil, netId = nil } -- 2026-09-06: プレート/netIdも追跡できるようテーブル化
-            Player.Functions.RemoveMoney('cash', Config.TruckerJobTruckDeposit, 'tow-received-bail')
-            TriggerClientEvent('QBCore:Notify', src, Lang:t('success.paid_with_cash', { value = Config.TruckerJobTruckDeposit }), 'success')
-            TriggerClientEvent('qb-trucker:client:SpawnVehicle', src, vehInfo)
-        elseif Player.PlayerData.money.bank >= Config.TruckerJobTruckDeposit then
-            Bail[Player.PlayerData.citizenid] = { deposit = Config.TruckerJobTruckDeposit, plate = nil, netId = nil }
-            Player.Functions.RemoveMoney('bank', Config.TruckerJobTruckDeposit, 'tow-received-bail')
-            TriggerClientEvent('QBCore:Notify', src, Lang:t('success.paid_with_bank', { value = Config.TruckerJobTruckDeposit }), 'success')
-            TriggerClientEvent('qb-trucker:client:SpawnVehicle', src, vehInfo)
+        if Player.PlayerData.money.cash >= Config.BailPrice then
+            Bail[Player.PlayerData.citizenid] = Config.BailPrice
+            Player.Functions.RemoveMoney('cash', Config.BailPrice, 'tow-paid-bail')
+            TriggerClientEvent('QBCore:Notify', src, Lang:t('success.paid_with_cash', { value = Config.BailPrice }), 'success')
+            TriggerClientEvent('qb-tow:client:SpawnVehicle', src, vehInfo)
+        elseif Player.PlayerData.money.bank >= Config.BailPrice then
+            Bail[Player.PlayerData.citizenid] = Config.BailPrice
+            Player.Functions.RemoveMoney('bank', Config.BailPrice, 'tow-paid-bail')
+            TriggerClientEvent('QBCore:Notify', src, Lang:t('success.paid_with_bank', { value = Config.BailPrice }), 'success')
+            TriggerClientEvent('qb-tow:client:SpawnVehicle', src, vehInfo)
         else
-            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_deposit', { value = Config.TruckerJobTruckDeposit }), 'error')
+            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_deposit', { value = Config.BailPrice }), 'error')
         end
     else
-        local info = Bail[Player.PlayerData.citizenid]
-        if info then
-            Player.Functions.AddMoney('cash', info.deposit, 'trucker-bail-paid')
-            -- 2026-09-06 新設: 正規返却時に、貸出し時に付与したキーの永続保存(qb-vehiclekeys)を確実に剥奪する。
-            -- これを行っていなかったため、返却済み・ログアウト後もそのトラックの鍵を持ち続けてしまっていた。
-            if info.plate then
-                pcall(function() exports['qb-vehiclekeys']:RemoveKeys(src, info.plate) end)
-            end
+        if Bail[Player.PlayerData.citizenid] ~= nil then
+            Player.Functions.AddMoney('bank', Bail[Player.PlayerData.citizenid], 'tow-bail-paid')
             Bail[Player.PlayerData.citizenid] = nil
-            TriggerClientEvent('QBCore:Notify', src, Lang:t('success.refund_to_cash', { value = info.deposit }), 'success')
+            TriggerClientEvent('QBCore:Notify', src, Lang:t('success.refund_to_cash', { value = Config.BailPrice }), 'success')
         end
     end
 end)
 
-RegisterNetEvent('qb-trucker:server:RegisterActiveVehicle', function(plate, netId)
-    -- 2026-09-06 新設: 借用中車両のプレート/netIdをBailに記録しておき、大破時・ログアウト時の
-    -- キー剥奪や車両削除に使えるようにする。
+RegisterNetEvent('qb-tow:server:nano', function(vehNetID)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
+    local targetVehicle = NetworkGetEntityFromNetworkId(vehNetID)
     if not Player then return end
-    local info = Bail[Player.PlayerData.citizenid]
-    if info then
-        info.plate = plate
-        info.netId = netId
+    local playerPed = GetPlayerPed(src)
+    local playerVehicle = GetVehiclePedIsIn(playerPed, true)
+    local playerVehicleCoords = GetEntityCoords(playerVehicle)
+    local targetVehicleCoords = GetEntityCoords(targetVehicle)
+    local dist = #(playerVehicleCoords - targetVehicleCoords)
+    if Player.PlayerData.job.name ~= 'tow' or dist > 11.0 then
+        return DropPlayer(src, Lang:t('info.skick'))
     end
-end)
-
-RegisterNetEvent('qb-trucker:server:EndVehicleRental', function(applyFine)
-    -- 2026-09-06 新設: 大破・Job変更など、正規の返却フロー以外でレンタルが終わった場合の処理。
-    -- 保証金は没収したまま(返金しない)。applyFine=trueの場合のみ、大破に対する追加の罰金
-    -- (Config.TruckerJobDestroyedFine、銀行口座から徴収)を科す。
-    local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
-    local citizenid = Player.PlayerData.citizenid
-    local info = Bail[citizenid]
-    if not info then return end
-    Bail[citizenid] = nil
-
-    if info.plate then
-        pcall(function() exports['qb-vehiclekeys']:RemoveKeys(src, info.plate) end)
-    end
-
-    if applyFine then
-        local removed = Player.Functions.RemoveMoney('bank', Config.TruckerJobDestroyedFine, 'trucker-vehicle-destroyed')
-        if removed then
-            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.vehicle_destroyed_fine', { value = Config.TruckerJobDestroyedFine }), 'error')
-        else
-            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.vehicle_destroyed_no_fine'), 'error')
-        end
-    end
-end)
-
-AddEventHandler('QBCore:Server:OnPlayerUnload', function(src)
-    -- 2026-09-06 新設: ログアウト・切断時に借用中のトラックが残っている場合、鍵の永続保存を
-    -- 剥奪し、車両も削除する(保証金は没収のまま、罰金は科さない)。以前はここで一切処理されず、
-    -- 放置されたトラックの鍵をプレイヤーが持ち続け、再ログイン後もそのトラックに乗れてしまっていた。
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player then return end
-    local citizenid = Player.PlayerData.citizenid
-    local info = Bail[citizenid]
-    if not info then return end
-    Bail[citizenid] = nil
-
-    if info.plate then
-        pcall(function() exports['qb-vehiclekeys']:RemoveKeys(src, info.plate) end)
-    end
-    if info.netId then
-        local veh = NetworkGetEntityFromNetworkId(info.netId)
-        if veh and veh ~= 0 and DoesEntityExist(veh) then
-            DeleteEntity(veh)
-        end
-    end
-end)
-
-RegisterNetEvent('qb-trucker:server:01101110', function(drops)
-    local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    if not Player or Player.PlayerData.job.name ~= 'trucker' then return end
-    drops = tonumber(drops)
-    if not drops then return end
-    drops = math.floor(drops)
-    if drops < 1 then return end
-    if drops > Config.TruckerJobMaxDrops then
-        drops = Config.TruckerJobMaxDrops
-    end
-    local bonus = 0
-
-    if drops >= 5 then
-        if Config.TruckerJobBonus < 0 then Config.TruckerJobBonus = 0 end
-        bonus = (math.ceil(Config.TruckerJobDropPrice / 100) * Config.TruckerJobBonus) * drops
-    end
-    local payment = (Config.TruckerJobDropPrice * drops + bonus)
-    payment = payment - (math.ceil(payment / 100) * Config.TruckerJobPaymentTax)
-    Player.Functions.AddJobReputation(drops)
-    Player.Functions.AddMoney('bank', payment, 'trucker-salary')
-    TriggerClientEvent('QBCore:Notify', src, Lang:t('success.you_earned', { value = payment }), 'success')
-end)
-
-RegisterNetEvent('qb-trucker:server:nano', function()
     local chance = math.random(1, 100)
-    if chance > 26 then return end
-    local xPlayer = QBCore.Functions.GetPlayer(tonumber(source))
-    xPlayer.Functions.AddItem('cryptostick', 1, false)
-    TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['cryptostick'], 'add')
+    if chance < 26 then
+        exports['qb-inventory']:AddItem(src, 'cryptostick', 1, false, false, 'qb-tow:server:nano')
+        TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['cryptostick'], 'add')
+    end
+end)
+
+-- Money Authority fix (2026-08-28): 個々の納車完了をサーバー側で検知・カウントする。
+-- deliverVehicle()(client/main.lua)から都度呼ばれる。qb-garbagejobのRoutes[citizenid]方式と同じ考え方。
+RegisterNetEvent('qb-tow:server:VehicleDelivered', function()
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player or Player.PlayerData.job.name ~= 'tow' then return end
+    local playerPed = GetPlayerPed(src)
+    local playerCoords = GetEntityCoords(playerPed)
+    if #(playerCoords - Config.Locations['dropoff'].coords) > 35.0 then
+        return
+    end
+    local citizenid = Player.PlayerData.citizenid
+    TowDropoffCount[citizenid] = (TowDropoffCount[citizenid] or 0) + 1
+end)
+
+RegisterNetEvent('qb-tow:server:11101110', function(drops)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+    local playerPed = GetPlayerPed(src)
+    local playerCoords = GetEntityCoords(playerPed)
+    if Player.PlayerData.job.name ~= 'tow' or #(playerCoords - vector3(Config.Locations['main'].coords.x, Config.Locations['main'].coords.y, Config.Locations['main'].coords.z)) > 6.0 then
+        return DropPlayer(src, Lang:t('info.skick'))
+    end
+    -- Money Authority fix (2026-08-28): drops引数(クライアント申告値)は使用しない。
+    -- server:VehicleDelivered で積み上げたサーバー側カウントのみを正とする。
+    local citizenid = Player.PlayerData.citizenid
+    drops = TowDropoffCount[citizenid] or 0
+    if drops <= 0 then return end
+    local bonus = 0
+    -- 2026-09-09 経済設計: 基準単価を$150〜170から$530〜570へ引き上げ(基準時給$3,000/hに対し、
+    -- トラック運転手より上の「高め」枠として設定)。
+    -- 同時に、この下のelseifチェーンのバグを修正した。従来は`drops > 5`が真になった時点で
+    -- 以降のelseifに到達できず、6台搬送しても20台搬送しても常に最も低いボーナス率(5%)しか
+    -- 適用されていなかった(10/15/20台用の高ボーナスが実質デッドコード化していた)。
+    -- 閾値の高い方から判定する順序に直し、複数台こなすほど正しく高いボーナス率が適用されるようにした。
+    -- 2026-09-10 経済設計: 基準時給$7,500/hへの移行に伴い$530〜570から約2.85倍に引き上げ。
+    -- 牽引対象車41箇所、デポ(471,-1311)から平均約3,400m。往復6.8km×道路係数1.35を60km/hで
+    -- 走行し、フック/解除に2.5分。1件あたり約11.7分 → 5.1件/h。
+    -- 旧$550では税15%引き後で実効約$2,520/hしかなく、全合法ジョブ中で最も低かった。
+    -- ※この倍率は全ジョブ中で最大(×2.85)。実効時給の推定は移動時間の仮定に依存するため、
+    --   他ジョブより誤差が大きい可能性がある。高すぎると感じた場合はここを最初に下げる。
+    local DropPrice = math.random(1560, 1620)
+    if drops > 20 then
+        bonus = math.ceil((DropPrice / 10) * 12)
+    elseif drops > 15 then
+        bonus = math.ceil((DropPrice / 10) * 10)
+    elseif drops > 10 then
+        bonus = math.ceil((DropPrice / 10) * 7)
+    elseif drops > 5 then
+        bonus = math.ceil((DropPrice / 10) * 5)
+    end
+    local price = (DropPrice * drops) + bonus
+    local taxAmount = math.ceil((price / 100) * PaymentTax)
+    local payment = price - taxAmount
+    Player.Functions.AddMoney('bank', payment, 'tow-salary')
+    TriggerClientEvent('QBCore:Notify', src, Lang:t('success.you_earned', { value = payment }), 'success')
+    TowDropoffCount[citizenid] = 0
+end)
+
+-- Money Authority fix (2026-08-28): ログアウト時にサーバー側カウントを破棄し、次回ログイン時に持ち越さない。
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(source)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if Player then
+        TowDropoffCount[Player.PlayerData.citizenid] = nil
+    end
+end)
+
+QBCore.Commands.Add('npc', Lang:t('info.toggle_npc'), {}, false, function(source)
+    TriggerClientEvent('jobs:client:ToggleNpc', source)
+end)
+
+QBCore.Commands.Add('tow', Lang:t('info.tow'), {}, false, function(source)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if Player.PlayerData.job.name == 'tow' or Player.PlayerData.job.name == 'mechanic' then
+        TriggerClientEvent('qb-tow:client:TowVehicle', source)
+    end
 end)

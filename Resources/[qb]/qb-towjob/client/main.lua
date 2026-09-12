@@ -321,6 +321,28 @@ local function ResetJobState()
     showMarker = false
 end
 
+-- [バグ修正 2026-09-12] 初期化漏れの修正。
+-- CreateElements() を呼んでいたのは OnPlayerLoaded と OnJobUpdate の2つだけで、
+-- onResourceStart が無かった。そのため「ログイン中に qb-towjob を再起動する」と
+-- どちらも発火せず、PlayerJob も空・ブリップもゾーンも作られないまま起動するため、
+-- ゲーム内からレッカージョブが消えたように見える(市役所で職を取り直すまで復帰しない)。
+AddEventHandler('onResourceStart', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    local pd = QBCore.Functions.GetPlayerData()
+    PlayerJob = (pd and pd.job) or {}
+    DestroyElements()
+    if PlayerJob.name == "tow" then
+        CreateElements()
+    end
+end)
+
+-- 停止時に後始末しないと、再起動のたびにブリップが孤児として残り積み上がる。
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    DestroyElements()
+    ResetJobState()
+end)
+
 -- Events
 
 RegisterNetEvent('qb-tow:client:SpawnVehicle', function()
