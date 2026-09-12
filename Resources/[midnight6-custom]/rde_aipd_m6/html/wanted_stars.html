@@ -15,16 +15,22 @@
         }
 
         /*
-         * POSITION: top-right, above the minimap area.
-         * GTA5 default minimap is bottom-left.
-         * Wanted UI lives top-right (vanilla GTA behavior).
-         * right: 3px  → flush to screen edge like vanilla
-         * top: 18px   → just below the safe-zone top edge
+         * POSITION: top-right, below the Midnight6 info HUD (ao_infohud).
+         *
+         * [Midnight6移植 2026-09-12] 以前は top:18px / right:3px で、
+         * ao_infohud の右上パネル(時計・CASH/BANK・ID)と重なっていた。
+         * ao_infohud/html/style.css の #hud は
+         *     --u: clamp(12px, 0.941vw, 21px)
+         *     top: calc(var(--u) * 1.2)  /  right: calc(var(--u) * 1.2)
+         * で、パネルの高さは約 3.3u(2行 × line-height 1.15 + 上下padding 0.8u)。
+         * つまり下端は約 4.5u。ここでは同じ単位を使って 5.6u から始め、
+         * 右端も ao_infohud と揃える。解像度が変わっても重ならない。
          */
         #wanted-hud {
+            --u: clamp(12px, 0.941vw, 21px);
             position: fixed;
-            top: 18px;
-            right: 3px;
+            top: calc(var(--u) * 5.6);
+            right: calc(var(--u) * 1.2);
             display: flex;
             flex-direction: column;
             align-items: flex-end;

@@ -31,25 +31,26 @@ local function GetJailTime()
     return pd.metadata['injail'] or 0
 end
 
+-- [2026-09-12 修正] ネイティブの DrawText は日本語フォントを持たないため
+-- 「□□□□」(豆腐文字)になっていた。NUI(html/jail_hud.html)で描画する。
+local lastSent = -1
+
+local function PushJailTime(t, force)
+    t = t or 0
+    if t == lastSent and not force then return end
+    lastSent = t
+    SendNUIMessage({ type = 'jailTime', time = t })
+end
+
 CreateThread(function()
     Wait(8000)
+    local tick = 0
     while true do
-        local t = GetJailTime()
-        if t and t > 0 then
-            SetTextFont(4)
-            SetTextScale(0.42, 0.42)
-            SetTextColour(255, 255, 255, 230)
-            SetTextDropshadow(0, 0, 0, 0, 255)
-            SetTextDropShadow()
-            SetTextOutline()
-            SetTextCentre(true)
-            SetTextEntry('STRING')
-            AddTextComponentString(('~r~刑期~s~  残り %d ヶ月  ~c~(実時間 約%d分)'):format(t, t))
-            DrawText(0.5, 0.020)
-            Wait(0)
-        else
-            Wait(2000)
-        end
+        tick = tick + 1
+        -- 値が変わったときに送る。加えて10秒ごとに送り直す
+        -- (NUIの読み込み前に送った分が捨てられても、次で必ず反映される)
+        PushJailTime(GetJailTime(), (tick % 5) == 1)
+        Wait(2000)
     end
 end)
 

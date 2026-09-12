@@ -638,16 +638,20 @@ RegisterNetEvent('police:m6Captured', function()
             TriggerEvent('m6_crime:server:captureAborted', source, jailTime)
             return
         end
-        -- qb-ambulancejob の死亡/瀕死状態を解除してから収監する
-        TriggerClientEvent('hospital:client:Revive', source)
-        SetTimeout(1500, function()
-            if not GetPlayerName(source) then
-                TriggerEvent('m6_crime:server:captureAborted', source, jailTime)
-                return
-            end
-            SetWantedLevel(source, 0, 'Captured')
-            JailPlayer(source, jailTime, nil, 'ai_capture')
-        end)
+        -- [Midnight6移植 2026-09-12 修正]
+        --   以前はここで hospital:client:Revive を送ってから収監していたが、
+        --   qb-ambulancejob の瀕死確定は遅れて入る:
+        --     laststand.lua 39-70 → Wait(1000) → ラグドールが止まるまで待つ
+        --                        → NetworkResurrectLocalPlayer → InLaststand = true
+        --   蘇生イベントが先に届くと main.lua 542 の
+        --     if isDead or InLaststand then
+        --   が false になり、何も起こらないまま瀕死が確定する。
+        --   結果として瀕死のまま刑務所へ送られていた(出血タイマー継続)。
+        --   収監(テレポート)を先に済ませ、到着後にクライアント側で
+        --   「起き上がるまで蘇生を送り直す」方式に変更した。
+        SetWantedLevel(source, 0, 'Captured')
+        JailPlayer(source, jailTime, nil, 'ai_capture')
+        TriggerClientEvent('rde_aipd:m6:wakeInPrison', source)
     end)
 
     Debug(('m6Captured: player %d will be jailed for %ds (level %d)'):format(source, jailTime, lvl))

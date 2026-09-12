@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>m6_crime | JAIL HUD</title>
+<style>
+  /*
+   * 刑期表示。
+   * ネイティブの DrawText は日本語フォントを持たないため「□□□□」になる
+   * (Midnight6 の豆腐文字問題)。NUI(HTML)で描画すれば日本語が出る。
+   *
+   * 位置: 画面上部中央。
+   *   ・コンパス(上部中央・最上段)と ao_infohud(右上パネル)の下に置く。
+   *   ・--u は ao_infohud/html/style.css と同じ基準単位。解像度が変わっても
+   *     同じ見た目・同じ余白になる。
+   */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    pointer-events: none;
+    font-family: 'Yu Gothic UI', 'Meiryo', 'Hiragino Sans', 'Noto Sans JP', 'MS Gothic', sans-serif;
+  }
+
+  #jail {
+    --u: clamp(12px, 0.941vw, 21px);
+    position: fixed;
+    top: calc(var(--u) * 5.6);
+    left: 50%;
+    transform: translateX(-50%) translateY(-6px);
+    display: flex;
+    align-items: center;
+    gap: calc(var(--u) * 0.6);
+    padding: calc(var(--u) * 0.34) calc(var(--u) * 0.95);
+    background: rgba(15, 17, 22, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: calc(var(--u) * 0.18) solid rgba(232, 72, 72, 0.9);
+    border-radius: calc(var(--u) * 0.5);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+    color: #e9ebf0;
+    font-size: calc(var(--u) * 0.86);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  #jail.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #jail .label {
+    color: rgba(255, 120, 120, 0.95);
+    font-weight: 700;
+  }
+
+  #jail .value {
+    font-size: calc(var(--u) * 1.05);
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  #jail .sub {
+    color: rgba(233, 235, 240, 0.55);
+    font-size: calc(var(--u) * 0.74);
+  }
+</style>
+</head>
+<body>
+
+  <div id="jail">
+    <span class="label">刑期</span>
+    <span>残り</span>
+    <span class="value" id="months">0</span>
+    <span>ヶ月</span>
+    <span class="sub" id="sub">(実時間 約0分)</span>
+  </div>
+
+  <script>
+    'use strict';
+
+    const el     = document.getElementById('jail');
+    const months = document.getElementById('months');
+    const sub    = document.getElementById('sub');
+
+    function update(time) {
+      time = Number(time) || 0;
+      if (time <= 0) { el.classList.remove('visible'); return; }
+      months.textContent = time;
+      sub.textContent = '(実時間 約' + time + '分)';
+      el.classList.add('visible');
+    }
+
+    window.addEventListener('message', ({ data }) => {
+      if (!data || data.type !== 'jailTime') return;
+      update(data.time);
+    });
+  </script>
+
+</body>
+</html>

@@ -1626,6 +1626,75 @@ local function SetAlive()
     WantedSystem.isDead = false
 end
 
+-- ════════════════════════════════════════════════════════════════
+-- [Midnight6追加 2026-09-12] 収監後に刑務所で起き上がらせる
+--
+--   問題: 捕縛→収監したとき、刑務所に「瀕死のまま」到着していた。
+--   原因: qb-ambulancejob の瀕死は遅れて確定する。
+--         laststand.lua 39-70
+--           Wait(1000) → ラグドールが止まるまで待機
+--           → NetworkResurrectLocalPlayer → InLaststand = true
+--         一方 hospital:client:Revive (main.lua 539-545) は
+--           if isDead or InLaststand then ... NetworkResurrectLocalPlayer ...
+--         なので、確定前に蘇生を送ると何も起きない。
+--   対策: 収監後、一定時間「倒れているか」を監視し、倒れている間は
+--         蘇生を送り直す。遅れて瀕死が確定した場合も取りこぼさない。
+--
+--   判定は qb-ambulancejob のグローバル変数(別リソースなので参照不可)ではなく、
+--   ローカルで即座に分かる次の3つを使う:
+--     ・IsEntityDead
+--     ・瀕死モーション(combat@damage@writhe / writhe_loop)の再生中か
+--     ・qb-core メタデータ(isdead / inlaststand) ※サーバー往復のぶん遅れる
+-- ════════════════════════════════════════════════════════════════
+
+local M6_WRITHE_DICT = 'combat@damage@writhe'
+local M6_WRITHE_ANIM = 'writhe_loop'
+
+local function M6IsDownNow()
+    local ped = PlayerPedId()
+    if IsEntityDead(ped) then return true end
+    if IsEntityPlayingAnim(ped, M6_WRITHE_DICT, M6_WRITHE_ANIM, 3) then return true end
+    return false
+end
+
+local m6WakeRunning = false
+
+RegisterNetEvent('rde_aipd:m6:wakeInPrison', function()
+    if m6WakeRunning then return end
+    m6WakeRunning = true
+
+    local cap        = (Config.M6 and Config.M6.capture) or {}
+    local windowMs   = cap.wakeWindowMs or 20000
+    local intervalMs = cap.wakeIntervalMs or 1000
+    local minGapMs   = cap.wakeMinGapMs or 1500
+
+    CreateThread(function()
+        local deadline = GetGameTimer() + windowMs
+        local lastRevive = 0
+        local revives = 0
+
+        -- 1回目は状態が確定する前でも送っておく(死亡状態はこれで解ける)
+        TriggerEvent('hospital:client:Revive')
+        lastRevive = GetGameTimer()
+        revives = 1
+
+        while GetGameTimer() < deadline do
+            Wait(intervalMs)
+            if M6IsDownNow() or M6IsDownMeta() then
+                if revives < 10 and (GetGameTimer() - lastRevive) >= minGapMs then
+                    TriggerEvent('hospital:client:Revive')
+                    lastRevive = GetGameTimer()
+                    revives = revives + 1
+                end
+            end
+        end
+
+        SetAlive()
+        Debug(('M6: wakeInPrison finished (revive sent %d times)'):format(revives))
+        m6WakeRunning = false
+    end)
+end)
+
 AddEventHandler('gameEventTriggered', function(name, args)
     if name == 'CEventNetworkEntityDamage' then
         local victim = args[1]

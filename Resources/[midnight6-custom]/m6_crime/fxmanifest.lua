@@ -22,6 +22,13 @@ client_scripts {
     'client/main.lua'
 }
 
+-- 刑期表示。日本語をネイティブの DrawText で出すと豆腐文字になるため NUI を使う
+ui_page 'html/jail_hud.html'
+
+files {
+    'html/jail_hud.html'
+}
+
 dependencies {
     'oxmysql',
     'ox_lib',
