@@ -9,7 +9,7 @@ Config = {}
 -- If you're not utilizing ox_lib, it's time to question your approach.
 Config.Target = "ox" -- "ox" or "qb"
 Config.Notify = "qb" -- "ox" or "qb"
-Config.Radial = "qb" -- "ox" or "qb"
+Config.Radial = "ox" -- "ox" or "qb"  -- 2026-09-11: ラジアルUIを ao_radial(ox_lib)へ移したため ox に変更。qb のままだと家具メニュー/物件を管理が qb-radialmenu 側にしか登録されず、ox 側で出ない。
 Config.Inventory = "ox" -- "ox" or "qb"
 Config.Logs = "qb" -- "qb"
 

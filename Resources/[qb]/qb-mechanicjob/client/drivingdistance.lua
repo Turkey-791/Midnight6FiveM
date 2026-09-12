@@ -11,7 +11,19 @@ local currentDamageMult = 1.0 -- 車両価格に応じたダメージ倍率(高�
 
 local function GetPriceDamageMultiplier(veh)
     if not Config.UseDurabilityTiers then return 1.0 end
-    local vehInfo = QBCore.Shared.VehicleHashes[GetEntityModel(veh)]
+    -- [バグ修正 2026-09-12] この resource のグローバル QBCore は client/cosmetic.lua:1 で
+    -- exports['qb-core']:GetCoreObject({ 'Functions' }) として生成されているため、
+    -- QBCore.Shared が存在しない。そのためここは毎回
+    --   SCRIPT ERROR: @qb-mechanicjob/client/drivingdistance.lua
+    --   attempt to index a nil value (field 'Shared')
+    -- で落ちており、呼び出し元の gameEventTriggered ハンドラもそこで中断していたため、
+    -- TrackDistance() が一度も起動せず、走行距離ダメージ・摩耗パーツ機能が全て死んでいた。
+    -- 同 resource の client/main.lua:1 と同じ GetShared エクスポート経由に統一する。
+    -- (QBCore.Shared を丸ごと取り直すのではなく必要な名前空間だけを取る。
+    --  QBCore:Client:SharedUpdate でテーブルが差し替わっても古い参照を掴まないよう、
+    --  ファイル先頭ではなく呼び出し毎に取得する)
+    local vehicleHashes = exports['qb-core']:GetShared('VehicleHashes')
+    local vehInfo = vehicleHashes and vehicleHashes[GetEntityModel(veh)]
     local price = vehInfo and vehInfo.price or Config.DurabilityBasePrice
     if not price or price <= Config.DurabilityBasePrice then return 1.0 end
     local ratio = (price - Config.DurabilityBasePrice) / (Config.DurabilityLuxuryPrice - Config.DurabilityBasePrice)

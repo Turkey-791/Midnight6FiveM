@@ -27,6 +27,19 @@
 --         キャンセル時に nil を返す挙動も元と同じ。
 -- ============================================================================
 
+-- ---------------------------------------------------------------------------
+-- ox_lib の UI は react-markdown で描画され、rehypeRaw を入れていないため
+-- <br> などの生HTMLは改行にならない。remark-breaks も無いので単独の \n も
+-- 改行にならない。Markdown のハード改行(行末2スペース + 改行)へ変換する。
+--   確認: ox_lib/web/build/assets/*.js に react-markdown のみ(rehypeRaw なし)
+-- ---------------------------------------------------------------------------
+local function mdText(s)
+    if type(s) ~= 'string' then return s end
+    if not s:find('<', 1, true) then return s end
+    s = s:gsub('<[bB][rR]%s*/?>', '  \n')
+    return s
+end
+
 local TYPE_MAP = {
     text     = 'input',
     input    = 'input',
@@ -53,7 +66,7 @@ local function ShowInput(data)
         local inp = inputs[i]
         local row = {
             type  = TYPE_MAP[inp.type] or 'input',
-            label = tostring(inp.text or inp.label or inp.header or ''),
+            label = mdText(tostring(inp.text or inp.label or inp.header or '')),
         }
 
         if inp.default ~= nil then row.default = inp.default end
@@ -78,7 +91,7 @@ local function ShowInput(data)
         names[i] = inp.name
     end
 
-    local result = lib.inputDialog(tostring(data.header or ''), rows)
+    local result = lib.inputDialog(mdText(tostring(data.header or '')), rows)
     if not result then return nil end
 
     local out = {}

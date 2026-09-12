@@ -43,11 +43,24 @@ local NOTIFY_TYPE = {
 }
 
 -- ---------------------------------------------------------------------------
+-- ox_lib の UI は react-markdown で描画され、rehypeRaw を入れていないため
+-- <br> などの生HTMLは改行にならない。remark-breaks も無いので単独の \n も
+-- 改行にならない。Markdown のハード改行(行末2スペース + 改行)へ変換する。
+--   確認: ox_lib/web/build/assets/*.js に react-markdown のみ(rehypeRaw なし)
+-- ---------------------------------------------------------------------------
+local function mdText(s)
+    if type(s) ~= 'string' then return s end
+    if not s:find('<', 1, true) then return s end
+    s = s:gsub('<[bB][rR]%s*/?>', '  \n')
+    return s
+end
+
+-- ---------------------------------------------------------------------------
 -- Text UI
 -- ---------------------------------------------------------------------------
 AddEventHandler('ao_uibridge:textui:show', function(text, position)
     if type(text) ~= 'string' or text == '' then return end
-    lib.showTextUI(text, { position = POSITION[position] or POSITION.left })
+    lib.showTextUI(mdText(text), { position = POSITION[position] or POSITION.left })
 end)
 
 AddEventHandler('ao_uibridge:textui:hide', function()
@@ -69,13 +82,18 @@ AddEventHandler('ao_uibridge:notify', function(text, texttype, length, icon)
     local data = {
         type     = NOTIFY_TYPE[texttype] or 'info',
         duration = tonumber(length) or 5000,
+        -- 2026-09-11: ox_lib の既定 'top-right' は ao_infohud(右上)と重なるため、
+        -- qb-core 時代と同じ「右・垂直中央」に固定する。
+        -- (ox_lib の有効値: top / top-right / top-left / bottom / bottom-right /
+        --  bottom-left / center-right / center-left)
+        position = 'center-right',
     }
 
     if type(text) == 'table' then
-        data.title       = text.caption
-        data.description = text.text or 'Placeholder'
+        data.title       = mdText(text.caption)
+        data.description = mdText(text.text or 'Placeholder')
     else
-        data.description = tostring(text)
+        data.description = mdText(tostring(text))
     end
 
     if icon and icon ~= '' then data.icon = icon end

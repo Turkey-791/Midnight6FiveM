@@ -11,8 +11,29 @@ local showMarker = false
 local CurrentBlip2 = nil
 local CurrentTow = nil
 local drawDropOff = false
+-- [バグ修正 2026-09-12] ジョブを離れたときに撤去できるよう、生成物のハンドルを保持する。
+-- 元の実装は CreateElements() 内の local 変数でブリップを作っていたため、作ったあとに
+-- 消す手段が無く、ジョブを変えてもマップにマークが残り続けていた。
+local JobBlips = {}     -- 本部 / 車両庫のブリップ
+local JobZones = {}     -- 本部 / 車両庫の ComboZone(qb-target 使用時はゾーン名の文字列)
+local NpcVehicle = nil  -- 牽引対象としてスポーンさせたNPC車両の実体
 
 -- Functions
+
+-- [バグ修正 2026-09-12] 元の実装はゾーン側のハンドラに職業判定が無かった。
+-- レッカー職を離れてもゾーンが生き続けるため、タクシー職のまま車両庫に入ると出庫メニューが
+-- 開き、さらに本部に入ると server/main.lua の qb-tow:server:11101110 にある
+-- 「job.name ~= 'tow' なら DropPlayer」に当たってキックされる状態だった。
+local function CurrentJobName()
+    local pd = QBCore.Functions.GetPlayerData()
+    local name = pd and pd.job and pd.job.name
+    if name then return name end
+    return PlayerJob and PlayerJob.name
+end
+
+local function IsTowJob()
+    return CurrentJobName() == 'tow'
+end
 
 local function getRandomVehicleLocation()
     local randomVehicle = math.random(1, #Config.Locations["towspots"])
@@ -131,6 +152,7 @@ local function CreateZone(type, number)
             },
             distance = 2
         })
+        JobZones[#JobZones + 1] = boxName -- [バグ修正 2026-09-12] 撤去用に名前を保持
     else
         local zone = BoxZone:Create(
             coords, size, size, {
@@ -153,6 +175,11 @@ local function CreateZone(type, number)
                 end
             end
         end)
+        -- [バグ修正 2026-09-12] 本部/車両庫のゾーンを後から撤去できるよう保持する
+        if type == "main" or type == "vehicle" then
+            JobZones[#JobZones + 1] = zoneCombo
+        end
+
         if type == "vehicle" then
             local zoneMark = BoxZone:Create(
                 coords, 20, 20, {
@@ -171,6 +198,7 @@ local function CreateZone(type, number)
                     TriggerEvent('qb-tow:client:ShowMarker', false)
                 end
             end)
+            JobZones[#JobZones + 1] = zoneComboV -- [バグ修正 2026-09-12]
         elseif type == "towspots" then
             CurrentLocation.zoneCombo = zoneCombo
         end
@@ -185,6 +213,7 @@ local function deliverVehicle(vehicle)
     -- 支払い計算はサーバー側のカウントのみを使用し、このJobsDoneはUI表示専用として残す。
     TriggerServerEvent('qb-tow:server:VehicleDelivered')
     VehicleSpawned = false
+    NpcVehicle = nil -- [バグ修正 2026-09-12] 直上の DeleteVehicle で消えているので参照を捨てる
     QBCore.Functions.Notify(Lang:t("mission.delivered_vehicle"), "success")
     QBCore.Functions.Notify(Lang:t("mission.get_new_vehicle"))
 
@@ -212,6 +241,7 @@ local function CreateElements()
     BeginTextCommandSetBlipName("STRING")
     AddTextComponentSubstringPlayerName(Config.Locations["main"].label)
     EndTextCommandSetBlipName(TowBlip)
+    JobBlips[#JobBlips + 1] = TowBlip -- [バグ修正 2026-09-12]
 
     local TowVehBlip = AddBlipForCoord(Config.Locations["vehicle"].coords.x, Config.Locations["vehicle"].coords.y, Config.Locations["vehicle"].coords.z)
     SetBlipSprite(TowVehBlip, 326)
@@ -222,10 +252,75 @@ local function CreateElements()
     BeginTextCommandSetBlipName("STRING")
     AddTextComponentSubstringPlayerName(Config.Locations["vehicle"].label)
     EndTextCommandSetBlipName(TowVehBlip)
+    JobBlips[#JobBlips + 1] = TowVehBlip -- [バグ修正 2026-09-12]
 
     CreateZone("main")
     CreateZone("vehicle")
 end
+
+-- [バグ修正 2026-09-12] ここから3つは新規。CreateElements() の対になる撤去処理。
+
+--- スポーンさせたNPC車両を片付ける。
+--- 他プレイヤーが乗っている車は消さない。所有権が取れない場合 DeleteVehicle は何もしない
+--- だけなので、消せなかったときも副作用は無い。
+local function RemoveNpcVehicle()
+    if NpcVehicle and DoesEntityExist(NpcVehicle) and NpcVehicle ~= CurrentTow then
+        if IsVehicleSeatFree(NpcVehicle, -1) and GetVehicleNumberOfPassengers(NpcVehicle) == 0 then
+            SetEntityAsMissionEntity(NpcVehicle, true, true)
+            DeleteVehicle(NpcVehicle)
+        end
+    end
+    NpcVehicle = nil
+end
+
+--- 本部/車両庫のブリップとゾーンを撤去する。CreateElements() が作ったものだけを対象にする。
+local function DestroyElements()
+    for i = 1, #JobBlips do
+        if DoesBlipExist(JobBlips[i]) then RemoveBlip(JobBlips[i]) end
+    end
+    JobBlips = {}
+
+    for i = 1, #JobZones do
+        local z = JobZones[i]
+        if type(z) == 'string' then
+            exports['qb-target']:RemoveZone(z)
+        elseif z and z.destroy then
+            z:destroy()
+        end
+    end
+    JobZones = {}
+
+    showMarker = false
+end
+
+--- 進行中のミッション状態を破棄する。レッカー職から離れたときだけ呼ぶ。
+--- JobsDone は意図的に残す(レッカー職に戻れば給与を請求できる。サーバー側の
+--- TowDropoffCount も残っているため、ここで0にすると受け取れなくなる)。
+local function ResetJobState()
+    if CurrentLocation and CurrentLocation.zoneCombo then
+        CurrentLocation.zoneCombo:destroy()
+    end
+    if DoesBlipExist(CurrentBlip) then RemoveBlip(CurrentBlip) end
+    if DoesBlipExist(CurrentBlip2) then RemoveBlip(CurrentBlip2) end
+    CurrentBlip = nil
+    CurrentBlip2 = nil
+
+    -- 牽引中の車を宙ぶらりんのまま残さない
+    if CurrentTow and DoesEntityExist(CurrentTow) then
+        FreezeEntityPosition(CurrentTow, false)
+        DetachEntity(CurrentTow, true, true)
+    end
+    CurrentTow = nil
+
+    RemoveNpcVehicle()
+
+    CurrentLocation = {}
+    NpcOn = false
+    VehicleSpawned = false
+    drawDropOff = false
+    showMarker = false
+end
+
 -- Events
 
 RegisterNetEvent('qb-tow:client:SpawnVehicle', function()
@@ -250,17 +345,35 @@ end)
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     PlayerJob = QBCore.Functions.GetPlayerData().job
 
+    DestroyElements() -- [バグ修正 2026-09-12] キャラ再選択などで二重に生成しないため
     if PlayerJob.name == "tow" then
         CreateElements()
     end
 end)
 
+-- [バグ修正 2026-09-12] 元は tow のときに CreateElements() を足すだけで、撤去の分岐が
+-- 一切無かった。そのため
+--   (1) ジョブを変えてもブリップ(本部・車両庫・牽引対象ルート)が残り続ける
+--   (2) tow → 他職 → tow で二重に生成される
+--   (3) レッカー職でなくなった後もゾーンが動き続ける
+-- という3点が起きていた。撤去を必ず先に行い、tow のときだけ作り直す。
 RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
     PlayerJob = JobInfo
 
+    DestroyElements()
+
     if PlayerJob.name == "tow" then
         CreateElements()
+    else
+        ResetJobState()
     end
+end)
+
+-- [バグ修正 2026-09-12] ログアウト/キャラ切り替え時にも撤去する
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    DestroyElements()
+    ResetJobState()
+    PlayerJob = {}
 end)
 
 RegisterNetEvent('jobs:client:ToggleNpc', function()
@@ -284,17 +397,28 @@ RegisterNetEvent('jobs:client:ToggleNpc', function()
             SetBlipRoute(CurrentBlip, true)
             SetBlipRouteColour(CurrentBlip, 3)
         else
+            -- [バグ修正 2026-09-12] 元はブリップだけを消しており、50x50 の牽引対象ゾーンと
+            -- スポーン済みのNPC車両が残っていた(OFFにしてもその場所に行くと車が湧く)。
+            -- また RemoveBlip が DoesBlipExist の中にあるため、ブリップが既に無い場合は
+            -- CurrentLocation も VehicleSpawned もリセットされなかった。
+            if CurrentLocation and CurrentLocation.zoneCombo then
+                CurrentLocation.zoneCombo:destroy()
+            end
             if DoesBlipExist(CurrentBlip) then
                 RemoveBlip(CurrentBlip)
-                CurrentLocation = {}
-                CurrentBlip = nil
             end
+            RemoveNpcVehicle()
+            CurrentLocation = {}
+            CurrentBlip = nil
             VehicleSpawned = false
         end
     end
 end)
 
 RegisterNetEvent('qb-tow:client:TowVehicle', function()
+    -- [バグ修正 2026-09-12] 牽引はレッカー職とメカニック職のみ(server/main.lua の /tow と同条件)
+    local job = CurrentJobName()
+    if job ~= 'tow' and job ~= 'mechanic' then return end
     local vehicle = GetVehiclePedIsIn(PlayerPedId(), true)
     if isTowVehicle(vehicle) then
         if CurrentTow == nil then
@@ -387,6 +511,7 @@ RegisterNetEvent('qb-tow:client:TowVehicle', function()
 end)
 
 RegisterNetEvent('qb-tow:client:TakeOutVehicle', function(data)
+    if not IsTowJob() then return end -- [バグ修正 2026-09-12]
     local coords = Config.Locations["vehicle"].coords
     coords = vector3(coords.x, coords.y, coords.z)
     local ped = PlayerPedId()
@@ -401,6 +526,7 @@ RegisterNetEvent('qb-tow:client:TakeOutVehicle', function(data)
 end)
 
 RegisterNetEvent('qb-tow:client:Vehicle', function()
+    if not IsTowJob() then return end -- [バグ修正 2026-09-12]
     local vehicle = GetVehiclePedIsIn(PlayerPedId(), false)
     if not CurrentTow then
         if vehicle and isTowVehicle(vehicle) then
@@ -415,6 +541,9 @@ RegisterNetEvent('qb-tow:client:Vehicle', function()
 end)
 
 RegisterNetEvent('qb-tow:client:PaySlip', function()
+    -- [バグ修正 2026-09-12] 職業判定が無かったため、レッカー職でない状態でここに入ると
+    -- サーバー側の DropPlayer(エクスプロイト対策)に当たってキックされていた。
+    if not IsTowJob() then return end
     if JobsDone > 0 then
         RemoveBlip(CurrentBlip)
         TriggerServerEvent("qb-tow:server:11101110", JobsDone)
@@ -426,9 +555,11 @@ RegisterNetEvent('qb-tow:client:PaySlip', function()
 end)
 
 RegisterNetEvent('qb-tow:client:SpawnNPCVehicle', function()
+    if not IsTowJob() then return end -- [バグ修正 2026-09-12]
     if not VehicleSpawned then
         QBCore.Functions.TriggerCallback('QBCore:Server:SpawnVehicle', function(netId)
             local veh = NetToVeh(netId)
+            NpcVehicle = veh -- [バグ修正 2026-09-12] 撤去できるよう実体を保持する
             exports['LegacyFuel']:SetFuel(veh, 0.0)
             VehicleSpawned = true
         end, CurrentLocation.model, CurrentLocation, false)

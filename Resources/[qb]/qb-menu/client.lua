@@ -34,6 +34,19 @@ local headerData   = nil
 local headerThread = false
 
 -- ---------------------------------------------------------------------------
+-- ox_lib の UI は react-markdown で描画され、rehypeRaw を入れていないため
+-- <br> などの生HTMLは改行にならない。remark-breaks も無いので単独の \n も
+-- 改行にならない。Markdown のハード改行(行末2スペース + 改行)へ変換する。
+--   確認: ox_lib/web/build/assets/*.js に react-markdown のみ(rehypeRaw なし)
+-- ---------------------------------------------------------------------------
+local function mdText(s)
+    if type(s) ~= 'string' then return s end
+    if not s:find('<', 1, true) then return s end
+    s = s:gsub('<[bB][rR]%s*/?>', '  \n')
+    return s
+end
+
+-- ---------------------------------------------------------------------------
 -- 並び替え: 元の qb-menu client.lua:8-15 と同一の挙動
 -- ---------------------------------------------------------------------------
 local function sortData(data, skipfirst)
@@ -105,10 +118,11 @@ local function buildOptions(data)
             if v.isMenuHeader then
                 title = tostring(v.header or '')
                 if v.txt and v.txt ~= '' then title = title .. ' — ' .. tostring(v.txt) end
+                title = mdText(title)
             else
                 local option = {
-                    title = tostring(v.header or ''),
-                    description = v.txt,
+                    title = mdText(tostring(v.header or '')),
+                    description = mdText(v.txt),
                 }
                 resolveIcon(option, v.icon)
                 if v.disabled then option.disabled = true end
