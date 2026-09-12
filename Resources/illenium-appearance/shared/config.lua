@@ -21,7 +21,7 @@ Config.TextUIOptions = {
 }
 
 Config.NotifyOptions = {
-    position = "top-right"
+    position = "center-right"
 }
 
 Config.OutfitCodeLength = 10
