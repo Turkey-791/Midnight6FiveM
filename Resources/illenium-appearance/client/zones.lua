@@ -42,6 +42,8 @@ local function onStoreEnter(data)
         }
         local prefix = Config.UseRadialMenu and "" or "[E] "
         if currentZone.name == "clothing" then
+            -- [Midnight6/ao_clothing] いまいる服屋をカタログ側に伝える(店舗別の品揃え)
+            pcall(function() exports["ao_clothing"]:SetCurrentStore(index) end)
             lib.showTextUI(prefix .. string.format(_L("textUI.clothing"), Config.ClothingCost), Config.TextUIOptions)
         elseif currentZone.name == "barber" then
             lib.showTextUI(prefix .. string.format(_L("textUI.barber"), Config.BarberCost), Config.TextUIOptions)
@@ -90,6 +92,8 @@ end
 
 local function onZoneExit()
     currentZone = nil
+    -- [Midnight6/ao_clothing] 退店したので店舗フィルタを解除する
+    pcall(function() exports["ao_clothing"]:ClearCurrentStore() end)
     Radial.RemoveOption()
     lib.hideTextUI()
 end

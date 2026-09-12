@@ -51,6 +51,7 @@ local crimeState = {
     lastPoliceCheck   = 0,
     -- ── v2.0: Combat Suppression Tracking ────────────────────────────────────
     lastShotFired     = 0,  -- GetGameTimer() bei letztem Schuss/Angriff
+    copKillTime       = nil, -- [Midnight6移植] 直近で警官を殺した時刻
 }
 
 -- Telefon-Wahrscheinlichkeit je nach Gebiet — v2.0: deutlich realistischer
@@ -246,12 +247,20 @@ end
 -- runtergeschraubt werden für strengere Realismus-Setups.
 local witnessRejectStats = {fov = 0, los = 0, lastReset = 0}
 
-local function WitnessCanSee(witnessPed, crimeCoords)
+local function WitnessCanSee(witnessPed, crimeCoords, crimeType)
     local cfg = Config.WitnessSystem
     if not cfg or not cfg.requireLineOfSight then return true end
     if not DoesEntityExist(witnessPed) then return false end
 
     local witnessCoords = GetEntityCoords(witnessPed)
+
+    -- [Midnight6移植] 「音で気づく」犯罪(銃声など)は、視野・遮蔽を問わず気づく
+    local hearing = Config.M6 and Config.M6.hearing
+    if hearing and hearing.enabled and crimeType and hearing.crimes and hearing.crimes[crimeType] then
+        if #(crimeCoords - witnessCoords) <= (hearing.radius or 70.0) then
+            return true
+        end
+    end
 
     -- ──── (0) PROXIMITY GRACE — sehr nahe NPCs hören & spüren immer ───────────
     -- v2.0: Grace 8m (war 12m im Original, wir hatten 5m gesetzt — zu klein).
@@ -296,7 +305,7 @@ local function WitnessCanSee(witnessPed, crimeCoords)
     return true
 end
 
-local function GetNearbyWitnesses(coords, radius, excludePed)
+local function GetNearbyWitnesses(coords, radius, excludePed, crimeType)
     local cfg      = Config.WitnessSystem or {}
     local areaType = crimeState.currentArea
 
@@ -312,6 +321,9 @@ local function GetNearbyWitnesses(coords, radius, excludePed)
     end
 
     local result = {npcs = {}, players = {}}
+
+    -- [Midnight6移植] 診断用カウンタ
+    local statInRadius, statCantCall = 0, 0
 
     local startFov, startLos = witnessRejectStats.fov, witnessRejectStats.los
 
@@ -329,9 +341,11 @@ local function GetNearbyWitnesses(coords, radius, excludePed)
                 local pedCoords = GetEntityCoords(ped)
                 local distance  = #(coords - pedCoords)
                 if distance <= radius then
+                    statInRadius = statInRadius + 1
                     -- ✅ v2.0: WitnessCanCall — physisch fähig zu rufen?
+                    if not WitnessCanCall(ped) then statCantCall = statCantCall + 1 end
                     if WitnessCanCall(ped) then
-                        if WitnessCanSee(ped, coords) then
+                        if WitnessCanSee(ped, coords, crimeType) then
                             -- Flüchtende NPCs: halbe Chance — sie sind abgelenkt,
                             -- aber können trotzdem rufen (Hauptfehler war Hard-Filter).
                             local effectiveChance = phoneChance
@@ -359,7 +373,7 @@ local function GetNearbyWitnesses(coords, radius, excludePed)
                 local targetPed = GetPlayerPed(pid)
                 if DoesEntityExist(targetPed) and not IsPedDeadOrDying(targetPed, true) then
                     local dist = #(coords - GetEntityCoords(targetPed))
-                    if dist <= radius and WitnessCanSee(targetPed, coords) then
+                    if dist <= radius and WitnessCanSee(targetPed, coords, crimeType) then
                         result.players[#result.players + 1] = {
                             player   = pid,
                             distance = dist,
@@ -382,6 +396,21 @@ local function GetNearbyWitnesses(coords, radius, excludePed)
         IsCombatSuppressed() and ' ×COMBAT' or '',
         fovRej, losRej
     ))
+
+    -- [Midnight6移植] 診断用の内訳を保持(/aipdwitness で表示)
+    crimeState.lastScan = {
+        crimeType   = crimeType or '?',
+        radius      = radius,
+        area        = areaType,
+        inRadius    = statInRadius,
+        cantCall    = statCantCall,
+        fovRejected = fovRej,
+        losRejected = losRej,
+        candidates  = #result.npcs,
+        withPhone   = withPhone,
+        chance      = phoneChance,
+        suppressed  = IsCombatSuppressed(),
+    }
     return result
 end
 
@@ -791,6 +820,32 @@ function LogCrime(crimeType, coords, force, victimPed)
     end
     crimeLevel = math.min(crimeLevel, 5)
 
+    -- [Midnight6移植] 目撃者を必要としない犯罪(警官への攻撃・殺害)
+    -- 元コードは MURDER_COP に force=true を渡していたが、force はクールダウンを
+    -- 飛ばすだけで目撃者要件は外れない。しかも警官(pedType 6)は目撃者候補から
+    -- 除外されているため、「誰も見ていない場所で警官を殺す」と何も起きず、
+    -- そのあと自然減衰で手配が消えていた。
+    if Config.M6 and Config.M6.alwaysReported and Config.M6.alwaysReported[crimeType] then
+        crimeState.copKillTime = GetGameTimer()
+        TriggerServerEvent('police:reportCrime', {
+            type          = crimeType,
+            coords        = crimeCoords,
+            level         = crimeLevel,
+            witnessCount  = 0,
+            crimeTime     = GetGameTimer(),
+            callCompleted = true,                     -- 無線通報として扱う
+            coOccupants   = GetVehicleCoOccupantServerIds(),
+            witness       = { distance = 0, isPlayerCaller = false, radio = true },
+        })
+        lib.notify({
+            type = 'error',
+            description = (crimeConfig.description or crimeType) .. ' — 無線で本部に通報された',
+            duration = 4000,
+        })
+        Debug(('%s: 目撃者不要の犯罪として通報'):format(crimeType))
+        return true
+    end
+
     -- Zeuge-Radius je nach Schwere
     local baseRadius = (Config.WitnessSystem and Config.WitnessSystem.baseDistance) or 50.0
     local severity   = crimeConfig.severity or 'medium'
@@ -800,7 +855,7 @@ function LogCrime(crimeType, coords, force, victimPed)
         1.0
     )
 
-    local witnesses = GetNearbyWitnesses(crimeCoords, radius, victimPed)
+    local witnesses = GetNearbyWitnesses(crimeCoords, radius, victimPed, crimeType)
     local withPhone = 0
     for _, w in ipairs(witnesses.npcs) do
         if w.hasPhone then withPhone = withPhone + 1 end
@@ -829,7 +884,7 @@ function LogCrime(crimeType, coords, force, victimPed)
                     if nowWanted > 0 and nowWanted >= crimeLevel then return end
 
                     -- Re-Scan mit gleichen Coords (Tatort-Position)
-                    local w2 = GetNearbyWitnesses(crimeCoords, radius, victimPed)
+                    local w2 = GetNearbyWitnesses(crimeCoords, radius, victimPed, crimeType)
                     local c2 = FindBestCaller(w2, crimeCoords)
                     if c2 then
                         Debug(('%s: Re-Scan #%d hat Zeuge gefunden!'):format(crimeType, attempt))
@@ -913,7 +968,23 @@ local function StartWantedDecaySystem()
                 goto continue
             end
 
+            -- [Midnight6移植] 警官を殺した直後は逃げ切り判定を止める
+            local blockSecs = (Config.M6 and Config.M6.decayBlockAfterCopKill) or 0
+            if blockSecs > 0 and crimeState.copKillTime
+                and (GetGameTimer() - crimeState.copKillTime) < (blockSecs * 1000) then
+                crimeState.decayActive = false
+                goto continue
+            end
+
+            -- [Midnight6移植] 減衰の速さは config(手配レベル別)で決める
+            local m6decay   = Config.M6 and Config.M6.decay
+            local beforeMs  = (m6decay and m6decay.timeBeforeDecay and m6decay.timeBeforeDecay * 1000)
+                              or decayConfig.timeBeforeDecay
             local wantedLevel = GetWantedLevel()
+            local intervalMs = decayConfig.decayInterval
+            if m6decay and m6decay.intervalByLevel and m6decay.intervalByLevel[wantedLevel] then
+                intervalMs = m6decay.intervalByLevel[wantedLevel] * 1000
+            end
             if wantedLevel > 0 then
                 local canSee = CheckCopsLineOfSight()
                 crimeState.copsCanSeePlayer = canSee
@@ -924,7 +995,7 @@ local function StartWantedDecaySystem()
                 else
                     local timeSince = GetGameTimer() - crimeState.lastSeenByCop
 
-                    if timeSince >= decayConfig.timeBeforeDecay then
+                    if timeSince >= beforeMs then
                         if not crimeState.decayActive then
                             crimeState.decayActive    = true
                             decayConfig.lastDecayTime = GetGameTimer()
@@ -935,7 +1006,7 @@ local function StartWantedDecaySystem()
                             })
                         end
 
-                        if (GetGameTimer() - decayConfig.lastDecayTime) >= decayConfig.decayInterval then
+                        if (GetGameTimer() - decayConfig.lastDecayTime) >= intervalMs then
                             if GetWantedLevel() > 0 then
                                 TriggerServerEvent('police:decayWantedLevel')
                                 decayConfig.lastDecayTime = GetGameTimer()
@@ -980,9 +1051,8 @@ AddEventHandler('gameEventTriggered', function(name, args)
     if not DoesEntityExist(victim) then return end
 
     -- ── v2.0: Combat Suppression Tracking ────────────────────────────────────
-    -- Jeder Angriff setzt den Timer → supprimiert Zeugen-Calls während Feuergefecht.
-    crimeState.lastShotFired = GetGameTimer()
-
+    -- [Midnight6移植] タイマーは犯罪を登録したあとに立てる(下部で設定)。
+    -- 先に立てると、その攻撃自身の通報率が下がってしまう。
     local victimType = GetPedType(victim)
 
     if isFatal == 1 or IsEntityDead(victim) then
@@ -1006,6 +1076,9 @@ AddEventHandler('gameEventTriggered', function(name, args)
             LogCrime('ASSAULT', nil, false, victim)
         end
     end
+
+    -- [Midnight6移植] 戦闘中フラグは登録後に立てる
+    crimeState.lastShotFired = GetGameTimer()
 end)
 
 -- ════════════════════════════════════════════════════════════════════════════════
@@ -1085,8 +1158,11 @@ local function StartCrimeDetectionThread()
                 end
 
                 if hasTarget then
-                    crimeState.lastShotFired = GetGameTimer()  -- v2.0: Combat Suppression
+                    -- [Midnight6移植] 元コードは LogCrime の前に lastShotFired を立てていたため、
+                    -- 「発砲した瞬間は戦闘中」と判定され、その発砲自身の通報率が 0.2 倍になっていた。
+                    -- これが「道端で撃っても no witness」の主因。順序を入れ替える。
                     LogCrime('SHOOTING')
+                    crimeState.lastShotFired = GetGameTimer()  -- v2.0: Combat Suppression
                 else
                     -- Cooldown trotzdem setzen damit wir nicht jeden Frame neu prüfen
                     crimeState.cooldowns['SHOOTING'] = GetGameTimer() - (Config.CrimeTypes.SHOOTING.cooldown - 2000)
@@ -1120,7 +1196,7 @@ local function StartCrimeDetectionThread()
                             seen = true
                         else
                             -- Mindestens 1 NPC in 20m mit Sichtlinie?
-                            local witnesses = GetNearbyWitnesses(cache.coords, 20.0)
+                            local witnesses = GetNearbyWitnesses(cache.coords, 20.0, nil, 'BRANDISHING')
                             seen = #witnesses.npcs > 0
                         end
                     else
@@ -1476,6 +1552,36 @@ if Config.Debug then
         LogCrime(crimeType, cache.coords, false)
     end, false)
 end
+
+-- ════════════════════════════════════════════════════════════════════════════════
+-- [Midnight6移植] 目撃者スキャンの診断コマンド
+--   /aipdwitness      … その場でスキャンして内訳を表示(犯罪は登録しない)
+--   /aipdlastscan     … 直前の実犯罪でのスキャン結果を表示
+-- ════════════════════════════════════════════════════════════════════════════════
+
+local function FormatScan(scan)
+    if not scan then return '記録がありません' end
+    return ('種別=%s 半径=%.0fm エリア=%s | 範囲内NPC=%d / 通報不能=%d / 視野外=%d / 遮蔽=%d → 候補=%d(電話所持 %d) 通報率=%.0f%%%s')
+        :format(scan.crimeType, scan.radius or 0, tostring(scan.area),
+            scan.inRadius or 0, scan.cantCall or 0, scan.fovRejected or 0, scan.losRejected or 0,
+            scan.candidates or 0, scan.withPhone or 0, (scan.chance or 0) * 100,
+            scan.suppressed and ' ※戦闘中で抑制' or '')
+end
+
+RegisterCommand('aipdwitness', function(_, args)
+    local crimeType = args[1] or 'SHOOTING'
+    local radius = (Config.WitnessSystem and Config.WitnessSystem.baseDistance) or 80.0
+    GetNearbyWitnesses(cache.coords, radius, nil, crimeType)
+    local msg = FormatScan(crimeState.lastScan)
+    print('^3[AIPD|診断]^7 ' .. msg)
+    lib.notify({ type = 'inform', duration = 12000, description = msg })
+end, false)
+
+RegisterCommand('aipdlastscan', function()
+    local msg = FormatScan(crimeState.lastScan)
+    print('^3[AIPD|診断]^7 ' .. msg)
+    lib.notify({ type = 'inform', duration = 12000, description = msg })
+end, false)
 
 -- ════════════════════════════════════════════════════════════════════════════════
 -- EXPORTS

@@ -65,6 +65,48 @@ Config.M6 = {
     -- countOnlyOnDuty = true のときは「勤務中の警官」だけが対象。
     policeExemptFromWanted = true,
 
+    -- ────────────────────────────────────────────────────────────
+    -- 逃げ切り(手配の自然減衰)の難易度
+    --   ・警官に見られていない状態が timeBeforeDecay 秒続くと減衰が始まる
+    --   ・以後、下の間隔ごとに手配が1段階下がる
+    --   ・手配が高いほど逃げ切りに時間がかかる
+    -- ────────────────────────────────────────────────────────────
+    decay = {
+        timeBeforeDecay = 20,   -- 見られなくなってから減衰開始までの秒数
+        intervalByLevel = {
+            [1] = 20,
+            [2] = 30,
+            [3] = 45,
+            [4] = 60,
+            [5] = 90,
+        },
+    },
+
+    -- 目撃者がいなくても必ず通報される犯罪。
+    -- 警官への攻撃・殺害は、無線と本部側の把握があるので目撃者を必要としない。
+    -- これが無いと「誰も見ていない場所で警官を殺す」が最も安全な行動になってしまう。
+    alwaysReported = {
+        MURDER_COP  = true,
+        ASSAULT_COP = true,
+    },
+
+    -- 警官を殺した直後は、手配の自然減衰(逃げ切り判定)を一定時間止める
+    decayBlockAfterCopKill = 60,    -- 秒。0 で無効。[Midnight6調整] 120 → 60
+
+    -- 「音で気づく」犯罪。銃声などは見ていなくても気づくので、
+    -- この距離内のNPCは視野・遮蔽の判定を飛ばして目撃者候補にする。
+    hearing = {
+        enabled = true,
+        radius  = 70.0,
+        crimes  = {
+            SHOOTING    = true,
+            MURDER      = true,
+            MURDER_COP  = true,
+            ASSAULT_COP = true,
+            HIT_AND_RUN = true,
+        },
+    },
+
     -- 目撃者の通報しやすさ(エリア別)。Midnight6 は人口密度が低いので既定より高め
     phoneChanceByArea = {
         CITY_CENTER = 0.85,
@@ -114,6 +156,17 @@ Config.AdminSettings = {
 
 -- ============================================================================
 -- WANTED LEVELS - ULTRA REALISTIC
+-- ============================================================================
+-- [Midnight6メモ] 実際に出てくるもの(コードで確認済み)
+--   Lv1: 2台 警官(cop) 拳銃        命中25 装甲0   非武装には撃たない
+--   Lv2: 3台 警官/保安官 +ショットガン 命中35 装甲25  非武装には撃たない
+--   Lv3: 4台 SWAT/保安官/FBI ライフル 命中45 装甲50  非武装には撃たない
+--   Lv4: 5台 riot/fbi2/police3      命中50 装甲75  非武装には撃たない
+--   Lv5: 6台 riot/fbi2/police4      命中60 装甲100 ★非武装でも撃つ
+--   ・台数は「プレイヤー警察の人数による倍率」が掛かる(警察1人なら0.5倍)
+--   ・ヘリは出ない(useHelicopters / useRoadblocks の設定はコードから参照されていない)
+--   ・車両追跡中のロードブロックは、レベルに関係なく発生する
+--   ・逮捕を狙う挙動は Lv1〜4。Lv5 だけ射殺前提になる
 -- ============================================================================
 
 Config.WantedLevels = {
@@ -229,7 +282,7 @@ Config.WantedLevels = {
             weapons = {"WEAPON_CARBINERIFLE", "WEAPON_PUMPSHOTGUN", "WEAPON_SMG", "WEAPON_COMBATMG"},
             vehicles = {"riot", "fbi2", "police4"},
             armor = 100,
-            accuracy = 70,
+            accuracy = 60,   -- [Midnight6調整] 70 → 60
             arrestDistance = 1.0,
             shootUnarmed = true,
             spawnDistance = 500.0,
@@ -327,7 +380,9 @@ Config.CrimeTypes = {
         severity = 'critical'
     },
     MURDER_COP = {
-        level = 5,
+        -- [Midnight6調整] 5 → 3。RDEは「同じレベルの犯罪を重ねると+1」する仕組みなので、
+        -- 1人目=Lv3、2人目=Lv4、3人目=Lv5 と段階的に上がる。
+        level = 3,
         description = "Officer Down",
         cooldown = 5000,
         witnessChance = 1.0,
@@ -343,7 +398,8 @@ Config.CrimeTypes = {
         severity = 'high'
     },
     ASSAULT_COP = {
-        level = 3,
+        -- [Midnight6調整] 3 → 2(殴っただけで重装備が出ないように)
+        level = 2,
         description = "Officer Assault",
         cooldown = 5000,
         witnessChance = 1.0,

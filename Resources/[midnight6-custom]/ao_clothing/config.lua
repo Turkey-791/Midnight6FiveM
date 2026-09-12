@@ -19,6 +19,13 @@ Config.Debug = false
 --   props:      0=帽子 1=眼鏡 2=耳 6=時計 7=ブレス
 -- slots を nil にすると全スロットを扱う。指定するとそのスロットだけの専門店になる。
 
+-- 構造的なスロット: 店舗で絞らない
+-- 腕(component 3)は「袖と手袋」で、トップスと対で決まる。ここを店舗で絞ると
+-- 「Tシャツを買ったのに袖が長いまま」といった不整合が直せなくなる。
+-- 実データ上も腕には basic タグの商品が1点も無く、絞ると多くの店で0点になってしまう。
+Config.UnfilteredComponents = { [3] = true }
+Config.UnfilteredProps      = {}
+
 Config.StoreProfiles = {
 
     -- ===== 新規キャラクター作成(仮想店舗) =====

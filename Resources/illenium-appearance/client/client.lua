@@ -126,6 +126,10 @@ function InitializeCharacter(gender, onSubmit, onCancel)
 end
 
 function OpenShop(config, isPedMenu, shopType)
+    -- [Midnight6/ao_clothing] 管理者の Ped メニューは店舗フィルタの対象外にする
+    if isPedMenu then
+        pcall(function() exports["ao_clothing"]:ClearCurrentStore() end)
+    end
     lib.callback("illenium-appearance:server:hasMoney", false, function(hasMoney, money)
         if not hasMoney and not isPedMenu then
             lib.notify({

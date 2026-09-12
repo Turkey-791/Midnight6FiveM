@@ -156,6 +156,33 @@ local function propBlacklistMap(gender, propId)
     return {}
 end
 
+-- [Midnight6/ao_clothing] ここから: 店舗別カタログのブラックリストを合成する
+-- ao_clothing が停止していても pcall で握りつぶし、illenium 本来の挙動に戻るだけにする
+local function mergeStoreBlacklist(blacklistSettings, kind, gender, slotId, maxDrawable)
+    local ok, storeList = pcall(function()
+        if kind == "components" then
+            return exports["ao_clothing"]:GetComponentBlacklist(gender, slotId, maxDrawable)
+        end
+        return exports["ao_clothing"]:GetPropBlacklist(gender, slotId, maxDrawable)
+    end)
+    if not ok or type(storeList) ~= "table" or type(storeList.drawables) ~= "table" then
+        return blacklistSettings
+    end
+    local seen = {}
+    for i = 1, #blacklistSettings.drawables do
+        seen[blacklistSettings.drawables[i]] = true
+    end
+    for i = 1, #storeList.drawables do
+        local d = storeList.drawables[i]
+        if not seen[d] then
+            seen[d] = true
+            blacklistSettings.drawables[#blacklistSettings.drawables + 1] = d
+        end
+    end
+    return blacklistSettings
+end
+-- [Midnight6/ao_clothing] ここまで
+
 local function getComponentSettings(ped, componentId)
     local drawableId = GetPedDrawableVariation(ped, componentId)
     local gender = client.getPedDecorationType()
@@ -167,6 +194,9 @@ local function getComponentSettings(ped, componentId)
 
     if client.isPedFreemodeModel(ped) then
         blacklistSettings = filterBlacklistSettings(componentBlacklistMap(gender, componentId), drawableId)
+        -- [Midnight6/ao_clothing] 店舗別の品揃えを合成
+        blacklistSettings = mergeStoreBlacklist(blacklistSettings, "components", gender, componentId,
+            GetNumberOfPedDrawableVariations(ped, componentId) - 1)
     end
 
     return {
@@ -195,6 +225,9 @@ local function getPropSettings(ped, propId)
 
     if client.isPedFreemodeModel(ped) then
         blacklistSettings = filterBlacklistSettings(propBlacklistMap(gender, propId), drawableId)
+        -- [Midnight6/ao_clothing] 店舗別の品揃えを合成
+        blacklistSettings = mergeStoreBlacklist(blacklistSettings, "props", gender, propId,
+            GetNumberOfPedPropDrawableVariations(ped, propId) - 1)
     end
 
     local settings = {

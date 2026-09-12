@@ -51,6 +51,10 @@ local function build()
                     local byslot = src[kind]
                     if byslot then
                         for slotId, items in pairs(byslot) do
+                            -- 構造的なスロットは許可セットを作らない。
+                            -- 未構築 = 空のブラックリスト = 制限なし、として扱われる。
+                            local skip = (kind == 'components' and Config.UnfilteredComponents[slotId])
+                                      or (kind == 'props' and Config.UnfilteredProps[slotId])
                             local set     = {}
                             local enabled = slotEnabled(profile, kind, slotId)
                             for drawable, entry in pairs(items) do
@@ -66,7 +70,9 @@ local function build()
                                 end
                                 if ok then set[drawable] = true end
                             end
-                            Allowed[pid][gender][kind][slotId] = set
+                            if not skip then
+                                Allowed[pid][gender][kind][slotId] = set
+                            end
                         end
                     end
                 end
