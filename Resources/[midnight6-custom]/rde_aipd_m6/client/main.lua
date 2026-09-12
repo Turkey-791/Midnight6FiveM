@@ -485,6 +485,7 @@ function Police.SpawnUnit(spawnPoint, config, level)
         lastTackle     = 0,
         lastPIT        = 0,
         lastRoadblock  = 0,
+        vehStuckSince  = nil,   -- [Midnight6追加] 車が進めなくなった時刻
         lastStateChange = GetGameTimer(),
         draggingOut    = false,
         hasLOS         = false,
@@ -971,8 +972,34 @@ function Police.UpdateBehavior(unit)
 
         else
             -- Player on foot, cop in vehicle
-            if distance < 25.0 and unit.state ~= 'exiting' then
+            -- [Midnight6修正 2026-09-12] 建物の中に入ってこない問題への対処。
+            --   元コードは「25m以内になったら降車」だけだった。
+            --   銀行の中など、車で25m以内に寄れない場所に相手がいると
+            --   いつまでも車に乗ったまま外をうろつくことになる。
+            --   距離は3Dなので、地下の金庫だと高さの差だけで25mを超えることもある。
+            --   ・相手が屋内にいるときは降車する距離を広げる
+            --   ・車が進めなくなっている(道が無い/建物の前で詰まっている)なら降車する
+            local bp = (Config.M6 and Config.M6.buildingPursuit) or {}
+            local bpOn = bp.enabled ~= false
+
+            local exitDist = bp.exitDistance or 25.0
+            if bpOn and GetInteriorFromEntity(cache.ped) ~= 0 then
+                exitDist = bp.interiorExitDistance or 60.0
+            end
+
+            local stuck = false
+            if bpOn then
+                if (GetEntitySpeed(copVeh) * 3.6) < (bp.stuckSpeedKmh or 3.0) then
+                    unit.vehStuckSince = unit.vehStuckSince or now
+                    if (now - unit.vehStuckSince) >= (bp.stuckMs or 4000) then stuck = true end
+                else
+                    unit.vehStuckSince = nil
+                end
+            end
+
+            if (distance < exitDist or stuck) and unit.state ~= 'exiting' then
                 unit.state = 'exiting'; unit.lastStateChange = now
+                unit.vehStuckSince = nil
                 TaskLeaveVehicle(unit.ped, copVeh, 256)
                 -- [Midnight6追加] 同乗者も降ろす。車内に残ると置物になってしまう
                 for _, pp in ipairs(unit.passengers or {}) do
@@ -980,7 +1007,7 @@ function Police.UpdateBehavior(unit)
                         TaskLeaveVehicle(pp, copVeh, 256)
                     end
                 end
-            elseif distance >= 25.0 then
+            elseif distance >= exitDist then
                 unit.state = 'pursuing'
                 TaskVehicleDriveToCoord(unit.ped, copVeh,
                     cache.coords.x, cache.coords.y, cache.coords.z,

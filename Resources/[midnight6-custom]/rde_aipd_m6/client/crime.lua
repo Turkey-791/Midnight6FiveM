@@ -842,6 +842,19 @@ end
 -- LOG CRIME — Hauptfunktion
 -- ════════════════════════════════════════════════════════════════════════════════
 
+-- [Midnight6追加] 検知の履歴。/aipdlog で直近20件を確認できる。
+-- 「気づかないうちに手配された」ときに、何が引き金だったかを後から特定するため。
+local function PushHistory(crimeType, level, result)
+    crimeState.history = crimeState.history or {}
+    table.insert(crimeState.history, 1, {
+        t      = os.date('%H:%M:%S'),
+        crime  = tostring(crimeType),
+        level  = level or 0,
+        result = result or '?',
+    })
+    while #crimeState.history > 20 do table.remove(crimeState.history) end
+end
+
 function LogCrime(crimeType, coords, force, victimPed)
     if not crimeState.systemInitialized then
         Debug('System noch nicht initialisiert')
@@ -902,11 +915,28 @@ function LogCrime(crimeType, coords, force, victimPed)
     local currentWanted = GetWantedLevel()
 
     -- Additives Wanted-Level-System
+    -- [Midnight6修正 2026-09-12] 加算の対象を重い犯罪に限定する。
+    --   元は「同じレベルの犯罪を重ねると +1」が全犯罪に効いていたため、
+    --   レベル1の軽犯罪(銃器の誇示・薬物所持・器物損壊など)を繰り返すだけで
+    --   1→2→3→4→5 と最高レベルまで上がってしまう。
+    --   銃器の誇示はクールダウン15秒なので、その場に立っているだけで数分で最高になる。
+    local sev = crimeConfig.severity or 'medium'
+    local esc = Config.M6 and Config.M6.escalation
+    local canEscalate = true
+    if esc and esc.onlySeverities then
+        canEscalate = esc.onlySeverities[sev] == true
+    end
+
     if currentWanted > 0 then
         if crimeLevel < currentWanted then
             Debug(('%s ignoriert (Level %d < aktuell %d)'):format(crimeType, crimeLevel, currentWanted))
             return false
         elseif crimeLevel == currentWanted then
+            if not canEscalate then
+                Debug(('%s は軽犯罪のため加算しない (現在 %d)'):format(crimeType, currentWanted))
+                PushHistory(crimeType, crimeLevel, '軽犯罪のため加算せず')
+                return false
+            end
             crimeLevel = math.min(5, currentWanted + 1)
         end
     end
@@ -935,6 +965,7 @@ function LogCrime(crimeType, coords, force, victimPed)
             duration = 4000,
         })
         Debug(('%s: 目撃者不要の犯罪として通報'):format(crimeType))
+        PushHistory(crimeType, crimeLevel, '無線通報(目撃者不要)')
         return true
     end
 
@@ -994,6 +1025,7 @@ function LogCrime(crimeType, coords, force, victimPed)
                 -- Alle Re-Scans leer → JETZT erst das "No witnesses" Event/Notif
                 TriggerServerEvent('police:crimeDetectedNoWitness', crimeType, crimeCoords)
                 TriggerServerEvent('police:nostr:crime', crimeType, crimeState.currentArea, false)
+                PushHistory(crimeType, crimeLevel, '目撃者なし')
                 lib.notify({
                     type        = 'success',
                     description = L('no_witnesses_nearby'),
@@ -1025,6 +1057,7 @@ function LogCrime(crimeType, coords, force, victimPed)
         duration    = 3000,
     })
 
+    PushHistory(crimeType, crimeLevel, ('目撃者が通報中(%.0fm)'):format(caller.distance or 0))
     Execute911CallSequence(caller, crimeType, crimeCoords, crimeLevel, totalWitnesses, witnesses)
     return true
 end
@@ -1159,6 +1192,13 @@ AddEventHandler('gameEventTriggered', function(name, args)
 
     if attacker ~= cache.ped or victim == cache.ped then return end
     if not DoesEntityExist(victim) then return end
+
+    -- [Midnight6修正 2026-09-12] 相手が「人」であることを確認する。
+    --   元コードは相手の種類を GetPedType でしか見ておらず、
+    --   「27でも28でもない」= 人間とみなしていた。
+    --   オブジェクトや車両を壊した場合 GetPedType は -1 を返すため、
+    --   プロップを壊しただけで MURDER / ASSAULT が記録されうる。
+    if not IsEntityAPed(victim) then return end
 
     -- ── v2.0: Combat Suppression Tracking ────────────────────────────────────
     -- [Midnight6移植] タイマーは犯罪を登録したあとに立てる(下部で設定)。
@@ -1685,6 +1725,23 @@ RegisterCommand('aipdwitness', function(_, args)
     local msg = FormatScan(crimeState.lastScan)
     print('^3[AIPD|診断]^7 ' .. msg)
     lib.notify({ type = 'inform', duration = 12000, description = msg })
+end, false)
+
+-- 直近に検知された犯罪の履歴。「何もしていないのに手配された」の原因特定用
+RegisterCommand('aipdlog', function()
+    local h = crimeState.history
+    if not h or #h == 0 then
+        lib.notify({ type = 'inform', description = '検知の記録はありません', duration = 5000 })
+        print('^3[AIPD|診断]^7 検知の記録はありません')
+        return
+    end
+    local lines = {}
+    for i, e in ipairs(h) do
+        lines[i] = ('%s  %s (Lv%d) → %s'):format(e.t, e.crime, e.level, e.result)
+    end
+    print('^3[AIPD|診断]^7 ===== 検知履歴(新しい順) =====')
+    for _, l in ipairs(lines) do print('^3[AIPD|診断]^7 ' .. l) end
+    lib.notify({ type = 'inform', duration = 20000, description = table.concat(lines, '\n') })
 end, false)
 
 -- 検知が働かないときに、どこで止まっているかを一度に確認する

@@ -97,3 +97,23 @@ RegisterNetEvent('ao_prisonwork:server:LogPunish', function(kind, units)
     print(('^1[ao_prisonwork]^7 所内犯罪: %s (%s) → 刑期 +%s')
         :format(GetPlayerName(src) or src, tostring(kind), tostring(units)))
 end)
+
+-- ───────────────────────────────────────────────────────────
+-- 座標採取(/prisonwork_here)
+-- ───────────────────────────────────────────────────────────
+-- 実機で良い位置に立って /prisonwork_here cook のように実行すると、
+-- リソース直下の captured_coords.txt に追記される。
+-- 本番の挙動には影響しない。採取が終わったらファイルごと消してよい。
+
+RegisterNetEvent('ao_prisonwork:server:CaptureCoord', function(jobId, x, y, z, h)
+    local src = source
+    if not Config.MarkCommand then return end
+
+    local name = 'captured_coords.txt'
+    local old = LoadResourceFile(GetCurrentResourceName(), name) or
+        '-- ao_prisonwork 座標採取ログ\n-- config.lua の locations にそのまま貼れる形式\n'
+    local line = ('            vec3(%.2f, %.2f, %.2f),   -- %s  (heading %.1f / by %s / %s)\n')
+        :format(x, y, z, jobId, h, GetPlayerName(src) or src, os.date('%Y-%m-%d %H:%M:%S'))
+    SaveResourceFile(GetCurrentResourceName(), name, old .. line, -1)
+    print(('^2[ao_prisonwork]^7 座標を記録: %s vec3(%.2f, %.2f, %.2f)'):format(jobId, x, y, z))
+end)

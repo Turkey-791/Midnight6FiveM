@@ -20,7 +20,9 @@ client_scripts {
     '@PolyZone/CircleZone.lua',
     '@PolyZone/ComboZone.lua',
     'client/main.lua',
-    'client/jobs.lua',
+    -- 2026-09-12: 刑務作業は ao_prisonwork へ移譲したため client/jobs.lua は読み込まない。
+    -- ファイル自体は参照用に残してある(復旧したい場合はこの行を戻すだけでよい)。
+    -- 'client/jobs.lua',
     'client/prisonbreak.lua'
 }
 

@@ -2,6 +2,10 @@ QBCore = exports['qb-core']:GetCoreObject({ 'Functions' })
 inJail = false
 jailTime = 0
 currentJob = nil
+-- 2026-09-12: client/jobs.lua を外したため、そこで定義されていた currentBlip を
+-- ここで宣言しておく。prisonbreak.lua と本ファイルの RemoveBlip(currentBlip) が
+-- nil を渡してエラーになるのを防ぐ(0 を渡した場合 RemoveBlip は何もしない)。
+currentBlip = 0
 CellsBlip = nil
 TimeBlip = nil
 ShopBlip = nil
@@ -197,14 +201,7 @@ RegisterNetEvent('prison:client:Enter', function(time)
 
 	inJail = true
 	jailTime = time
-	local tempJobs = {}
-	local i = 1
-	for k in pairs(Config.Locations.jobs) do
-		tempJobs[i] = k
-		i += 1
-	end
-	currentJob = tempJobs[math.random(1, #tempJobs)]
-	CreateJobBlip(true)
+	-- 2026-09-12: 刑務作業の職種割り当てとブリップ生成は ao_prisonwork が行う。
 	ApplyClothes()
 	TriggerServerEvent('prison:server:SetJailStatus', jailTime)
 	TriggerServerEvent('prison:server:SaveJailItems', jailTime)
@@ -212,7 +209,7 @@ RegisterNetEvent('prison:client:Enter', function(time)
 	CreateCellsBlip()
 	Wait(2000)
 	DoScreenFadeIn(1000)
-	QBCore.Functions.Notify(Lang:t('error.do_some_work', { currentjob = Config.Jobs[currentJob] }), 'error')
+	-- 2026-09-12: 作業の案内は ao_prisonwork が出すため、ここでは通知しない。
 end)
 
 RegisterNetEvent('prison:client:Leave', function()
@@ -326,4 +323,51 @@ CreateThread(function()
 			end
 		end)
 	end
+end)
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- [Midnight6 2026-09-12] 外部リソース向けフック
+--
+-- 背景:
+--   jailTime はこのファイルのグローバル変数で、export も外部向けイベントも
+--   公開されていなかった。外部から metadata['injail'] を書き換えても、
+--   下のカウントダウンスレッドが毎分 jailTime を基準に上書きするため
+--   最大60秒で巻き戻ってしまう。
+--   そのため、刑期を増減する唯一の正しい経路としてこの2つのイベントを用意する。
+--
+-- 使う側(ao_prisonwork など)は必ずこのイベントを経由すること。
+-- ════════════════════════════════════════════════════════════════════════════
+
+--- 刑期を短縮する(刑務作業の減刑)
+--- @param amount number 短縮する単位数(1 ≒ 実時間60秒)
+RegisterNetEvent('prison:client:ReduceJailTime', function(amount)
+	amount = tonumber(amount) or 0
+	if not inJail or amount <= 0 or jailTime <= 0 then return end
+	jailTime = math.max(0, jailTime - amount)
+	TriggerServerEvent('prison:server:SetJailStatus', jailTime)
+	if jailTime <= 0 then
+		QBCore.Functions.Notify(Lang:t('success.timesup'), 'success', 10000)
+	else
+		QBCore.Functions.Notify(Lang:t('success.time_cut'))
+	end
+end)
+
+--- 刑期を延長する(所内での犯罪など)
+--- @param amount number 加算する単位数(1 ≒ 実時間60秒)
+RegisterNetEvent('prison:client:AddJailTime', function(amount)
+	amount = tonumber(amount) or 0
+	if not inJail or amount <= 0 then return end
+	jailTime = jailTime + amount
+	TriggerServerEvent('prison:server:SetJailStatus', jailTime)
+	QBCore.Functions.Notify(Lang:t('info.timeleft', { JAILTIME = jailTime }), 'error')
+end)
+
+--- 収監中かどうか
+exports('IsInJail', function()
+	return inJail == true
+end)
+
+--- 残りの刑期(単位)。収監中でなければ 0
+exports('GetJailTime', function()
+	return inJail and jailTime or 0
 end)

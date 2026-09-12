@@ -173,6 +173,16 @@ RegisterNetEvent('police:reportCrime', function(data)
         local crimeLevel = crimeConfig.level or 1
         local newLevel = currentLevel
         
+        -- [Midnight6修正 2026-09-12] 加算の対象を重い犯罪に限定する。
+        -- クライアント側(client/crime.lua LogCrime)と同じ規則。
+        -- 軽犯罪を繰り返すだけで最高レベルまで上がるのを防ぐ。
+        local sev = crimeConfig.severity or 'medium'
+        local esc = Config.M6 and Config.M6.escalation
+        local canEscalate = true
+        if esc and esc.onlySeverities then
+            canEscalate = esc.onlySeverities[sev] == true
+        end
+
         -- Additive wanted level system
         if currentLevel == 0 then
             newLevel = crimeLevel
@@ -181,9 +191,13 @@ RegisterNetEvent('police:reportCrime', function(data)
             if crimeLevel > currentLevel then
                 newLevel = crimeLevel
                 Debug(('Crime upgrade: %s | %d -> %d'):format(crimeType, currentLevel, newLevel))
-            elseif crimeLevel == currentLevel then
+            elseif crimeLevel == currentLevel and canEscalate then
                 newLevel = math.min(5, currentLevel + 1)
                 Debug(('Same level crime: %s | %d -> %d'):format(crimeType, currentLevel, newLevel))
+            elseif crimeLevel == currentLevel then
+                Debug(('Minor crime, no escalation: %s | stays %d'):format(crimeType, currentLevel))
+                NotifyPolice(crimeType, coords, witnessData)
+                return
             else
                 Debug(('Ignoring lower crime: %s | current %d > crime %d'):format(
                     crimeType, currentLevel, crimeLevel
