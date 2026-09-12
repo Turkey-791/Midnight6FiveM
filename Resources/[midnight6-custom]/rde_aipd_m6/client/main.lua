@@ -340,9 +340,15 @@ function Police.SpawnUnit(spawnPoint, config, level)
     SetVehicleHasBeenOwnedByPlayer(vehicle, true)
     SetVehicleIsConsideredByPlayer(vehicle, true)
 
-    local chaseSpeed = (config.chaseSpeed or 25.0) / 3.6
-    ModifyVehicleTopSpeed(vehicle, chaseSpeed)
-    SetEntityMaxSpeed(vehicle, chaseSpeed + 2.0)
+    -- [Midnight6修正 2026-09-12] パトカーの速度上限
+    --   元コード:
+    --     local chaseSpeed = (config.chaseSpeed or 25.0) / 3.6
+    --     ModifyVehicleTopSpeed(vehicle, chaseSpeed)    -- 倍率を取るnativeにm/sを渡していた
+    --     SetEntityMaxSpeed(vehicle, chaseSpeed + 2.0)  -- 実質32〜62km/hのハード上限
+    --   SetEntityMaxSpeed は m/s 指定。config の chaseSpeed は km/h として扱う。
+    local chaseKmh = config.chaseSpeed or 110.0
+    ModifyVehicleTopSpeed(vehicle, config.topSpeedMultiplier or 1.0)
+    SetEntityMaxSpeed(vehicle, chaseKmh / 3.6)
 
     -- Spawn cop ped
     local ped = CreatePed(4, joaat(pedModel),
@@ -378,6 +384,58 @@ function Police.SpawnUnit(spawnPoint, config, level)
     end
 
     SetPedIntoVehicle(ped, vehicle, -1)
+
+    -- ── [Midnight6追加] ドライブバイ担当の同乗者 ──────────────────
+    -- 元のRDEは1台1名の運転手のみで、車両追跡中に一切射撃しなかった。
+    -- 台数は増やさず、1台あたりの人数だけ増やす。
+    local passengerPeds = {}
+    do
+        local db = (Config.M6 and Config.M6.driveBy) or {}
+        local want = config.passengers or 0
+        -- 同乗者を乗せる車は全体で maxUnitsWithPassenger 台まで。
+        -- 全台に乗せると、降車後の徒歩戦力が一気に倍になってしまう。
+        local withPassenger = 0
+        for _, u in ipairs(WantedSystem.pursuingUnits) do
+            if u and u.passengers and #u.passengers > 0 then withPassenger = withPassenger + 1 end
+        end
+        if withPassenger >= (db.maxUnitsWithPassenger or 2) then want = 0 end
+        if db.enabled ~= false and want > 0 and level >= (db.minLevel or 3) then
+            local seats = GetVehicleModelNumberOfSeats(joaat(vehModel)) - 1  -- 運転席を除く
+            if seats > 0 then
+                if want > seats then want = seats end
+                local pWeapons = db.weapons or { 'WEAPON_PISTOL' }
+                for seat = 0, want - 1 do
+                    local pModel = config.models[math.random(#config.models)]
+                    if LoadModel(pModel) then
+                        local pPed = CreatePed(4, joaat(pModel),
+                            spawnPoint.coords.x, spawnPoint.coords.y, spawnPoint.coords.z,
+                            spawnPoint.heading, true, true)
+                        if DoesEntityExist(pPed) then
+                            SetEntityAsMissionEntity(pPed, true, true)
+                            SetBlockingOfNonTemporaryEvents(pPed, true)
+                            SetPedFleeAttributes(pPed, 0, false)
+                            SetPedCombatAttributes(pPed, 46, true)  -- always fight
+                            SetPedCombatAttributes(pPed, 5,  true)  -- can use vehicles
+                            SetPedCombatAttributes(pPed, 3,  true)  -- always fight back
+                            SetPedCombatAttributes(pPed, 52, true)  -- always shoot
+                            SetPedCombatAttributes(pPed, 2,  true)  -- can do drivebys
+                            SetPedRelationshipGroupHash(pPed, joaat('COP'))
+                            SetPedAccuracy(pPed, db.accuracy or 35)
+                            SetPedArmour(pPed, config.armor or 0)
+                            SetPedAsCop(pPed, true)
+                            SetPedCanSwitchWeapon(pPed, true)
+                            local pw = pWeapons[math.random(#pWeapons)]
+                            GiveWeaponToPed(pPed, joaat(pw), 250, false, true)
+                            SetCurrentPedWeapon(pPed, joaat(pw), true)
+                            SetPedIntoVehicle(pPed, vehicle, seat)
+                            passengerPeds[#passengerPeds+1] = pPed
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     SetTaskVehicleChaseBehaviorFlag(ped, 0, true)
     SetTaskVehicleChaseBehaviorFlag(ped, 1, true)
     SetTaskVehicleChaseBehaviorFlag(ped, 2, true)
@@ -387,6 +445,9 @@ function Police.SpawnUnit(spawnPoint, config, level)
     -- Wurde Wanted geclealt während wir gespawnt haben?
     if not WantedSystem.policeActive then
         Debug('SpawnUnit: policeActive=false nach Spawn — discard')
+        for _, pp in ipairs(passengerPeds) do
+            if DoesEntityExist(pp) then SetEntityAsMissionEntity(pp, false, true); DeleteEntity(pp) end
+        end
         SetEntityAsMissionEntity(ped,     false, true); DeleteEntity(ped)
         SetEntityAsMissionEntity(vehicle, false, true); DeleteEntity(vehicle)
         return false
@@ -413,6 +474,7 @@ function Police.SpawnUnit(spawnPoint, config, level)
 
     WantedSystem.pursuingUnits[#WantedSystem.pursuingUnits+1] = {
         ped            = ped,
+        passengers     = passengerPeds,   -- [Midnight6追加] ドライブバイ担当
         vehicle        = vehicle,
         blip           = blip,
         config         = config,
@@ -482,20 +544,45 @@ end
 
 -- [Midnight6移植] 降伏対応: そのユニットの射撃をやめさせる
 function M6StopShooting(unit)
-    if not unit or not DoesEntityExist(unit.ped) then return end
-    ClearPedTasks(unit.ped)
-    SetPedCombatAttributes(unit.ped, 46, false)  -- always fight
-    SetPedCombatAttributes(unit.ped, 52, false)  -- always shoot
-    SetPedCombatAttributes(unit.ped, 2,  false)  -- driveby
-    SetPedCombatAttributes(unit.ped, 5,  true)   -- can use vehicles
+    if not unit then return end
+    local peds = { unit.ped }
+    for _, pp in ipairs(unit.passengers or {}) do peds[#peds+1] = pp end
+    for _, p in ipairs(peds) do
+        if DoesEntityExist(p) then
+            ClearPedTasks(p)
+            SetPedCombatAttributes(p, 46, false)  -- always fight
+            SetPedCombatAttributes(p, 52, false)  -- always shoot
+            SetPedCombatAttributes(p, 2,  false)  -- driveby
+            SetPedCombatAttributes(p, 5,  true)   -- can use vehicles
+        end
+    end
 end
 
 -- [Midnight6移植] 降伏解除時に戦闘設定を戻す
 function M6ResumeShooting(unit)
-    if not unit or not DoesEntityExist(unit.ped) then return end
-    SetPedCombatAttributes(unit.ped, 46, true)
-    SetPedCombatAttributes(unit.ped, 52, true)
-    SetPedCombatAttributes(unit.ped, 2,  true)
+    if not unit then return end
+    local peds = { unit.ped }
+    for _, pp in ipairs(unit.passengers or {}) do peds[#peds+1] = pp end
+    for _, p in ipairs(peds) do
+        if DoesEntityExist(p) then
+            SetPedCombatAttributes(p, 46, true)
+            SetPedCombatAttributes(p, 52, true)
+            SetPedCombatAttributes(p, 2,  true)
+        end
+    end
+end
+
+-- [Midnight6追加] 同乗者の後始末
+function M6DeletePassengers(unit)
+    if not unit or not unit.passengers then return end
+    for i = #unit.passengers, 1, -1 do
+        local pp = unit.passengers[i]
+        if pp and DoesEntityExist(pp) then
+            SetEntityAsMissionEntity(pp, false, true)
+            DeleteEntity(pp)
+        end
+        table.remove(unit.passengers, i)
+    end
 end
 
 -- ── TRY TACKLE — v2.0: Physics-based (Forward Vector + Sprint + Force) ───────
@@ -608,6 +695,94 @@ local function CreateRoadblock(unit)
             SetEntityHeading(unit.vehicle, heading + 90.0)
             SetVehicleOnGroundProperly(unit.vehicle)
             TaskLeaveVehicle(unit.ped, unit.vehicle, 0)
+        end
+    end)
+end
+
+-- ── [Midnight6追加] スパイクストリップ ───────────────────────────
+-- 先回りして道路に設置する。GTAのスパイクpropは置いただけでは効かないので、
+-- 近づいたかどうかを自前で見てタイヤをパンクさせる。
+-- 判定するのは自分の車だけなので、他のプレイヤーを巻き込むことはない。
+local m6LastSpike   = 0
+local m6SpikeObjects = {}
+
+local function M6ClearSpikes()
+    for i = #m6SpikeObjects, 1, -1 do
+        local o = m6SpikeObjects[i]
+        if o and DoesEntityExist(o) then
+            SetEntityAsMissionEntity(o, false, true)
+            DeleteEntity(o)
+        end
+        table.remove(m6SpikeObjects, i)
+    end
+end
+
+local function M6CreateSpikeStrip(level)
+    local cfg = (Config.M6 and Config.M6.spikes) or {}
+    if cfg.enabled == false then return end
+    if (level or 0) < (cfg.minLevel or 2) then return end
+    if not cache.inVehicle or not DoesEntityExist(cache.vehicle) then return end
+
+    local now = GetGameTimer()
+    if (now - m6LastSpike) < (cfg.cooldownMs or 30000) then return end
+
+    local speed = GetEntitySpeed(cache.vehicle)               -- m/s
+    if (speed * 3.6) < (cfg.minSpeedKmh or 25.0) then return end
+
+    -- 進行方向の「先」に置く。近すぎると避けられず理不尽になる
+    local minLead = cfg.minLeadDist or 70.0
+    local lead = math.max(minLead, math.min(cfg.maxLeadDist or 250.0, speed * (cfg.leadSeconds or 4.0)))
+    local dir  = GetEntityForwardVector(cache.vehicle)
+    local ahead = vec3(cache.coords.x + dir.x * lead, cache.coords.y + dir.y * lead, cache.coords.z)
+
+    local ok, roadPos = GetClosestRoad(ahead, 40.0)
+    if not ok or not roadPos then return end
+    if #(roadPos - cache.coords) < minLead then return end
+
+    local propName = cfg.prop or 'p_ld_stinger_s'
+    if not LoadModel(propName) then return end
+
+    local obj = CreateObject(joaat(propName), roadPos.x, roadPos.y, roadPos.z, true, true, false)
+    if not DoesEntityExist(obj) then return end
+
+    SetEntityAsMissionEntity(obj, true, true)
+    PlaceObjectOnGroundProperly(obj)
+    -- 進行方向に対して横向きに置く
+    SetEntityHeading(obj, GetEntityHeading(cache.vehicle) + 90.0)
+    FreezeEntityPosition(obj, true)
+
+    m6SpikeObjects[#m6SpikeObjects+1] = obj
+    m6LastSpike = now
+    Debug(('M6: spike strip placed %.0fm ahead'):format(lead))
+
+    CreateThread(function()
+        local life    = cfg.lifetimeMs or 25000
+        local radius  = cfg.triggerRadius or 3.5
+        local minKmh  = cfg.minSpeedKmh or 25.0
+        local elapsed = 0
+        local hit     = false
+
+        while elapsed < life and DoesEntityExist(obj) do
+            Wait(50); elapsed = elapsed + 50
+            if cache.inVehicle and DoesEntityExist(cache.vehicle) then
+                local d = #(GetEntityCoords(cache.vehicle) - GetEntityCoords(obj))
+                if d < radius and (GetEntitySpeed(cache.vehicle) * 3.6) >= minKmh then
+                    for wheel = 0, 5 do
+                        SetVehicleTyreBurst(cache.vehicle, wheel, true, 1000.0)
+                    end
+                    hit = true
+                    break
+                end
+            end
+        end
+
+        if hit then Wait(3000) end
+        if DoesEntityExist(obj) then
+            SetEntityAsMissionEntity(obj, false, true)
+            DeleteEntity(obj)
+        end
+        for i = #m6SpikeObjects, 1, -1 do
+            if m6SpikeObjects[i] == obj then table.remove(m6SpikeObjects, i) end
         end
     end)
 end
@@ -727,10 +902,20 @@ function Police.UpdateBehavior(unit)
                     TaskVehicleTempAction(unit.ped, copVeh, 6, 2000)
                     CreateThread(function()
                         Wait(500)
-                        if DoesEntityExist(cache.vehicle) then
-                            local fwd = GetEntityForwardVector(copVeh)
-                            ApplyForceToEntity(cache.vehicle, 1, fwd.x*25.0, fwd.y*25.0, 0, 0,0,0, 0, false, true, true, true, true)
-                        end
+                        -- [Midnight6修正 2026-09-12]
+                        --   元コードは接触判定も距離の再チェックもなく、条件を満たすと
+                        --   必ず 25.0 のインパルスを加えていた。15m離れていても発生するため、
+                        --   「見えない車に突き飛ばされる」「壁や対向車に激突して死ぬ」原因になっていた。
+                        --   実際に接触しているときだけ、弱めの力を加える。
+                        local pit = (Config.M6 and Config.M6.pit) or {}
+                        if not DoesEntityExist(cache.vehicle) or not DoesEntityExist(copVeh) then return end
+                        if pit.requireContact ~= false
+                            and not IsEntityTouchingEntity(copVeh, cache.vehicle) then return end
+                        if #(GetEntityCoords(copVeh) - GetEntityCoords(cache.vehicle))
+                            > (pit.maxForceDistance or 6.0) then return end
+                        local f   = pit.force or 12.0
+                        local fwd = GetEntityForwardVector(copVeh)
+                        ApplyForceToEntity(cache.vehicle, 1, fwd.x*f, fwd.y*f, 0, 0,0,0, 0, false, true, true, true, true)
                     end)
                 end
             end
@@ -743,6 +928,25 @@ function Police.UpdateBehavior(unit)
                 CreateRoadblock(unit)
             end
 
+            -- [Midnight6追加] スパイクストリップ(先回りして設置)
+            if distance < 250.0 then
+                M6CreateSpikeStrip(unit.level or WantedSystem.level)
+            end
+
+            -- [Midnight6追加] 同乗者のドライブバイ
+            do
+                local db = (Config.M6 and Config.M6.driveBy) or {}
+                if db.enabled ~= false and distance < (db.range or 70.0) then
+                    for _, pp in ipairs(unit.passengers or {}) do
+                        if DoesEntityExist(pp) and not IsPedDeadOrDying(pp, true)
+                            and not IsPedInCombat(pp, cache.ped)
+                        then
+                            TaskCombatPed(pp, cache.ped, 0, 16)
+                        end
+                    end
+                end
+            end
+
             -- Flanking when mid-range
             if distance > 30.0 and distance < 80.0 and math.random() < 0.3 then
                 FlankPlayer(unit, copVeh)
@@ -750,9 +954,17 @@ function Police.UpdateBehavior(unit)
                 TaskVehicleChase(unit.ped, cache.ped)
                 SetDriverAbility(unit.ped, 100.0)
                 SetDriverAggressiveness(unit.ped, 100.0)
+                -- [Midnight6修正] 追い上げ。SetEntityMaxSpeed の上限そのものを
+                -- 上げないと、エンジン出力を上げても頭打ちになる
+                local baseKmh = unit.config.chaseSpeed or 110.0
                 if distance > 50.0 then
+                    local boost = (Config.M6 and Config.M6.chaseCatchUpFactor) or 1.15
+                    SetEntityMaxSpeed(copVeh, (baseKmh * boost) / 3.6)
                     ModifyVehicleTopSpeed(copVeh, 1.3)
                     SetVehicleEnginePowerMultiplier(copVeh, 2.0)
+                else
+                    SetEntityMaxSpeed(copVeh, baseKmh / 3.6)
+                    ModifyVehicleTopSpeed(copVeh, unit.config.topSpeedMultiplier or 1.0)
                 end
             end
             unit.state = 'pursuing_vehicle'
@@ -762,6 +974,12 @@ function Police.UpdateBehavior(unit)
             if distance < 25.0 and unit.state ~= 'exiting' then
                 unit.state = 'exiting'; unit.lastStateChange = now
                 TaskLeaveVehicle(unit.ped, copVeh, 256)
+                -- [Midnight6追加] 同乗者も降ろす。車内に残ると置物になってしまう
+                for _, pp in ipairs(unit.passengers or {}) do
+                    if DoesEntityExist(pp) and not IsPedDeadOrDying(pp, true) then
+                        TaskLeaveVehicle(pp, copVeh, 256)
+                    end
+                end
             elseif distance >= 25.0 then
                 unit.state = 'pursuing'
                 TaskVehicleDriveToCoord(unit.ped, copVeh,
@@ -776,6 +994,27 @@ function Police.UpdateBehavior(unit)
         -- ── ON-FOOT PURSUIT ─────────────────────────────────────
         if unit.state == 'exiting' and (now - unit.lastStateChange) > 2000 then
             unit.state = 'on_foot'
+        end
+
+        -- [Midnight6追加] 降車した同乗者の行動。
+        -- 運転手側の細かい分岐(タックル・逮捕)は持たせず、
+        -- 武装している相手には応戦、そうでなければ追いかけるだけにする。
+        for _, pp in ipairs(unit.passengers or {}) do
+            if DoesEntityExist(pp) and not IsPedDeadOrDying(pp, true)
+                and not IsPedInAnyVehicle(pp, false)
+            then
+                local armed = PlayerIsArmed()
+                if not WantedSystem.isSurrendered
+                    and (armed or unit.config.shootUnarmed)
+                    and distance < (unit.config.combatRange or 50.0)
+                then
+                    if not IsPedInCombat(pp, cache.ped) then
+                        TaskCombatPed(pp, cache.ped, 0, 16)
+                    end
+                elseif not IsPedInCombat(pp, cache.ped) then
+                    TaskGoToEntity(pp, cache.ped, -1, 3.0, 2.0, 0, 0)
+                end
+            end
         end
 
         if unit.state == 'on_foot' or unit.state == 'exiting' or unit.state == 'pursuing' then
@@ -929,6 +1168,9 @@ function Police.ClearAllUnits()
     WantedSystem.pursuingUnits = {}
     WantedSystem.policeActive  = false
 
+    -- [Midnight6追加] 設置済みのスパイクも撤去する
+    M6ClearSpikes()
+
     local dis         = Config.PoliceDisengage or {}
     local maxWait     = dis.maxDepartureWait   or 15000   -- war 25000
     local departDist  = dis.departureDistance  or 250.0
@@ -947,6 +1189,16 @@ function Police.ClearAllUnits()
             SetPedCombatAttributes(unit.ped, 46, false)
             SetPedCombatAttributes(unit.ped, 52, false)
             SetPedCombatAttributes(unit.ped, 1,  false)
+        end
+        -- [Midnight6追加] 同乗者も即座に撃つのをやめさせる
+        for _, pp in ipairs(unit.passengers or {}) do
+            if DoesEntityExist(pp) and not IsEntityDead(pp) then
+                ClearPedTasksImmediately(pp)
+                SetPedCombatAttributes(pp, 46, false)
+                SetPedCombatAttributes(pp, 52, false)
+                SetPedCombatAttributes(pp, 2,  false)
+                SetPedCombatAttributes(pp, 1,  false)
+            end
         end
         if DoesEntityExist(unit.vehicle) then
             SetVehicleSiren(unit.vehicle, false)
@@ -1022,6 +1274,7 @@ function Police.ClearAllUnits()
                 end
             end
 
+            M6DeletePassengers(unit)   -- [Midnight6追加]
             if DoesEntityExist(ped)     then SetEntityAsMissionEntity(ped,     false, true); DeleteEntity(ped)     end
             if DoesEntityExist(vehicle) then SetEntityAsMissionEntity(vehicle, false, true); DeleteEntity(vehicle) end
 
@@ -1053,6 +1306,7 @@ function Police.CleanupInvalid()
 
         if pedGone then
             if unit.blip and DoesBlipExist(unit.blip) then RemoveBlip(unit.blip) end
+            M6DeletePassengers(unit)   -- [Midnight6追加]
             if unit.vehicle and DoesEntityExist(unit.vehicle) then
                 SetEntityAsMissionEntity(unit.vehicle, false, true)
                 if not keepVeh then DeleteEntity(unit.vehicle) end
@@ -1072,6 +1326,7 @@ function Police.CleanupInvalid()
                 SetEntityAsMissionEntity(unit.vehicle, false, true); DeleteEntity(unit.vehicle); unit.vehicle = nil
             end
             if removeBody and DoesEntityExist(unit.ped) then
+                M6DeletePassengers(unit)   -- [Midnight6追加]
                 SetEntityAsMissionEntity(unit.ped, false, true); DeleteEntity(unit.ped)
                 table.remove(WantedSystem.pursuingUnits, i)
             end
@@ -1300,6 +1555,7 @@ function WantedSystem.StartPoliceSystem()
                 unit.lastUpdate = now
                 if Police.UpdateBehavior(unit) == false then
                     if unit.blip    and DoesBlipExist(unit.blip)     then RemoveBlip(unit.blip)     end
+                    M6DeletePassengers(unit)   -- [Midnight6追加]
                     if unit.vehicle and DoesEntityExist(unit.vehicle) then DeleteEntity(unit.vehicle) end
                     table.remove(WantedSystem.pursuingUnits, i)
                 end

@@ -145,7 +145,7 @@ Config.StoreProfiles = {
         },
     },
     ['casino'] = {
-        label   = 'カジノ ギフトショップ',
+        label   = 'カジノ ブティック',
         tags    = { 'casino', 'casino_only', 'formal' },
         tierMin = 4, tierMax = 6,
     },
@@ -169,4 +169,36 @@ Config.IlleniumStoreMap = {
     [13] = 'military',          -- Great Chaparral    / Discount Store
     [14] = 'mask',              -- Vespucci Beach     / Vespucci Movie Masks
     [15] = 'general_mid',       -- Hawick Ave / Alta  / Sub Urban
+    [16] = 'casino',            -- カジノ ブティック / illenium の Config.Stores に追加した16番目
 }
+
+-- ============================================================
+-- カジノ内ブティックの店員PED
+-- ============================================================
+-- illenium 側の [E] ゾーン (Config.Stores[16]) と同じ座標にPEDを立てて、
+-- 「店員に話しかけて服を買う」ように見せるためのもの。
+-- PED自体には当たり判定つきの操作は付けていない (買う処理は [E] ゾーン側)。
+-- 実処理は client/casino_ped.lua。
+--
+-- coords は AO が実機で測った値 (プレイヤー位置基準)。
+-- CreatePed は中心指定なので casino_ped.lua 側で z-1.0 してから使う。
+Config.CasinoShopPed = {
+    enabled  = true,
+    model    = 's_f_m_shop_high',                          -- Ponsonbys(高級服屋)の店員。スーツ姿。
+    coords   = vector4(1100.62, 195.47, -49.44, 313.78),   -- レジ前
+    scenario = nil,                                        -- nil = 何もさせない(待機モーションのみ)
+}
+
+-- モデル差し替え候補 (いずれも標準搭載。peds.json で存在を確認済み):
+--   's_m_y_casino_01' / 's_f_y_casino_01' : カジノのディーラー
+--   'ig_tomcasino'                        : カジノ入口にいるトム
+--   'u_f_m_casinoshop_01'                 : 軽食売り場の売り子(既存PEDと同じ顔になる)
+--
+-- 置き場所の差し替え候補:
+--   試着室エリアのど真ん中 vector4(1096.46, 201.01, -49.44, 217.11)
+--   ※動かすときは illenium-appearance/shared/config.lua の Config.Stores[16] の
+--     coords / points も必ず同じ場所に合わせること。
+--     ズレるとPEDに近づいても [E] が出ない。
+--
+-- scenario を入れたい場合の例 (入れると多少動く。無くても不自然ではない):
+--   'WORLD_HUMAN_CLIPBOARD' / 'WORLD_HUMAN_STAND_IMPATIENT'

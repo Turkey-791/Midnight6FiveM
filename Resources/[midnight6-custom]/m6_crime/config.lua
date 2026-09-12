@@ -61,6 +61,8 @@ Config.CrimeTypes = {
     BURGLARY           = { level = nil, statute = 3 * 3600,  alert = false, label = '空き巣' },
     VANDALISM          = { level = nil, statute = 1 * 3600,  alert = false, label = '器物損壊' },
     DRUG_POSSESSION    = { level = nil, statute = 2 * 3600,  alert = false, label = '薬物所持' },
+
+    PRISON_ESCAPE      = { level = 4, statute = 24 * 3600, alert = true,  label = '刑務所脱走' },
 }
 
 Config.DefaultStatute = 2 * 3600   -- 種別表にない犯罪の時効(秒)
@@ -81,6 +83,28 @@ Config.Statute = {
     -- 死亡で時効が進むか(false にすると死亡中は止まる。現状は常に進む)
     -- ※ 実装は「発生時刻 + 時効秒」で判定する方式なので、止める場合は別途対応が必要
     countWhileOffline = true,
+}
+
+-- ============================================================================
+-- 脱獄
+--   qb-prison は「刑務所の中心から200m離れた」ことだけで脱走と判定し、
+--   通知を出して刑期を0にし、預けた所持品を消す
+--   (qb-prison/client/prisonbreak.lua 212-232 / server/main.lua 33-41)。
+--   プレイヤー警察への通報は on-duty の警官にしか飛ばず、手配レベルも付かないため、
+--   脱走してもゲーム側に何も起きない状態だった。ここで接続する。
+-- ============================================================================
+
+Config.Escape = {
+    enabled       = true,
+    wantedLevel   = 4,      -- 脱走時に付ける手配レベル
+    -- 未服役の刑期を次の収監に持ち越す
+    carryOverTime = true,
+    carryPenalty  = 1.5,    -- 持ち越し分の倍率(脱走したぶん重くする)
+    carryMaxUnits = 60,     -- 持ち越しの上限(qb-prison の単位。1 ≒ 実時間1分)
+    pollSeconds   = 5,      -- 残り刑期を控えておく間隔
+    -- プレイヤー警察が逮捕したときに、未服役分を警官へ知らせる
+    -- (qb-policejob の刑期は警官が入力するため、自動加算はできない)
+    notifyOfficer = true,
 }
 
 -- ============================================================================

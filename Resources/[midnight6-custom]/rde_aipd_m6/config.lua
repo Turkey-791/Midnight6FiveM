@@ -125,6 +125,54 @@ Config.M6 = {
         WILDERNESS  = 0.25,
     },
 
+    -- ────────────────────────────────────────────────────────────
+    -- 車で逃走するプレイヤーへの対応
+    --
+    -- 元のRDEは車両追跡中に一切射撃せず(PIT・ロードブロック・回り込みのみ)、
+    -- さらにパトカーの最高速度が実質32〜62km/hに制限されていたため、
+    -- 「車で逃げる」が最も安全な選択肢になっていた。
+    -- ────────────────────────────────────────────────────────────
+
+    -- 50m以上離されたときに、一時的に速度上限を引き上げる倍率
+    chaseCatchUpFactor = 1.15,
+
+    -- 同乗者によるドライブバイ
+    driveBy = {
+        enabled  = true,
+        minLevel = 3,          -- このレベル以上の編成に同乗者が乗る(台数は増えない)
+        -- 同乗者を乗せる車は全体でこの台数まで。
+        -- 全台に乗せると、降車後の徒歩戦力が一気に倍になってしまう
+        maxUnitsWithPassenger = 2,
+        range    = 70.0,       -- この距離以内で撃ち始める
+        -- ドライブバイで使える武器のみ。ライフル系は車内から撃てない
+        weapons  = { 'WEAPON_SMG', 'WEAPON_PISTOL' },
+        accuracy = 35,         -- 運転席の警官より当たりにくくしておく
+    },
+
+    -- スパイクストリップ(先回りして道路に設置)
+    spikes = {
+        enabled       = true,
+        minLevel      = 2,
+        cooldownMs    = 30000,   -- 設置の間隔(全ユニット共通)
+        leadSeconds   = 4.0,     -- 現在の速度で何秒先に置くか
+        minLeadDist   = 70.0,    -- これより近くには置かない(避けられないため)
+        maxLeadDist   = 250.0,
+        triggerRadius = 3.5,     -- この距離まで近づくとパンクする
+        minSpeedKmh   = 25.0,    -- これ未満の速度では設置も作動もしない
+        lifetimeMs    = 25000,   -- 設置から撤去までの時間
+        prop          = 'p_ld_stinger_s',
+    },
+
+    -- PIT(体当たり)
+    --   元コードは接触判定も距離の再チェックもなく、条件を満たすと必ず
+    --   プレイヤーの車へ 25.0 のインパルスを加えていた。
+    --   見えない車に突き飛ばされたようになり、事故死の原因になっていた。
+    pit = {
+        requireContact   = true,  -- 実際に接触しているときだけ力を加える
+        maxForceDistance = 6.0,   -- 念のための距離チェック(m)
+        force            = 12.0,  -- 元は 25.0
+    },
+
     -- 薬物所持の判定に使うアイテム名(部分一致)。Midnight6 の品目に合わせて調整する
     drugKeywords = {
         'weed', 'cocaine', 'coke_', 'heroin', 'meth', 'oxy',
@@ -167,15 +215,19 @@ Config.AdminSettings = {
 -- WANTED LEVELS - ULTRA REALISTIC
 -- ============================================================================
 -- [Midnight6メモ] 実際に出てくるもの(コードで確認済み)
---   Lv1: 2台 警官(cop) 拳銃        命中25 装甲0   非武装には撃たない
---   Lv2: 3台 警官/保安官 +ショットガン 命中35 装甲25  非武装には撃たない
---   Lv3: 4台 SWAT/保安官/FBI ライフル 命中45 装甲50  非武装には撃たない
---   Lv4: 5台 riot/fbi2/police3      命中50 装甲75  非武装には撃たない
---   Lv5: 6台 riot/fbi2/police4      命中60 装甲100 ★非武装でも撃つ
+--   Lv1: 2台 警官(cop) 拳銃          命中25 装甲0   非武装には撃たない  最高110km/h
+--   Lv2: 3台 警官/保安官 +ショットガン 命中35 装甲25  非武装には撃たない  最高130km/h
+--   Lv3: 4台 SWAT/保安官/FBI ライフル 命中45 装甲50  非武装には撃たない  最高155km/h
+--   Lv4: 5台 riot/fbi2/police3       命中50 装甲75  非武装には撃たない  最高180km/h
+--   Lv5: 6台 riot/fbi2/police4       命中60 装甲100 ★非武装でも撃つ     最高200km/h
 --   ・台数は「プレイヤー警察の人数による倍率」が掛かる(警察1人なら0.5倍)
 --   ・ヘリは出ない(useHelicopters / useRoadblocks の設定はコードから参照されていない)
 --   ・車両追跡中のロードブロックは、レベルに関係なく発生する
 --   ・逮捕を狙う挙動は Lv1〜4。Lv5 だけ射殺前提になる
+--   ・[2026-09-12追加] Lv3以上は最大2台に同乗者が乗り、車内から撃ってくる
+--     (Config.M6.driveBy)。降車後は徒歩でも応戦する
+--   ・[2026-09-12追加] Lv2以上でスパイクストリップを先回り設置する
+--     (Config.M6.spikes)
 -- ============================================================================
 
 Config.WantedLevels = {
@@ -202,7 +254,8 @@ Config.WantedLevels = {
             arrestDistance = 2.5,
             shootUnarmed = false,
             spawnDistance = 350.0,
-            chaseSpeed = 25.0,
+            chaseSpeed = 110.0,  -- [Midnight6調整] km/h。元は25.0で実質32km/h上限だった
+            passengers = 0,      -- [Midnight6追加] ドライブバイ担当の同乗者
             combatRange = 40.0,
             fleeThreshold = 30,
             useCovers = false,
@@ -225,7 +278,8 @@ Config.WantedLevels = {
             arrestDistance = 2.0,
             shootUnarmed = false,
             spawnDistance = 350.0,
-            chaseSpeed = 35.0,
+            chaseSpeed = 130.0,  -- [Midnight6調整] 元は35.0
+            passengers = 0,
             combatRange = 50.0,
             fleeThreshold = 20,
             useCovers = true,
@@ -248,7 +302,8 @@ Config.WantedLevels = {
             arrestDistance = 1.5,
             shootUnarmed = false,
             spawnDistance = 400.0,
-            chaseSpeed = 45.0,
+            chaseSpeed = 155.0,  -- [Midnight6調整] 元は45.0
+            passengers = 1,      -- ここから同乗者が撃ってくる
             combatRange = 60.0,
             fleeThreshold = 15,
             useCovers = true,
@@ -271,7 +326,8 @@ Config.WantedLevels = {
             arrestDistance = 1.0,
             shootUnarmed = false,
             spawnDistance = 450.0,
-            chaseSpeed = 50.0,
+            chaseSpeed = 180.0,  -- [Midnight6調整] 元は50.0
+            passengers = 1,
             combatRange = 75.0,
             fleeThreshold = 10,
             useCovers = true,
@@ -295,7 +351,8 @@ Config.WantedLevels = {
             arrestDistance = 1.0,
             shootUnarmed = true,
             spawnDistance = 500.0,
-            chaseSpeed = 55.0,
+            chaseSpeed = 200.0,  -- [Midnight6調整] 元は55.0
+            passengers = 2,
             combatRange = 100.0,
             fleeThreshold = 5,
             useCovers = true,

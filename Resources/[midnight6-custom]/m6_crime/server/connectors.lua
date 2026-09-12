@@ -136,4 +136,80 @@ RegisterNetEvent('police:server:JailPlayer', function(playerId, time)
     -- RDE を通らない収監なので、ここで台帳へ通知する
     TriggerEvent('m6_crime:server:arrested', targetId, tonumber(time) or 0, 'player_police_qb')
     Debug(('プレイヤー警察による収監: target=%d time=%s'):format(targetId, tostring(time)))
+
+    -- 未服役分(脱獄)の通知。qb-policejob は刑期を警官が入力するため自動加算できない
+    if Config.Escape and Config.Escape.enabled and Config.Escape.notifyOfficer then
+        local Target = QBCore.Functions.GetPlayer(targetId)
+        local owed = Target and (tonumber(Target.PlayerData.metadata['m6_owedjail']) or 0) or 0
+        if owed > 0 then
+            TriggerClientEvent('QBCore:Notify', officer,
+                ('この人物には脱走による未服役 %d ヶ月があります'):format(owed), 'error', 10000)
+        end
+    end
 end)
+
+-- ════════════════════════════════════════════════════════════════
+-- 脱獄
+--
+--   qb-prison は刑務所の中心から200m離れると脱走と判定し、
+--     SecurityLockdown → PrisonBreakAlert → SetJailStatus(0) → GiveJailItems(true)
+--   をこの順でサーバーへ送る(client/prisonbreak.lua 212-232)。
+--   GiveJailItems に escaped = true が付くのは脱走のときだけで、
+--   通常の出所(面会所NPC)は引数なしなので、ここで脱走だけを拾える。
+--
+--   元の挙動では手配レベルが付かず、刑期も0になって終わりだった。
+-- ════════════════════════════════════════════════════════════════
+
+if Config.Escape and Config.Escape.enabled then
+    -- 残り刑期の控え。SetJailStatus(0) が先に届くため、脱走後では読めない
+    local lastKnownJail = {}
+
+    CreateThread(function()
+        local interval = math.max(1, (Config.Escape.pollSeconds or 5)) * 1000
+        while true do
+            Wait(interval)
+            for _, src in pairs(QBCore.Functions.GetPlayers()) do
+                local Player = QBCore.Functions.GetPlayer(src)
+                if Player then
+                    local t = tonumber(Player.PlayerData.metadata['injail']) or 0
+                    if t > 0 then lastKnownJail[src] = t end
+                end
+            end
+        end
+    end)
+
+    AddEventHandler('playerDropped', function()
+        lastKnownJail[source] = nil
+    end)
+
+    RegisterNetEvent('prison:server:GiveJailItems', function(escaped)
+        if not escaped then return end
+        local src = source
+        local Player = QBCore.Functions.GetPlayer(src)
+        if not Player then return end
+
+        local owed = lastKnownJail[src] or 0
+        lastKnownJail[src] = nil
+
+        -- 未服役の刑期を持ち越す
+        if Config.Escape.carryOverTime and owed > 0 then
+            local prev  = tonumber(Player.PlayerData.metadata['m6_owedjail']) or 0
+            local add   = math.floor(owed * (Config.Escape.carryPenalty or 1.5))
+            local total = math.min(prev + add, Config.Escape.carryMaxUnits or 60)
+            Player.Functions.SetMetaData('m6_owedjail', total)
+            Debug(('脱走: src=%d 残り%dヶ月 → 未服役 %dヶ月を計上'):format(src, owed, total))
+        end
+
+        -- 手配と台帳。qb-prison が injail を0にするのを待ってから出す
+        -- (RDE は収監中のプレイヤーには手配を付けないため)
+        SetTimeout(1000, function()
+            if not GetPlayerName(src) then return end
+            exports['m6_crime']:Report(src, 'PRISON_ESCAPE', PlayerCoords(src), {
+                sourceMod = 'qb-prison',
+                witnessed = true,
+                level     = Config.Escape.wantedLevel,
+                meta      = { owedUnits = owed },
+            })
+        end)
+    end)
+end

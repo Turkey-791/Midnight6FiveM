@@ -438,6 +438,27 @@ lib.addCommand('m6crimes', {
     end
 end)
 
+-- 脱走による未服役の刑期を確認・調整する
+lib.addCommand('m6owed', {
+    help = '対象の未服役刑期(脱走分)を表示。第2引数を付けると上書き',
+    params = {
+        { name = 'target', type = 'playerId' },
+        { name = 'units',  type = 'number', optional = true },
+    },
+    restricted = 'group.admin'
+}, function(source, args)
+    local Player = QBCore.Functions.GetPlayer(args.target)
+    if not Player then return end
+    if args.units then
+        Player.Functions.SetMetaData('m6_owedjail', math.max(0, math.floor(args.units)))
+    end
+    local owed = tonumber(Player.PlayerData.metadata['m6_owedjail']) or 0
+    lib.notify(source, {
+        type = 'inform', duration = 8000,
+        description = ('未服役の刑期: %d ヶ月 (実時間 約%d分)'):format(owed, owed)
+    })
+end)
+
 lib.addCommand('m6police', { help = '現在の警察人数とAI倍率を表示', restricted = 'group.admin' },
 function(source)
     lib.notify(source, {

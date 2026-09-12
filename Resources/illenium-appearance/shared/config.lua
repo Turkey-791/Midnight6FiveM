@@ -372,6 +372,29 @@ Config.Stores = {
             vector3(122.56930541992, -207.83396911621, 54.56)
         }
     },
+    -- [Midnight6/ao_clothing] カジノ ブティック (店舗プロファイル 'casino')
+    -- 場所: カジノ内の服屋エリアのレジ前。AO が実機で測った座標。
+    -- ここには ao_clothing/client/casino_ped.lua が店員PEDを1体立てている。
+    --   ゾーンの中心とPEDの立ち位置をわざと同じにしてあるので、プレイヤーから見ると
+    --   「店員のところへ行って [E] で買う」という動きになる。
+    --   位置を動かすときは ao_clothing/config.lua の Config.CasinoShopPed.coords と
+    --   ここの coords / points を必ずセットで変えること。
+    -- showBlip = false: カジノ内部の座標(z=-49)は地上の建物と200mほどズレた位置に
+    --   ブリップが出てしまうため。カジノ自体のブリップがあるので発見性は足りている。
+    {
+        type = "clothing",
+        coords = vector4(1100.62, 195.47, -49.44, 313.78),
+        size = vector3(4.0, 4.0, 4.0),
+        rotation = 314,
+        usePoly = false,
+        showBlip = false,
+        points = {
+            vector3(1098.62, 193.47, -49.44),
+            vector3(1102.62, 193.47, -49.44),
+            vector3(1102.62, 197.47, -49.44),
+            vector3(1098.62, 197.47, -49.44)
+        }
+    },
     {
         type = "barber",
         coords = vector4(-814.22, -183.7, 37.57, 116.91),

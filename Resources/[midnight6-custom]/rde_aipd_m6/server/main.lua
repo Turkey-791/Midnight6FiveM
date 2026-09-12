@@ -366,6 +366,19 @@ function JailPlayer(source, time, cell, reason)
         local player = GetQbPlayer(source)
         if not player then return end
 
+        -- [Midnight6追加] 脱獄時の未服役分を加算する。
+        -- m6_crime が脱走を検知したときに m6_owedjail へ積んでいる。
+        local owed = tonumber(player.PlayerData.metadata['m6_owedjail']) or 0
+        if owed > 0 then
+            units = units + owed
+            player.Functions.SetMetaData('m6_owedjail', 0)
+            Debug(('JailPlayer: 未服役分 %d ヶ月を加算 (source=%d)'):format(owed, source))
+            pcall(function()
+                TriggerClientEvent('QBCore:Notify', source,
+                    ('脱走前の未服役分 %d ヶ月が加算されました'):format(owed), 'error', 8000)
+            end)
+        end
+
         player.Functions.SetMetaData('injail', units)
         local currentDate = os.date('*t')
         if currentDate.day == 31 then currentDate.day = 30 end
