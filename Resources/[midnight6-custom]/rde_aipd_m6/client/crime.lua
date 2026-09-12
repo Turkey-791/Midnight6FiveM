@@ -989,6 +989,24 @@ local function StartWantedDecaySystem()
                 local canSee = CheckCopsLineOfSight()
                 crimeState.copsCanSeePlayer = canSee
 
+                -- [Midnight6追加] 視界に入っていなくても、AI警官が近くにいる間は
+                -- 「まだ付近を捜索中」とみなして減衰までのカウントを始めない。
+                -- これが無いと、視線を切っただけですぐ逃げ切り判定に入ってしまう。
+                if not canSee then
+                    local radius = (m6decay and m6decay.searchRadius) or 0.0
+                    if radius > 0 and WantedSystem and WantedSystem.pursuingUnits then
+                        for _, unit in ipairs(WantedSystem.pursuingUnits) do
+                            if unit and unit.ped and DoesEntityExist(unit.ped)
+                                and not IsPedDeadOrDying(unit.ped, true)
+                                and #(cache.coords - GetEntityCoords(unit.ped)) <= radius
+                            then
+                                canSee = true
+                                break
+                            end
+                        end
+                    end
+                end
+
                 if canSee then
                     crimeState.lastSeenByCop = GetGameTimer()
                     crimeState.decayActive   = false
